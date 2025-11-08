@@ -159,9 +159,16 @@ export class AnalyticsService {
     });
   }
 
-  // Hata loglama
+  // Hata loglama (Sentry + Supabase - Merkezi log aggregation)
   static async logError(error: Error, context?: string): Promise<void> {
     try {
+      // Sentry'ye gönder (merkezi log aggregation)
+      const { captureException } = await import('../utils/sentry');
+      captureException(error, {
+        context: context || 'unknown',
+        service: 'AnalyticsService',
+      });
+
       // Supabase'e hata bilgisi kaydet
       const { error: insertError } = await supabase.from('analytics_errors').insert({
         error_message: error.message,
