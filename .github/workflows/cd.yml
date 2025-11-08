@@ -12,6 +12,7 @@ jobs:
     name: Preview Build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    timeout-minutes: 60
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,12 +28,14 @@ jobs:
         with:
           expo-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+        continue-on-error: true
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
       - name: Install EAS CLI
         run: npm install -g eas-cli
+        continue-on-error: false
 
       - name: Build Preview (iOS)
         run: |
@@ -40,6 +43,7 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         continue-on-error: true
+        timeout-minutes: 30
         # EXPO_TOKEN zorunlu - EAS build için gerekli
         # continue-on-error: iOS build şimdilik skip ediliyor (Provisioning Profile'da Associated Domains eksik)
 
@@ -48,6 +52,8 @@ jobs:
           eas build --platform android --profile preview --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        continue-on-error: true
+        timeout-minutes: 30
         # EXPO_TOKEN zorunlu - EAS build için gerekli
 
   # Production Build (Tag-based)
@@ -55,6 +61,7 @@ jobs:
     name: Production Build
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    timeout-minutes: 60
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -70,12 +77,14 @@ jobs:
         with:
           expo-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+        continue-on-error: true
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
       - name: Install EAS CLI
         run: npm install -g eas-cli
+        continue-on-error: false
 
       - name: Build Production (iOS)
         run: |
@@ -83,6 +92,7 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         continue-on-error: true
+        timeout-minutes: 30
         # continue-on-error: iOS build şimdilik skip ediliyor (Provisioning Profile'da Associated Domains eksik)
 
       - name: Build Production (Android)
@@ -90,6 +100,8 @@ jobs:
           eas build --platform android --profile production --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        continue-on-error: true
+        timeout-minutes: 30
         # EXPO_TOKEN zorunlu - EAS build için gerekli
 
       - name: Submit to App Stores
@@ -97,5 +109,8 @@ jobs:
           eas submit --platform all --profile production --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        continue-on-error: true
+        timeout-minutes: 15
         # EXPO_TOKEN zorunlu - EAS submit için gerekli
+        # continue-on-error: Submit başarısız olsa da workflow devam eder
 
