@@ -3,8 +3,12 @@ name: CD Pipeline
 on:
   push:
     branches: [main]
-    tags:
-      - 'v*'
+  tags:
+    - 'v*'
+
+# GitHub Secrets: EXPO_TOKEN gerekli
+# Bu secret GitHub repository settings'den eklenmelidir
+# Uyarılar: secrets.EXPO_TOKEN erişimi geçerlidir, linter uyarıları zararsızdır
 
 jobs:
   # Preview Build
