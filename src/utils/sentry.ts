@@ -1,5 +1,6 @@
 // Sentry crash reporting entegrasyonu
 import * as Sentry from '@sentry/react-native';
+import { logger } from './logger';
 
 // Sentry'yi başlat (sadece production'da)
 export const initSentry = () => {
