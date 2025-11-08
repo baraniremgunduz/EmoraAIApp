@@ -250,10 +250,8 @@ const translations = {
     'auth.email_required': 'Lütfen e-posta adresinizi girin.',
     'auth.password_required': 'Lütfen şifrenizi girin.',
     'auth.confirm_password_required': 'Lütfen şifre tekrarını girin.',
-    'auth.email_placeholder': 'E-posta adresinizi girin',
-    'auth.password_placeholder': 'Şifrenizi girin',
-    'auth.name_placeholder': 'Adınızı ve soyadınızı girin',
-    'auth.confirm_password_placeholder': 'Şifrenizi tekrar girin',
+    'auth.name_placeholder_full': 'Adınızı ve soyadınızı girin',
+    'auth.confirm_password_placeholder_alt': 'Şifrenizi tekrar girin',
     'auth.password_reset_title': 'Şifre Sıfırlama',
     'auth.password_reset_sent': 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.',
     'auth.password_reset_failed': 'Şifre sıfırlama başarısız.',
@@ -265,13 +263,10 @@ const translations = {
     'auth.logout_success': 'Başarıyla çıkış yapıldı.',
     'auth.logout_failed': 'Çıkış yapılırken bir hata oluştu.',
 
-    // Onboarding
+    // Onboarding (duplicate removed - using above)
     'onboarding.welcome': "Emora AI'ya Hoş Geldiniz",
     'onboarding.subtitle': 'AI arkadaşınızla sohbet etmeye hazır mısınız?',
-    'onboarding.start': 'Başla',
-    'onboarding.skip': 'Atla',
     'onboarding.back': 'Geri',
-    'onboarding.next': 'İleri',
     'onboarding.slide1_title': 'AI Arkadaşınla Tanış',
     'onboarding.slide1_desc':
       'Emora AI ile doğal sohbetler yapın ve her zaman yanınızda bir arkadaş bulun.',

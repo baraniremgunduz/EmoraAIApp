@@ -161,7 +161,10 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   input: {
-    ...darkTheme.typography.body,
+    fontSize: darkTheme.typography.body.fontSize,
+    fontFamily: darkTheme.typography.body.fontFamily,
+    fontWeight: darkTheme.typography.body.fontWeight as '400',
+    letterSpacing: darkTheme.typography.body.letterSpacing,
     color: darkTheme.colors.text,
     paddingHorizontal: 20,
     paddingVertical: 18,
