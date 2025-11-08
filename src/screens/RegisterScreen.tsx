@@ -10,6 +10,7 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { darkTheme } from '../utils/theme';
 import { AuthService } from '../services/authService';
@@ -108,6 +109,11 @@ export default function RegisterScreen({ navigation }: any) {
           >
             {/* Header - Minimal */}
             <View style={styles.header}>
+              <Image
+                source={require('../../assets/icon.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
               <Text style={styles.logoText}>{t('app.name')}</Text>
               <Text style={styles.tagline}>{t('auth.register_tagline')}</Text>
             </View>
@@ -259,6 +265,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
     paddingTop: 10,
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
+    marginBottom: 16,
   },
   logoText: {
     ...darkTheme.typography.title,

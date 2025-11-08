@@ -10,6 +10,7 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { TextInput, Button, Card } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -71,6 +72,11 @@ export default function LoginScreen({ navigation }: any) {
           >
             {/* Header - Minimal */}
             <View style={styles.header}>
+              <Image
+                source={require('../../assets/icon.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
               <Text style={styles.logoText}>{t('app.name')}</Text>
               <Text style={styles.tagline}>{t('app.tagline')}</Text>
             </View>
@@ -154,6 +160,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
     paddingTop: 10,
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
+    marginBottom: 16,
   },
   logoText: {
     ...darkTheme.typography.title,
