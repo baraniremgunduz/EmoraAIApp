@@ -181,7 +181,10 @@ const styles = StyleSheet.create({
     color: darkTheme.colors.textSecondary,
   } as const,
   errorText: {
-    ...darkTheme.typography.caption,
+    fontSize: darkTheme.typography.caption.fontSize,
+    fontFamily: darkTheme.typography.caption.fontFamily,
+    fontWeight: darkTheme.typography.caption.fontWeight as '400',
+    letterSpacing: darkTheme.typography.caption.letterSpacing,
     color: darkTheme.colors.error,
     marginTop: 4,
     marginLeft: 16,
