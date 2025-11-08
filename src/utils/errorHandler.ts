@@ -1,9 +1,19 @@
 // Hata mesajı yönetimi ve kullanıcı dostu hata gösterimi
 import { Alert } from 'react-native';
 import { AppError } from '../types';
+import { captureException } from './sentry';
 
 export const getErrorMessage = (error: unknown, t: (key: string) => string): string => {
   const appError = error as AppError;
+  
+  // Production'da Sentry'ye gönder (merkezi log aggregation)
+  if (!__DEV__ && error instanceof Error) {
+    captureException(error, {
+      errorType: 'user_facing_error',
+      errorCode: appError?.code,
+      errorStatus: appError?.status,
+    });
+  }
   // Network hataları
   if (
     appError?.message?.includes('network') ||

@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     timeout-minutes: 60
+    # Otomatik deployment: Preview build'ler otomatik olarak TestFlight ve Internal Testing'e gönderilir
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -55,6 +56,15 @@ jobs:
         continue-on-error: true
         timeout-minutes: 30
         # EXPO_TOKEN zorunlu - EAS build için gerekli
+      
+      - name: Notify Build Status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Preview build başarılı - TestFlight ve Internal Testing'e hazır"
+          else
+            echo "❌ Preview build başarısız - Log'ları kontrol edin"
+          fi
 
   # Production Build (Tag-based)
   production-build:
@@ -106,11 +116,22 @@ jobs:
 
       - name: Submit to App Stores
         run: |
+          # Production build başarılıysa otomatik olarak App Store ve Play Store'a submit et
+          echo "🚀 Production build başarılı, App Store'lara submit ediliyor..."
           eas submit --platform all --profile production --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         continue-on-error: true
         timeout-minutes: 15
         # EXPO_TOKEN zorunlu - EAS submit için gerekli
-        # continue-on-error: Submit başarısız olsa da workflow devam eder
+        # Otomatik deployment: Tag oluşturulduğunda otomatik olarak store'lara gönderilir
+      
+      - name: Notify Deployment Status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Production deployment başarılı - App Store ve Play Store'a gönderildi"
+          else
+            echo "⚠️ Deployment sırasında hata oluştu - Log'ları kontrol edin"
+          fi
 

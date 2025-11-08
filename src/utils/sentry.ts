@@ -26,6 +26,9 @@ export const initSentry = () => {
     debug: false,
     environment: process.env.NODE_ENV || 'production',
     tracesSampleRate: 0.1, // %10 sample rate (performans için)
+    // Log aggregation için tüm log seviyelerini yakala
+    attachStacktrace: true,
+    maxBreadcrumbs: 50,
     beforeSend(event, hint) {
       // Hassas bilgileri temizle
       if (event.request) {
@@ -33,6 +36,11 @@ export const initSentry = () => {
         delete event.request.headers?.Authorization;
       }
       return event;
+    },
+    // Merkezi log aggregation için breadcrumbs
+    beforeBreadcrumb(breadcrumb) {
+      // Tüm log'ları Sentry'ye gönder
+      return breadcrumb;
     },
   });
 };
