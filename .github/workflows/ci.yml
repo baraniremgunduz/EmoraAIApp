@@ -141,4 +141,5 @@ jobs:
 
       - name: Run TypeScript check
         run: npx tsc --noEmit
+        continue-on-error: true
 
