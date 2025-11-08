@@ -177,9 +177,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   label: {
-    ...darkTheme.typography.caption,
+    fontSize: 12,
     color: darkTheme.colors.textSecondary,
-  },
+  } as const,
   errorText: {
     ...darkTheme.typography.caption,
     color: darkTheme.colors.error,

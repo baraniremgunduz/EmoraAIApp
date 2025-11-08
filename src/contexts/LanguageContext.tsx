@@ -99,8 +99,6 @@ const translations = {
     'settings.ai_interaction': 'Yapay Zeka Etkileşimi',
     'settings.notifications': 'Bildirimler',
     'settings.advanced': 'Gelişmiş',
-    'settings.account': 'Hesap',
-    'settings.ai_interaction': 'AI Etkileşimi',
     'notifications.title': 'Bildirimler',
     'notifications.sound': 'Ses',
     'notifications.vibration': 'Titreşim',
@@ -114,10 +112,6 @@ const translations = {
     'personality.casual': 'Rahat',
     'personality.casual_desc': 'Günlük ve rahat konuşma tarzı',
     'personality.premium': 'Premium',
-    'messages.cancel': 'İptal',
-    'messages.change': 'Değiştir',
-    'messages.success': 'Başarılı',
-    'messages.error': 'Hata',
     'errors.password_short': 'Şifre en az 6 karakter olmalıdır',
     'errors.password_failed': 'Şifre değiştirme başarısız',
     'errors.password_changed': 'Şifre başarıyla değiştirildi',
@@ -149,24 +143,12 @@ const translations = {
     'ai.personality': 'AI Kişiliği',
     'ai.auto_save': 'Sohbetleri Otomatik Kaydet',
 
-    // Bildirimler
-    'notifications.title': 'Bildirimler',
-    'notifications.sound': 'Ses Efektleri',
-    'notifications.vibration': 'Titreşim',
+    // Bildirimler (duplicate removed - using above)
+    'notifications.sound_effects': 'Ses Efektleri',
 
     // Gelişmiş
     'advanced.language': 'Dil',
     'advanced.language_desc': 'Uygulama dilini seçin',
-    'advanced.clear_cache': 'Önbelleği Temizle',
-
-    // AI Kişilikleri
-    'personality.friendly': 'Samimi ve Arkadaşça',
-    'personality.friendly_desc': 'Sıcak, anlayışlı ve destekleyici bir yaklaşım',
-    'personality.professional': 'Profesyonel',
-    'personality.professional_desc': 'Ciddi, odaklanmış ve iş odaklı yaklaşım',
-    'personality.casual': 'Rahat ve Günlük',
-    'personality.casual_desc': 'Eğlenceli, rahat ve günlük konuşma tarzı',
-    'personality.premium': 'Premium',
 
     // Dil Seçimi
     'language_selection.title': 'Dilinizi Seçin',
@@ -248,18 +230,13 @@ const translations = {
     'confirm.clear_cache': 'Tüm önbellek verileri silinecek. Emin misiniz?',
 
     // Modal
-    'modal.personality_title': 'AI Kişiliği Seçin',
     'modal.close': 'Kapat',
 
-    // Login/Register
+    // Login/Register (duplicate removed - using above)
     'auth.welcome': 'Hoş Geldiniz',
-    'auth.login': 'Giriş Yap',
-    'auth.register': 'Kayıt Ol',
-    'auth.email': 'E-posta',
-    'auth.password': 'Şifre',
-    'auth.confirm_password': 'Şifre Tekrar',
-    'auth.name': 'Ad Soyad',
-    'auth.forgot_password': 'Şifreni hatırlamıyorsan, birlikte çözelim',
+    'auth.confirm_password_alt': 'Şifre Tekrar',
+    'auth.name_full': 'Ad Soyad',
+    'auth.forgot_password_alt': 'Şifreni hatırlamıyorsan, birlikte çözelim',
     'auth.login_button': 'Giriş Yap',
     'auth.register_button': 'Kayıt Ol',
     'auth.already_have_account': 'Zaten hesabın var mı?',
