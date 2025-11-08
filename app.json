@@ -1,0 +1,97 @@
+{
+  "expo": {
+    "name": "Emora AI",
+    "slug": "emora",
+    "scheme": "emoraai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
+    "cli": {
+      "appVersionSource": "local"
+    },
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F0F23"
+    },
+    "ios": {
+      "icon": "./assets/icon.png",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.emoraai.app.2025",
+      "buildNumber": "9",
+      "associatedDomains": ["applinks:emoraai.com"],
+      "infoPlist": {
+        "NSCameraUsageDescription": "Bu uygulama fotoğraf çekmek için kamera erişimi gerektirir.",
+        "NSPhotoLibraryUsageDescription": "Bu uygulama fotoğraf seçmek için galeri erişimi gerektir.",
+        "NSMicrophoneUsageDescription": "Bu uygulama ses kaydetmek için mikrofon erişimi gerektir.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F0F23"
+      },
+      "package": "com.emoraai.app",
+      "versionCode": 1,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "emoraai",
+              "host": "chat"
+            },
+            {
+              "scheme": "https",
+              "host": "emoraai.com",
+              "pathPrefix": "/chat"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.1",
+            "useFrameworks": "static",
+            "newArchEnabled": false,
+            "flipper": false
+          }
+        }
+      ],
+      "expo-localization",
+      "expo-updates"
+    ],
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "owner": "barangunduz2",
+    "extra": {
+      "eas": {
+        "projectId": "9fbb5ec4-de66-4d2b-a5c5-c7339cbaf766"
+      }
+    }
+  }
+}

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self';
+                   script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+                   style-src 'self' 'unsafe-inline';
+                   img-src 'self' data: https:;
+                   font-src 'self' data:;
+                   connect-src 'self' https://*.supabase.co https://api.openai.com;
+                   frame-ancestors 'none';
+                   base-uri 'self';
+                   form-action 'self';">
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <title>Emora AI - Yapay Zeka Destekli Sohbet Uygulaması</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0F0F23 0%, #1a1a2e 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        .feature {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .feature h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        .download {
+            text-align: center;
+            margin: 40px 0;
+        }
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            background-clip: padding-box;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 10px;
+            transition: transform 0.3s;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+        }
+        .contact {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🤖 Emora AI</div>
+            <div class="subtitle">Yapay Zeka Destekli Sohbet Uygulaması</div>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <h3>🧠 Akıllı Sohbet</h3>
+                <p>Gelişmiş yapay zeka ile doğal sohbet deneyimi. Bağlamsal anlayış ve akıllı yanıtlar.</p>
+            </div>
+            <div class="feature">
+                <h3>🌍 Çok Dilli Destek</h3>
+                <p>Türkçe, İngilizce ve daha fazla dil desteği. Otomatik dil algılama.</p>
+            </div>
+            <div class="feature">
+                <h3>💬 Sınırsız Sohbet</h3>
+                <p>Sınırsız sohbet geçmişi, favori sohbetleri kaydetme ve arama özellikleri.</p>
+            </div>
+            <div class="feature">
+                <h3>🎨 Modern Arayüz</h3>
+                <p>Karanlık tema desteği, cam efekti tasarım ve kullanıcı dostu arayüz.</p>
+            </div>
+            <div class="feature">
+                <h3>🔒 Gizlilik ve Güvenlik</h3>
+                <p>End-to-end şifreleme, veri güvenliği ve gizlilik odaklı tasarım.</p>
+            </div>
+            <div class="feature">
+                <h3>⭐ Premium Özellikler</h3>
+                <p>Sınırsız sohbet, gelişmiş AI modelleri ve reklamsız deneyim.</p>
+            </div>
+        </div>
+
+        <div class="download">
+            <h2>📱 Hemen İndirin!</h2>
+            <p>App Store'dan Emora AI'yi indirin ve yapay zekanın gücünü keşfedin.</p>
+            <a href="#" class="download-btn">App Store'dan İndir</a>
+        </div>
+
+        <div class="contact">
+            <h3>📞 Destek ve İletişim</h3>
+            <p>Herhangi bir sorunuz veya öneriniz için bizimle iletişime geçin:</p>
+            <p>📧 Email: support@emora-ai.com</p>
+            <p>🐛 Hata Bildirimi: GitHub Issues</p>
+        </div>
+    </div>
+</body>
+</html>

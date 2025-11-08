@@ -1,0 +1,180 @@
+# 🔐 Güvenlik Kurulum Rehberi - Adım Adım
+
+Bu rehber, güvenlik güncellemelerinden sonra uygulamanızı nasıl yapılandıracağınızı gösterir.
+
+## 📋 Özet
+
+Artık **hardcoded API anahtarları kaldırıldı**. Tüm hassas bilgiler environment variables ile yönetiliyor:
+- ✅ Development: `.env` dosyası kullanılır
+- ✅ Production: EAS Secrets kullanılır
+
+---
+
+## 🚀 ADIM 1: Development Ortamı İçin (.env Dosyası)
+
+### 1.1. .env Dosyası Oluştur
+
+Proje kök dizininde (EmoraAI klasöründe) `.env` dosyası oluşturun:
+
+```bash
+cd "/Users/iremdogadogruyol/Emora AI App/EmoraAI"
+cp .env.example .env
+```
+
+### 1.2. .env Dosyasını Düzenle
+
+`.env` dosyasını açın ve gerçek değerlerinizi ekleyin:
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://wxmexmdpobjzgiqjxuix.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4bWV4bWRwb2JqemdpcWp4dWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NTY5NzQsImV4cCI6MjA3NjMzMjk3NH0.FFTUufP4XE4Ofa5TPw5_YgYkQ2Pia0WjTe8-FQE4m0U
+```
+
+**ÖNEMLİ:** 
+- `.env` dosyası zaten `.gitignore`'da, Git'e commit edilmeyecek
+- Değerleri kendi Supabase projenizden alın
+
+### 1.3. Uygulamayı Test Et
+
+```bash
+# Metro bundler'ı yeniden başlatın (environment variables için gerekli)
+npx expo start --clear
+```
+
+Eğer hata alırsanız, `.env` dosyasının doğru yerde olduğundan ve değerlerin doğru olduğundan emin olun.
+
+---
+
+## 🏭 ADIM 2: Production Build İçin (EAS Secrets)
+
+### 2.1. EAS CLI'yi Kontrol Et
+
+```bash
+# EAS CLI kurulu mu kontrol edin
+eas --version
+
+# Eğer kurulu değilse:
+npm install -g eas-cli
+```
+
+### 2.2. EAS'e Giriş Yap
+
+```bash
+eas login
+```
+
+### 2.3. Secrets Oluştur
+
+Aşağıdaki komutları sırayla çalıştırın:
+
+```bash
+# Supabase URL
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "https://wxmexmdpobjzgiqjxuix.supabase.co" --type string
+
+# Supabase Anon Key
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4bWV4bWRwb2JqemdpcWp4dWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NTY5NzQsImV4cCI6MjA3NjMzMjk3NH0.FFTUufP4XE4Ofa5TPw5_YgYkQ2Pia0WjTe8-FQE4m0U" --type string
+
+# App Store Shared Secret (iOS için)
+eas secret:create --scope project --name APP_STORE_SHARED_SECRET --value "07c9c5b0fbae48b9b768e296c477f907" --type string
+```
+
+**Not:** Her komut çalıştığında size bir onay mesajı gösterecek.
+
+### 2.4. Secrets'ları Kontrol Et
+
+```bash
+eas secret:list
+```
+
+Bu komut, oluşturduğunuz tüm secrets'ları gösterecek.
+
+### 2.5. Production Build Al
+
+```bash
+# iOS için
+eas build --profile production --platform ios
+
+# Android için
+eas build --profile production --platform android
+```
+
+Build sırasında EAS otomatik olarak secrets'ları environment variables olarak ekleyecek.
+
+---
+
+## ✅ Kontrol Listesi
+
+### Development İçin:
+- [ ] `.env` dosyası oluşturuldu
+- [ ] `.env` dosyasında `EXPO_PUBLIC_SUPABASE_URL` var
+- [ ] `.env` dosyasında `EXPO_PUBLIC_SUPABASE_ANON_KEY` var
+- [ ] Uygulama başarıyla çalışıyor
+
+### Production İçin:
+- [ ] EAS CLI kurulu ve giriş yapıldı
+- [ ] `EXPO_PUBLIC_SUPABASE_URL` secret'ı oluşturuldu
+- [ ] `EXPO_PUBLIC_SUPABASE_ANON_KEY` secret'ı oluşturuldu
+- [ ] `APP_STORE_SHARED_SECRET` secret'ı oluşturuldu (iOS için)
+- [ ] `eas secret:list` ile secrets kontrol edildi
+- [ ] Production build başarıyla alındı
+
+---
+
+## 🐛 Sorun Giderme
+
+### "Supabase yapılandırma bilgileri eksik" Hatası
+
+**Development için:**
+1. `.env` dosyasının `EmoraAI/` klasöründe olduğundan emin olun
+2. `.env` dosyasında değerlerin doğru olduğundan emin olun (tırnak işareti olmadan)
+3. Metro bundler'ı yeniden başlatın: `npx expo start --clear`
+
+**Production için:**
+1. `eas secret:list` ile secrets'ların oluşturulduğunu kontrol edin
+2. Secret isimlerinin tam olarak doğru olduğundan emin olun (büyük/küçük harf duyarlı)
+3. Build'i yeniden deneyin
+
+### Secret Güncelleme
+
+Bir secret'ı güncellemek için:
+```bash
+eas secret:update --name EXPO_PUBLIC_SUPABASE_URL --value "yeni_değer"
+```
+
+### Secret Silme
+
+Bir secret'ı silmek için:
+```bash
+eas secret:delete --name EXPO_PUBLIC_SUPABASE_URL
+```
+
+---
+
+## 📚 Daha Fazla Bilgi
+
+- Detaylı güvenlik bilgileri: `APP_STORE_SECURITY.md`
+- Genel kurulum: `SETUP_GUIDE.md`
+- EAS dokümantasyonu: https://docs.expo.dev/build-reference/variables/
+
+---
+
+## 🎯 Hızlı Başlangıç (Özet)
+
+**Development:**
+```bash
+cp .env.example .env
+# .env dosyasını düzenle
+npx expo start --clear
+```
+
+**Production:**
+```bash
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "..." --type string
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "..." --type string
+eas build --profile production --platform ios
+```
+
+---
+
+**Artık uygulamanız güvenli! 🔒**
+
