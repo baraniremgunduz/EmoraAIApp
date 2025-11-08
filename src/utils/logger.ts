@@ -9,28 +9,27 @@ export const logger = {
       console.log(...args);
     }
   },
-  
+
   error: (...args: any[]) => {
     // Error'lar her zaman loglanır (production'da da)
     console.error(...args);
   },
-  
+
   warn: (...args: any[]) => {
     if (isDevelopment) {
       console.warn(...args);
     }
   },
-  
+
   debug: (...args: any[]) => {
     if (isDevelopment) {
       console.debug(...args);
     }
   },
-  
+
   info: (...args: any[]) => {
     if (isDevelopment) {
       console.info(...args);
     }
-  }
+  },
 };
-

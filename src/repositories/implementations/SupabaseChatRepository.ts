@@ -39,9 +39,9 @@ export class SupabaseChatRepository implements IChatRepository {
 
   async getFallbackResponse(userMessage: string): Promise<string> {
     try {
-      const userLanguage = await AsyncStorage.getItem('appLanguage') || 'tr';
-      const aiPersonality = await AsyncStorage.getItem('aiPersonality') || 'friendly';
-      
+      const userLanguage = (await AsyncStorage.getItem('appLanguage')) || 'tr';
+      const aiPersonality = (await AsyncStorage.getItem('aiPersonality')) || 'friendly';
+
       return getRandomFallbackResponse(aiPersonality, userLanguage);
     } catch (error) {
       logger.error('Fallback response alma hatası:', error);
@@ -49,4 +49,3 @@ export class SupabaseChatRepository implements IChatRepository {
     }
   }
 }
-

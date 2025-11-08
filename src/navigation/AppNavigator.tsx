@@ -7,13 +7,13 @@ import { ActivityIndicator, View } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
   withTiming,
   interpolateColor,
-  interpolate
+  interpolate,
 } from 'react-native-reanimated';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -80,24 +80,24 @@ function AnimatedTabIcon({ focused, route }: { focused: boolean; route: any }) {
       stiffness: 200,
       mass: 0.8,
     });
-    
+
     // Background color transition
-    backgroundColor.value = withTiming(focused ? 1 : 0, { 
+    backgroundColor.value = withTiming(focused ? 1 : 0, {
       duration: 300,
     });
-    
+
     // Shadow animation
-    shadowOpacity.value = withTiming(focused ? 0.4 : 0.15, { 
+    shadowOpacity.value = withTiming(focused ? 0.4 : 0.15, {
       duration: 250,
     });
-    
+
     // Border animation
-    borderOpacity.value = withTiming(focused ? 0 : 1, { 
+    borderOpacity.value = withTiming(focused ? 0 : 1, {
       duration: 200,
     });
-    
+
     // Glass effect animation
-    glassOpacity.value = withTiming(focused ? 0 : 0.1, { 
+    glassOpacity.value = withTiming(focused ? 0 : 0.1, {
       duration: 200,
     });
 
@@ -135,17 +135,10 @@ function AnimatedTabIcon({ focused, route }: { focused: boolean; route: any }) {
       ['transparent', darkTheme.colors.primary]
     );
 
-    const shadowHeight = interpolate(
-      backgroundColor.value,
-      [0, 1],
-      [0, 6]
-    );
+    const shadowHeight = interpolate(backgroundColor.value, [0, 1], [0, 6]);
 
     return {
-      transform: [
-        { scale: scale.value * pulseScale.value },
-        { rotate: `${rotation.value}deg` }
-      ],
+      transform: [{ scale: scale.value * pulseScale.value }, { rotate: `${rotation.value}deg` }],
       backgroundColor: focused ? bgColor : 'transparent',
       shadowOffset: {
         width: 0,
@@ -167,23 +160,28 @@ function AnimatedTabIcon({ focused, route }: { focused: boolean; route: any }) {
   }
 
   return (
-    <Animated.View style={[{
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 2,
-      shadowColor: focused ? darkTheme.colors.primary : 'transparent',
-      shadowRadius: focused ? 10 : 0,
-      elevation: focused ? 6 : 0,
-      zIndex: 1,
-      position: 'relative',
-    }, animatedStyle]}>
-      <Ionicons 
-        name={iconName} 
-        size={focused ? 20 : 18} 
-        color={focused ? 'white' : darkTheme.colors.primary} 
+    <Animated.View
+      style={[
+        {
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: 2,
+          shadowColor: focused ? darkTheme.colors.primary : 'transparent',
+          shadowRadius: focused ? 10 : 0,
+          elevation: focused ? 6 : 0,
+          zIndex: 1,
+          position: 'relative',
+        },
+        animatedStyle,
+      ]}
+    >
+      <Ionicons
+        name={iconName}
+        size={focused ? 20 : 18}
+        color={focused ? 'white' : darkTheme.colors.primary}
       />
     </Animated.View>
   );
@@ -203,7 +201,7 @@ function MainTabNavigator() {
       stiffness: 150,
       mass: 0.8,
     });
-    tabBarOpacity.value = withTiming(1, { 
+    tabBarOpacity.value = withTiming(1, {
       duration: 400,
     });
     tabBarTranslateY.value = withSpring(0, {
@@ -213,149 +211,150 @@ function MainTabNavigator() {
   }, []);
 
   const tabBarAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: tabBarScale.value },
-      { translateY: tabBarTranslateY.value }
-    ],
+    transform: [{ scale: tabBarScale.value }, { translateY: tabBarTranslateY.value }],
     opacity: tabBarOpacity.value,
   }));
 
   return (
     <View style={{ flex: 1 }}>
       {/* Glass effect overlay for tab bar */}
-      <View style={{
-        position: 'absolute',
-        bottom: 30,
-        left: 40,
-        right: 40,
-        height: 70,
-        borderRadius: 30,
-        backgroundColor: 'rgba(21, 21, 27, 0.9)', // Daha opak overlay
-        zIndex: 0,
-      }} />
-      <Animated.View style={[{ flex: 1 }, tabBarAnimatedStyle]}>
-        <MainTab.Navigator
-          screenOptions={({ route }) => ({
-            headerShown: false,
-          tabBarStyle: {
-          backgroundColor: 'rgba(21, 21, 27, 0.95)', // Daha opak background
-          borderTopWidth: 0,
-          elevation: 12,
-          shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: -4,
-          },
-          shadowOpacity: 0.3,
-          shadowRadius: 12,
-          height: 70,
-          paddingBottom: 8,
-          paddingTop: 8,
-          paddingHorizontal: 20,
+      <View
+        style={{
           position: 'absolute',
           bottom: 30,
           left: 40,
           right: 40,
+          height: 70,
           borderRadius: 30,
-          justifyContent: 'space-evenly',
-          alignItems: 'center',
-          // Glass effect için backdrop blur simülasyonu
-          overflow: 'visible',
-          zIndex: 10,
-        },
-        tabBarActiveTintColor: 'white',
-        tabBarInactiveTintColor: darkTheme.colors.textSecondary,
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginTop: 6,
-          marginBottom: 2,
-          letterSpacing: 0.5,
-          textAlign: 'center',
-        },
-        tabBarLabel: ({ focused, children }) => {
-          const scale = useSharedValue(focused ? 1.05 : 1);
-          const opacity = useSharedValue(focused ? 1 : 0.7);
-          const translateY = useSharedValue(focused ? -2 : 0);
-          const colorProgress = useSharedValue(focused ? 1 : 0);
-
-          React.useEffect(() => {
-            // Scale animation with bounce
-            scale.value = withSpring(focused ? 1.05 : 1, {
-              damping: 12,
-              stiffness: 200,
-              mass: 0.8,
-            });
-            
-            // Opacity transition
-            opacity.value = withTiming(focused ? 1 : 0.7, { 
-              duration: 300,
-            });
-            
-            // Vertical movement
-            translateY.value = withSpring(focused ? -2 : 0, {
-              damping: 15,
-              stiffness: 150,
-            });
-            
-            // Color transition
-            colorProgress.value = withTiming(focused ? 1 : 0, { 
-              duration: 250,
-            });
-          }, [focused]);
-
-          const animatedStyle = useAnimatedStyle(() => {
-            const textColor = interpolateColor(
-              colorProgress.value,
-              [0, 1],
-              [darkTheme.colors.textSecondary, 'white']
-            );
-
-            return {
-              transform: [
-                { scale: scale.value },
-                { translateY: translateY.value }
-              ],
-              opacity: opacity.value,
-              color: textColor,
-            };
-          });
-
-          return (
-            <Animated.Text style={[{
+          backgroundColor: 'rgba(21, 21, 27, 0.9)', // Daha opak overlay
+          zIndex: 0,
+        }}
+      />
+      <Animated.View style={[{ flex: 1 }, tabBarAnimatedStyle]}>
+        <MainTab.Navigator
+          screenOptions={({ route }) => ({
+            headerShown: false,
+            tabBarStyle: {
+              backgroundColor: 'rgba(21, 21, 27, 0.95)', // Daha opak background
+              borderTopWidth: 0,
+              elevation: 12,
+              shadowColor: '#000',
+              shadowOffset: {
+                width: 0,
+                height: -4,
+              },
+              shadowOpacity: 0.3,
+              shadowRadius: 12,
+              height: 70,
+              paddingBottom: 8,
+              paddingTop: 8,
+              paddingHorizontal: 20,
+              position: 'absolute',
+              bottom: 30,
+              left: 40,
+              right: 40,
+              borderRadius: 30,
+              justifyContent: 'space-evenly',
+              alignItems: 'center',
+              // Glass effect için backdrop blur simülasyonu
+              overflow: 'visible',
+              zIndex: 10,
+            },
+            tabBarActiveTintColor: 'white',
+            tabBarInactiveTintColor: darkTheme.colors.textSecondary,
+            tabBarLabelStyle: {
               fontSize: 11,
               fontWeight: '600',
               marginTop: 6,
               marginBottom: 2,
               letterSpacing: 0.5,
               textAlign: 'center',
-              zIndex: 2,
-              position: 'relative',
-            }, animatedStyle]}>
-              {children}
-            </Animated.Text>
-          );
-        },
-        tabBarIcon: ({ focused, color, size }) => (
-          <AnimatedTabIcon focused={focused} route={route} />
-        ),
-      })}
-    >
-      <MainTab.Screen 
-        name="Chat" 
-        component={ChatScreen}
-        options={{ tabBarLabel: t('navigation.chat') }}
-      />
-      <MainTab.Screen 
-        name="Profile" 
-        component={ProfileScreen}
-        options={{ tabBarLabel: t('navigation.profile') }}
-      />
-      <MainTab.Screen 
-        name="Settings" 
-        component={SettingsScreen}
-        options={{ tabBarLabel: t('navigation.settings') }}
-      />
+            },
+            tabBarLabel: ({ focused, children }) => {
+              const scale = useSharedValue(focused ? 1.05 : 1);
+              const opacity = useSharedValue(focused ? 1 : 0.7);
+              const translateY = useSharedValue(focused ? -2 : 0);
+              const colorProgress = useSharedValue(focused ? 1 : 0);
+
+              React.useEffect(() => {
+                // Scale animation with bounce
+                scale.value = withSpring(focused ? 1.05 : 1, {
+                  damping: 12,
+                  stiffness: 200,
+                  mass: 0.8,
+                });
+
+                // Opacity transition
+                opacity.value = withTiming(focused ? 1 : 0.7, {
+                  duration: 300,
+                });
+
+                // Vertical movement
+                translateY.value = withSpring(focused ? -2 : 0, {
+                  damping: 15,
+                  stiffness: 150,
+                });
+
+                // Color transition
+                colorProgress.value = withTiming(focused ? 1 : 0, {
+                  duration: 250,
+                });
+              }, [focused]);
+
+              const animatedStyle = useAnimatedStyle(() => {
+                const textColor = interpolateColor(
+                  colorProgress.value,
+                  [0, 1],
+                  [darkTheme.colors.textSecondary, 'white']
+                );
+
+                return {
+                  transform: [{ scale: scale.value }, { translateY: translateY.value }],
+                  opacity: opacity.value,
+                  color: textColor,
+                };
+              });
+
+              return (
+                <Animated.Text
+                  style={[
+                    {
+                      fontSize: 11,
+                      fontWeight: '600',
+                      marginTop: 6,
+                      marginBottom: 2,
+                      letterSpacing: 0.5,
+                      textAlign: 'center',
+                      zIndex: 2,
+                      position: 'relative',
+                    },
+                    animatedStyle,
+                  ]}
+                >
+                  {children}
+                </Animated.Text>
+              );
+            },
+            tabBarIcon: ({ focused, color, size }) => (
+              <AnimatedTabIcon focused={focused} route={route} />
+            ),
+          })}
+        >
+          <MainTab.Screen
+            name="Chat"
+            component={ChatScreen}
+            options={{ tabBarLabel: t('navigation.chat') }}
+          />
+          <MainTab.Screen
+            name="Profile"
+            component={ProfileScreen}
+            options={{ tabBarLabel: t('navigation.profile') }}
+          />
+          <MainTab.Screen
+            name="Settings"
+            component={SettingsScreen}
+            options={{ tabBarLabel: t('navigation.settings') }}
+          />
         </MainTab.Navigator>
       </Animated.View>
     </View>
@@ -379,7 +378,7 @@ export default function AppNavigator() {
       // Önce dil seçimi kontrolü yap
       const savedLanguage = await AsyncStorage.getItem('appLanguage');
       logger.log('Kaydedilmiş dil kontrolü:', savedLanguage);
-      
+
       if (!savedLanguage) {
         // Dil seçimi yapılmamış, dil seçimi ekranını göster
         logger.log('Dil seçimi ekranı gösteriliyor');
@@ -387,12 +386,12 @@ export default function AppNavigator() {
         setIsLoading(false);
         return;
       }
-      
+
       // Dil seçimi yapılmış, auth durumunu kontrol et
       logger.log('Dil seçimi yapılmış, auth kontrolü yapılıyor');
       const user = await AuthService.getCurrentUser();
       setIsAuthenticated(!!user);
-      
+
       // İlk kez açılıyorsa onboarding göster
       setShowOnboarding(!user); // Kullanıcı yoksa onboarding göster
     } catch (error) {
@@ -409,7 +408,7 @@ export default function AppNavigator() {
     try {
       const user = await AuthService.getCurrentUser();
       setIsAuthenticated(!!user);
-      
+
       // İlk kez açılıyorsa onboarding göster
       setShowOnboarding(!user); // Kullanıcı yoksa onboarding göster
     } catch (error) {
@@ -426,12 +425,12 @@ export default function AppNavigator() {
     // Minimum loading süresi (splash screen için)
     const minLoadingTime = 1500; // 1.5 saniye minimum
     const startTime = Date.now();
-    
+
     // Auth durumunu kontrol et
     checkLanguageAndAuthState().finally(() => {
       const elapsedTime = Date.now() - startTime;
       const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
-      
+
       // Kalan süreyi bekle veya hemen kapat
       setTimeout(() => {
         setShowLoading(false);
@@ -441,7 +440,9 @@ export default function AppNavigator() {
 
   // Auth state değişikliklerini dinle
   useEffect(() => {
-    const { data: { subscription } } = AuthService.onAuthStateChange((user) => {
+    const {
+      data: { subscription },
+    } = AuthService.onAuthStateChange(user => {
       setIsAuthenticated(!!user);
     });
 
@@ -456,12 +457,14 @@ export default function AppNavigator() {
   // Auth durumu kontrol edilirken loading
   if (isLoading) {
     return (
-      <View style={{ 
-        flex: 1, 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        backgroundColor: darkTheme.colors.background 
-      }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: darkTheme.colors.background,
+        }}
+      >
         <ActivityIndicator size="large" color={darkTheme.colors.primary} />
       </View>
     );
@@ -477,40 +480,37 @@ export default function AppNavigator() {
           }}
         >
           {showLanguageSelection ? (
-            <RootStack.Screen 
-              name="LanguageSelection" 
+            <RootStack.Screen
+              name="LanguageSelection"
               component={(props: any) => (
-                <LanguageSelectionScreen 
-                  {...props} 
+                <LanguageSelectionScreen
+                  {...props}
                   onLanguageSelected={() => {
                     setShowLanguageSelection(false);
                     checkAuthState();
-                  }} 
+                  }}
                 />
-              )} 
+              )}
             />
           ) : showOnboarding && !onboardingCompleted ? (
-            <RootStack.Screen 
-              name="Onboarding" 
+            <RootStack.Screen
+              name="Onboarding"
               component={(props: any) => (
-                <OnboardingScreen 
-                  {...props} 
-                  onComplete={() => setOnboardingCompleted(true)} 
-                />
-              )} 
+                <OnboardingScreen {...props} onComplete={() => setOnboardingCompleted(true)} />
+              )}
             />
-                 ) : isAuthenticated ? (
-                   <>
-                     <RootStack.Screen name="Main" component={MainTabNavigator} />
-                     <RootStack.Screen name="AccountSettings" component={AccountSettingsScreen} />
-                     <RootStack.Screen name="ChatHistory" component={ChatHistoryScreen} />
-                     <RootStack.Screen name="HelpSupport" component={HelpSupportScreen} />
-                     <RootStack.Screen name="EditProfile" component={EditProfileScreen} />
-                     <RootStack.Screen name="PremiumFeatures" component={PremiumFeaturesScreen} />
-                     <RootStack.Screen name="PaymentScreen" component={PaymentScreen} />
-                     <RootStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
-                   </>
-                 ) : (
+          ) : isAuthenticated ? (
+            <>
+              <RootStack.Screen name="Main" component={MainTabNavigator} />
+              <RootStack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+              <RootStack.Screen name="ChatHistory" component={ChatHistoryScreen} />
+              <RootStack.Screen name="HelpSupport" component={HelpSupportScreen} />
+              <RootStack.Screen name="EditProfile" component={EditProfileScreen} />
+              <RootStack.Screen name="PremiumFeatures" component={PremiumFeaturesScreen} />
+              <RootStack.Screen name="PaymentScreen" component={PaymentScreen} />
+              <RootStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+            </>
+          ) : (
             <RootStack.Screen name="Auth" component={AuthNavigator} />
           )}
         </RootStack.Navigator>

@@ -58,7 +58,10 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
       price: currency === 'TRY' ? '₺699.99' : '$49.99',
       originalPrice: currency === 'TRY' ? '₺1,559.88' : '$59.88',
       period: t('payment.yearly_period'),
-      savings: currency === 'TRY' ? '₺860 ' + t('payment.savings') + ' (55%)' : '$10 ' + t('payment.savings') + ' (17%)',
+      savings:
+        currency === 'TRY'
+          ? '₺860 ' + t('payment.savings') + ' (55%)'
+          : '$10 ' + t('payment.savings') + ' (17%)',
       popular: true,
       features: [
         t('payment.feature_unlimited'),
@@ -113,10 +116,13 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
     if (isLoading) return;
 
     const selectedPlanData = plans.find(plan => plan.id === selectedPlan);
-    
+
     Alert.alert(
       t('payment.confirm_title'),
-      t('payment.confirm_message', { plan: selectedPlanData?.name, price: selectedPlanData?.price }),
+      t('payment.confirm_message', {
+        plan: selectedPlanData?.name,
+        price: selectedPlanData?.price,
+      }),
       [
         {
           text: t('messages.cancel'),
@@ -126,21 +132,18 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
           text: t('payment.confirm_purchase'),
           onPress: async () => {
             setIsLoading(true);
-            
+
             try {
               // Gerçek satın alma işlemi
               const success = await PurchaseService.purchasePlan(selectedPlan);
-              
+
               if (success) {
                 // Satın alma başarılı, kullanıcıyı ana sayfaya yönlendir
                 navigation.navigate('Chat');
               }
             } catch (error) {
               console.error('Purchase error:', error);
-              Alert.alert(
-                t('messages.error'),
-                t('alert.purchase_error')
-              );
+              Alert.alert(t('messages.error'), t('alert.purchase_error'));
             } finally {
               setIsLoading(false);
             }
@@ -156,7 +159,7 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
 
   const renderPlanCard = (plan: Plan) => {
     const isSelected = selectedPlan === plan.id;
-    
+
     return (
       <TouchableOpacity
         key={plan.id}
@@ -172,22 +175,18 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
             <Text style={styles.popularBadgeText}>{t('payment.most_popular')}</Text>
           </View>
         )}
-        
+
         <View style={styles.planHeader}>
           <Text style={styles.planName}>{plan.name}</Text>
           <View style={styles.priceContainer}>
             <Text style={styles.planPrice}>{plan.price}</Text>
-            {plan.originalPrice && (
-              <Text style={styles.originalPrice}>{plan.originalPrice}</Text>
-            )}
+            {plan.originalPrice && <Text style={styles.originalPrice}>{plan.originalPrice}</Text>}
           </View>
           <Text style={styles.planPeriod}>{plan.period}</Text>
           {plan.id === 'yearly' && (
             <Text style={styles.monthlyEquivalent}>{t('payment.yearly_monthly')}</Text>
           )}
-          {plan.savings && (
-            <Text style={styles.savingsText}>{plan.savings}</Text>
-          )}
+          {plan.savings && <Text style={styles.savingsText}>{plan.savings}</Text>}
         </View>
 
         <View style={styles.featuresContainer}>
@@ -234,9 +233,7 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
         {/* Plans */}
         <View style={styles.plansSection}>
           <Text style={styles.sectionTitle}>{t('payment.choose_plan')}</Text>
-          <View style={styles.plansContainer}>
-            {plans.map(renderPlanCard)}
-          </View>
+          <View style={styles.plansContainer}>{plans.map(renderPlanCard)}</View>
         </View>
 
         {/* Payment Methods */}
@@ -285,8 +282,8 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
 
         {/* Purchase Button */}
         <View style={styles.purchaseSection}>
-          <TouchableOpacity 
-            style={[styles.purchaseButton, isLoading && styles.purchaseButtonDisabled]} 
+          <TouchableOpacity
+            style={[styles.purchaseButton, isLoading && styles.purchaseButtonDisabled]}
             onPress={handlePurchase}
             disabled={isLoading}
           >

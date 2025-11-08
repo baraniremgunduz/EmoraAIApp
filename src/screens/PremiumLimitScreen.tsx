@@ -1,13 +1,6 @@
 // Premium Limit Ekranı - Free kullanıcılar için
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-  Modal,
-} from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Modal } from 'react-native';
 import { Button, Card } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,12 +24,7 @@ export default function PremiumLimitScreen({
 }: PremiumLimitScreenProps) {
   const { t } = useLanguage();
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.container}>
           <LinearGradient
@@ -51,19 +39,17 @@ export default function PremiumLimitScreen({
                     <Ionicons name="star" size={40} color={darkTheme.colors.premium} />
                   </View>
                   <Text style={styles.title}>{t('premium.upgrade')}</Text>
-                  <Text style={styles.subtitle}>
-                    Bugünlük konuşma hakkını doldurdun
-                  </Text>
+                  <Text style={styles.subtitle}>Bugünlük konuşma hakkını doldurdun</Text>
                 </View>
 
                 {/* Progress */}
                 <View style={styles.progressContainer}>
                   <View style={styles.progressBar}>
-                    <View 
+                    <View
                       style={[
-                        styles.progressFill, 
-                        { width: `${(messagesUsed / messagesLimit) * 100}%` }
-                      ]} 
+                        styles.progressFill,
+                        { width: `${(messagesUsed / messagesLimit) * 100}%` },
+                      ]}
                     />
                   </View>
                   <Text style={styles.progressText}>
@@ -74,22 +60,22 @@ export default function PremiumLimitScreen({
                 {/* Benefits */}
                 <View style={styles.benefitsContainer}>
                   <Text style={styles.benefitsTitle}>Premium ile neler kazanırsın:</Text>
-                  
+
                   <View style={styles.benefitItem}>
                     <Ionicons name="infinite" size={20} color={darkTheme.colors.primary} />
                     <Text style={styles.benefitText}>{t('premium.unlimited')}</Text>
                   </View>
-                  
+
                   <View style={styles.benefitItem}>
                     <Ionicons name="flash" size={20} color={darkTheme.colors.primary} />
                     <Text style={styles.benefitText}>Hızlı yanıt süresi</Text>
                   </View>
-                  
+
                   <View style={styles.benefitItem}>
                     <Ionicons name="heart" size={20} color={darkTheme.colors.primary} />
                     <Text style={styles.benefitText}>Özel AI kişilikleri</Text>
                   </View>
-                  
+
                   <View style={styles.benefitItem}>
                     <Ionicons name="download" size={20} color={darkTheme.colors.primary} />
                     <Text style={styles.benefitText}>Sohbet geçmişi dışa aktarma</Text>
@@ -111,11 +97,16 @@ export default function PremiumLimitScreen({
                       end={{ x: 1, y: 0 }}
                       style={styles.upgradeButtonGradient}
                     >
-                      <Ionicons name="star" size={20} color="white" style={styles.upgradeButtonIcon} />
+                      <Ionicons
+                        name="star"
+                        size={20}
+                        color="white"
+                        style={styles.upgradeButtonIcon}
+                      />
                       <Text style={styles.upgradeButtonLabel}>{t('premium.upgrade')}</Text>
                     </LinearGradient>
                   </TouchableOpacity>
-                  
+
                   <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                     <Text style={styles.closeButtonText}>Daha sonra</Text>
                   </TouchableOpacity>

@@ -59,21 +59,21 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  
+
   // Pagination state
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const PAGE_SIZE = 50; // Her sayfada 50 mesaj
-  
+
   // Responsive design için ekran boyutları
   const { width, height } = Dimensions.get('window');
   const isSmallScreen = height < 700;
   const isLargeScreen = height > 800;
-  
+
   // Navigation bar yüksekliği (70px height + 30px bottom = 100px)
   const NAV_BAR_HEIGHT = 100;
-  
+
   // FlatList performance constants
   const ESTIMATED_ITEM_HEIGHT = 80; // Yaklaşık mesaj yüksekliği
 
@@ -110,7 +110,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
 
   // Uygulama kapanınca veya background'a geçince chat geçmişini kaydet
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', async (nextAppState) => {
+    const subscription = AppState.addEventListener('change', async nextAppState => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
         // Uygulama background'a geçiyor veya kapanıyor
         if (currentUser && messages.length > 0) {
@@ -158,16 +158,18 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
     try {
       // Yeni chat session oluştur
       if (userId) {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
-          const userLanguage = await AsyncStorage.getItem('appLanguage') || 'tr';
+          const userLanguage = (await AsyncStorage.getItem('appLanguage')) || 'tr';
           const sessionTitle = userLanguage === 'en' ? 'New Chat' : 'Yeni Sohbet';
-          
+
           const { data: newSession, error } = await supabase
             .from('chat_sessions')
             .insert({
               user_id: userId,
-              title: sessionTitle
+              title: sessionTitle,
             })
             .select('id')
             .single();
@@ -196,14 +198,14 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   // Session mesajlarını yükle (pagination ile)
   const loadSessionMessages = async (sessionId: string, pageNum: number = 0) => {
     if (!currentUser) return;
-    
+
     try {
       if (pageNum === 0) {
         setIsLoading(true);
       } else {
         setIsLoadingMore(true);
       }
-      
+
       const offset = pageNum * PAGE_SIZE;
       const sessionMessages = await ChatService.loadSessionMessagesPaginated(
         sessionId,
@@ -211,13 +213,13 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
         PAGE_SIZE,
         offset
       );
-      
+
       if (sessionMessages.length < PAGE_SIZE) {
         setHasMore(false);
       } else {
         setHasMore(true);
       }
-      
+
       if (sessionMessages && sessionMessages.length > 0) {
         if (pageNum === 0) {
           // İlk sayfa - mesajları set et
@@ -243,7 +245,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       setIsLoadingMore(false);
     }
   };
-  
+
   // Daha fazla mesaj yükle (infinite scroll)
   const loadMoreMessages = useCallback(() => {
     const sessionId = route?.params?.sessionId;
@@ -254,7 +256,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
 
   const sendMessage = async () => {
     if (!inputText.trim()) return;
-    
+
     // Network kontrolü - offline ise uyarı ver
     const online = await isOnline();
     if (!online) {
@@ -264,16 +266,16 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       );
       return;
     }
-    
+
     // Input sanitization ve validasyon
     const validation = validateAndSanitizeInput(inputText);
     if (!validation.valid) {
       Alert.alert(t('messages.error'), validation.error || 'Geçersiz mesaj');
       return;
     }
-    
+
     const sanitizedContent = validation.sanitized || inputText.trim();
-    
+
     // Rate limiting kontrolü
     const userId = currentUser?.id || 'anonymous';
     const rateLimitCheck = checkRateLimit(userId);
@@ -306,22 +308,18 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
     try {
       // AI'dan cevap al - mevcut mesajları context olarak gönder
       const aiResponse = await ChatService.sendMessage(sanitizedContent, userId, updatedMessages);
-      
+
       // AI cevabını ekle
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
       logger.error('Mesaj gönderme hatası:', error);
-      
+
       // Kullanıcı dostu hata mesajı göster ve retry seçeneği sun
-      showErrorAlert(
-        error,
-        t,
-        () => {
-          // Retry fonksiyonu - mesajı tekrar gönder
-          sendMessage();
-        }
-      );
-      
+      showErrorAlert(error, t, () => {
+        // Retry fonksiyonu - mesajı tekrar gönder
+        sendMessage();
+      });
+
       // Fallback mesaj
       const fallbackMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -337,115 +335,129 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   };
 
   // Memoized message component
-  const MessageItem = React.memo(({ item }: { item: Message }) => {
-    const isUser = item.role === 'user';
-    
-    // Memoized styles
-    const containerStyle = useMemo(() => [
-      styles.messageContainer,
-      isUser ? styles.userMessageContainer : styles.aiMessageContainer
-    ], [isUser]);
-    
-    const bubbleStyle = useMemo(() => [
-      styles.messageBubble,
-      isUser ? styles.userMessageBubble : styles.aiMessageBubble
-    ], [isUser]);
-    
-    // Memoized time string
-    const timeString = useMemo(() => 
-      new Date(item.timestamp).toLocaleTimeString('tr-TR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }), [item.timestamp]
-    );
-    
-    return (
-      <View style={containerStyle}>
-        <View style={bubbleStyle}>
-          <View style={styles.messageContent}>
-            {item.content.includes('```') || item.content.includes('`') ? (
-              <Markdown
-                style={{
-                  body: {
-                    color: isUser ? 'white' : darkTheme.colors.text,
-                    fontSize: 16,
-                    lineHeight: 22,
-                  },
-                  code_inline: {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    padding: 2,
-                    borderRadius: 4,
-                    fontFamily: 'monospace',
-                  },
-                  code_block: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                    padding: 12,
-                    borderRadius: 8,
-                    fontFamily: 'monospace',
-                    marginVertical: 8,
-                  },
-                  fence: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                    padding: 12,
-                    borderRadius: 8,
-                    fontFamily: 'monospace',
-                    marginVertical: 8,
-                  },
-                }}
+  const MessageItem = React.memo(
+    ({ item }: { item: Message }) => {
+      const isUser = item.role === 'user';
+
+      // Memoized styles
+      const containerStyle = useMemo(
+        () => [
+          styles.messageContainer,
+          isUser ? styles.userMessageContainer : styles.aiMessageContainer,
+        ],
+        [isUser]
+      );
+
+      const bubbleStyle = useMemo(
+        () => [styles.messageBubble, isUser ? styles.userMessageBubble : styles.aiMessageBubble],
+        [isUser]
+      );
+
+      // Memoized time string
+      const timeString = useMemo(
+        () =>
+          new Date(item.timestamp).toLocaleTimeString('tr-TR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        [item.timestamp]
+      );
+
+      return (
+        <View style={containerStyle}>
+          <View style={bubbleStyle}>
+            <View style={styles.messageContent}>
+              {item.content.includes('```') || item.content.includes('`') ? (
+                <Markdown
+                  style={{
+                    body: {
+                      color: isUser ? 'white' : darkTheme.colors.text,
+                      fontSize: 16,
+                      lineHeight: 22,
+                    },
+                    code_inline: {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      padding: 2,
+                      borderRadius: 4,
+                      fontFamily: 'monospace',
+                    },
+                    code_block: {
+                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                      padding: 12,
+                      borderRadius: 8,
+                      fontFamily: 'monospace',
+                      marginVertical: 8,
+                    },
+                    fence: {
+                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                      padding: 12,
+                      borderRadius: 8,
+                      fontFamily: 'monospace',
+                      marginVertical: 8,
+                    },
+                  }}
+                >
+                  {item.content}
+                </Markdown>
+              ) : (
+                <Text
+                  style={[
+                    styles.messageText,
+                    isUser ? styles.userMessageText : styles.aiMessageText,
+                  ]}
+                >
+                  {item.content}
+                </Text>
+              )}
+              <Text
+                style={[styles.messageTime, isUser ? styles.userMessageTime : styles.aiMessageTime]}
               >
-                {item.content}
-              </Markdown>
-            ) : (
-              <Text style={[
-                styles.messageText,
-                isUser ? styles.userMessageText : styles.aiMessageText
-              ]}>
-                {item.content}
+                {timeString}
               </Text>
-            )}
-            <Text style={[
-              styles.messageTime,
-              isUser ? styles.userMessageTime : styles.aiMessageTime
-            ]}>
-              {timeString}
-            </Text>
-          </View>
-          {isUser && (
-            <View style={styles.userAvatar}>
-              <Ionicons name="person-outline" size={16} color={darkTheme.colors.primary} />
             </View>
-          )}
+            {isUser && (
+              <View style={styles.userAvatar}>
+                <Ionicons name="person-outline" size={16} color={darkTheme.colors.primary} />
+              </View>
+            )}
+          </View>
         </View>
-      </View>
-    );
-  }, (prevProps, nextProps) => {
-    // Custom comparison - sadece content veya timestamp değiştiyse re-render
-    return prevProps.item.id === nextProps.item.id &&
-           prevProps.item.content === nextProps.item.content &&
-           prevProps.item.timestamp === nextProps.item.timestamp;
-  });
-  
+      );
+    },
+    (prevProps, nextProps) => {
+      // Custom comparison - sadece content veya timestamp değiştiyse re-render
+      return (
+        prevProps.item.id === nextProps.item.id &&
+        prevProps.item.content === nextProps.item.content &&
+        prevProps.item.timestamp === nextProps.item.timestamp
+      );
+    }
+  );
+
   // Memoized render function
   const renderMessage = useCallback(({ item }: { item: Message }) => {
     return <MessageItem item={item} />;
   }, []);
-  
+
   // Memoized key extractor
   const keyExtractor = useCallback((item: Message) => item.id, []);
-  
+
   // Memoized getItemLayout for FlatList performance
-  const getItemLayout = useCallback((data: any, index: number) => ({
-    length: ESTIMATED_ITEM_HEIGHT,
-    offset: ESTIMATED_ITEM_HEIGHT * index,
-    index,
-  }), []);
+  const getItemLayout = useCallback(
+    (data: any, index: number) => ({
+      length: ESTIMATED_ITEM_HEIGHT,
+      offset: ESTIMATED_ITEM_HEIGHT * index,
+      index,
+    }),
+    []
+  );
 
   // Export chat handler
   const handleExportChat = useCallback(async () => {
     try {
       // Welcome mesajını hariç tut
       const messagesToExport = messages.filter(msg => msg.id !== 'welcome');
-      
+
       if (messagesToExport.length === 0) {
         Alert.alert(t('messages.error'), 'Export edilecek mesaj yok');
         return;
@@ -472,7 +484,10 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
                 Alert.alert(t('messages.success') || 'Başarılı', 'Sohbet başarıyla paylaşıldı');
               } catch (error: any) {
                 logger.error('Export hatası:', error);
-                Alert.alert(t('messages.error') || 'Hata', error.message || 'Export başarısız oldu');
+                Alert.alert(
+                  t('messages.error') || 'Hata',
+                  error.message || 'Export başarısız oldu'
+                );
               }
             },
           },
@@ -488,7 +503,10 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
                 Alert.alert(t('messages.success') || 'Başarılı', 'Sohbet başarıyla paylaşıldı');
               } catch (error: any) {
                 logger.error('Export hatası:', error);
-                Alert.alert(t('messages.error') || 'Hata', error.message || 'Export başarısız oldu');
+                Alert.alert(
+                  t('messages.error') || 'Hata',
+                  error.message || 'Export başarısız oldu'
+                );
               }
             },
           },
@@ -502,7 +520,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
 
   const renderLoadingMessage = () => {
     if (!isLoading) return null;
-    
+
     return (
       <View style={[styles.messageContainer, styles.aiMessageContainer]}>
         <View style={[styles.messageBubble, styles.aiMessageBubble]}>
@@ -523,25 +541,24 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   return (
     <View style={styles.container}>
       {/* Header - Responsive */}
-      <View style={[
-        styles.header, 
-        { 
-          paddingBottom: isSmallScreen ? 16 : 20,
-          paddingTop: Math.max(insets.top, 10) + (isSmallScreen ? 8 : 12)
-        }
-      ]}>
+      <View
+        style={[
+          styles.header,
+          {
+            paddingBottom: isSmallScreen ? 16 : 20,
+            paddingTop: Math.max(insets.top, 10) + (isSmallScreen ? 8 : 12),
+          },
+        ]}
+      >
         <Text style={[styles.headerTitle, { fontSize: isSmallScreen ? 18 : 20 }]}>Emora AI</Text>
         <View style={styles.headerActions}>
           {/* Export Button */}
           {messages.length > 0 && messages.some(m => m.id !== 'welcome') && (
-            <TouchableOpacity 
-              style={styles.exportButton}
-              onPress={handleExportChat}
-            >
+            <TouchableOpacity style={styles.exportButton} onPress={handleExportChat}>
               <Ionicons name="download-outline" size={20} color={darkTheme.colors.primary} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.premiumIndicator}
             onPress={() => navigation.navigate('PremiumFeatures')}
           >
@@ -567,7 +584,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
             style={styles.messagesList}
             contentContainerStyle={[
               styles.messagesContent,
-              { paddingBottom: isSmallScreen ? 4 : 8 }
+              { paddingBottom: isSmallScreen ? 4 : 8 },
             ]}
             // ✅ Performance optimizations
             getItemLayout={getItemLayout}
@@ -605,53 +622,55 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
         </View>
 
         {/* Input - Responsive */}
-        <View style={[
-          styles.inputContainer, 
-          { 
-            paddingBottom: isKeyboardVisible 
-              ? Math.max(insets.bottom, 2)  // Klavye açıkken sadece safe area bottom
-              : Math.max(insets.bottom, 4) + NAV_BAR_HEIGHT  // Klavye kapalıyken navigation bar + safe area
-          }
-        ]}>
-        <View style={styles.inputWrapper}>
-          <TextInput
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder={t('chat.placeholder')}
-            mode="flat"
-            multiline
-            maxLength={1000}
-            editable={true}
-            showSoftInputOnFocus={true}
-            dense={true}
-            contentStyle={styles.textInputContent}
-            style={[styles.textInput, { fontSize: isSmallScreen ? 14 : 15 }]}
-            theme={{
-              colors: {
-                primary: darkTheme.colors.primary,
-                background: 'transparent',
-                text: darkTheme.colors.text,
-                placeholder: darkTheme.colors.textSecondary,
-              },
-            }}
-            underlineColor="transparent"
-          />
-          <TouchableOpacity
-            onPress={sendMessage}
-            disabled={!inputText.trim() || isLoading}
-            style={[
-              styles.sendButton,
-              (!inputText.trim() || isLoading) && styles.sendButtonDisabled
-            ]}
-          >
-            <Ionicons 
-              name="arrow-up" 
-              size={16} 
-              color={(!inputText.trim() || isLoading) ? darkTheme.colors.textSecondary : 'white'} 
+        <View
+          style={[
+            styles.inputContainer,
+            {
+              paddingBottom: isKeyboardVisible
+                ? Math.max(insets.bottom, 2) // Klavye açıkken sadece safe area bottom
+                : Math.max(insets.bottom, 4) + NAV_BAR_HEIGHT, // Klavye kapalıyken navigation bar + safe area
+            },
+          ]}
+        >
+          <View style={styles.inputWrapper}>
+            <TextInput
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder={t('chat.placeholder')}
+              mode="flat"
+              multiline
+              maxLength={1000}
+              editable={true}
+              showSoftInputOnFocus={true}
+              dense={true}
+              contentStyle={styles.textInputContent}
+              style={[styles.textInput, { fontSize: isSmallScreen ? 14 : 15 }]}
+              theme={{
+                colors: {
+                  primary: darkTheme.colors.primary,
+                  background: 'transparent',
+                  text: darkTheme.colors.text,
+                  placeholder: darkTheme.colors.textSecondary,
+                },
+              }}
+              underlineColor="transparent"
             />
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={sendMessage}
+              disabled={!inputText.trim() || isLoading}
+              style={[
+                styles.sendButton,
+                (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
+              ]}
+            >
+              <Ionicons
+                name="arrow-up"
+                size={16}
+                color={!inputText.trim() || isLoading ? darkTheme.colors.textSecondary : 'white'}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
       </KeyboardAvoidingView>
 
       {/* Premium Limit Modal */}
@@ -688,32 +707,44 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
             {/* Features List */}
             <View style={styles.featuresList}>
               <View style={styles.featureItem}>
-                <View style={[styles.featureIcon, { backgroundColor: darkTheme.colors.primary + '20' }]}>
+                <View
+                  style={[styles.featureIcon, { backgroundColor: darkTheme.colors.primary + '20' }]}
+                >
                   <Ionicons name="infinite" size={20} color={darkTheme.colors.primary} />
                 </View>
                 <View style={styles.featureContent}>
                   <Text style={styles.featureTitle}>{t('premium.unlimited')}</Text>
-                  <Text style={styles.featureDescription}>Günlük mesaj limiti olmadan istediğiniz kadar sohbet edin</Text>
+                  <Text style={styles.featureDescription}>
+                    Günlük mesaj limiti olmadan istediğiniz kadar sohbet edin
+                  </Text>
                 </View>
               </View>
 
               <View style={styles.featureItem}>
-                <View style={[styles.featureIcon, { backgroundColor: darkTheme.colors.success + '20' }]}>
+                <View
+                  style={[styles.featureIcon, { backgroundColor: darkTheme.colors.success + '20' }]}
+                >
                   <Ionicons name="flash" size={20} color={darkTheme.colors.success} />
                 </View>
                 <View style={styles.featureContent}>
                   <Text style={styles.featureTitle}>Hızlı Yanıtlar</Text>
-                  <Text style={styles.featureDescription}>Premium kullanıcılar için öncelikli ve hızlı AI yanıtları</Text>
+                  <Text style={styles.featureDescription}>
+                    Premium kullanıcılar için öncelikli ve hızlı AI yanıtları
+                  </Text>
                 </View>
               </View>
 
               <View style={styles.featureItem}>
-                <View style={[styles.featureIcon, { backgroundColor: darkTheme.colors.premium + '20' }]}>
+                <View
+                  style={[styles.featureIcon, { backgroundColor: darkTheme.colors.premium + '20' }]}
+                >
                   <Ionicons name="star" size={20} color={darkTheme.colors.premium} />
                 </View>
                 <View style={styles.featureContent}>
                   <Text style={styles.featureTitle}>Özel Özellikler</Text>
-                  <Text style={styles.featureDescription}>Gelişmiş AI modelleri ve özel sohbet özellikleri</Text>
+                  <Text style={styles.featureDescription}>
+                    Gelişmiş AI modelleri ve özel sohbet özellikleri
+                  </Text>
                 </View>
               </View>
             </View>

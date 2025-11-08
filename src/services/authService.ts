@@ -28,13 +28,13 @@ export class AuthService {
   async signIn(email: string, password: string) {
     try {
       const result = await this.authRepository.signInWithPassword(email, password);
-      
+
       // Login başarılıysa token refresh'i başlat
       if (result.user) {
         TokenRefreshManager.startAutoRefresh();
         logger.log('Token refresh started after login');
       }
-      
+
       return result;
     } catch (error) {
       logger.error('Giriş hatası:', error);
@@ -48,13 +48,13 @@ export class AuthService {
       const result = await this.authRepository.signUp(email, password, {
         name: name || '',
       });
-      
+
       // Kayıt başarılıysa token refresh'i başlat
       if (result.user) {
         TokenRefreshManager.startAutoRefresh();
         logger.log('Token refresh started after registration');
       }
-      
+
       return result;
     } catch (error) {
       logger.error('Kayıt hatası:', error);
@@ -67,13 +67,13 @@ export class AuthService {
     try {
       // Token refresh'i durdur
       TokenRefreshManager.stopAutoRefresh();
-      
+
       // Encryption key'leri temizle
       const user = await this.authRepository.getCurrentUser();
       if (user) {
         await MessageEncryption.deleteEncryptionKey(user.id);
       }
-      
+
       await this.authRepository.signOut();
       logger.log('Logout completed, token refresh stopped');
     } catch (error) {

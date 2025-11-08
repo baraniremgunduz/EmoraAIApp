@@ -7,7 +7,10 @@ import { logger } from '../../utils/logger';
 export class SupabaseAuthRepository implements IAuthRepository {
   constructor(private supabase: SupabaseClient) {}
 
-  async signInWithPassword(email: string, password: string): Promise<{
+  async signInWithPassword(
+    email: string,
+    password: string
+  ): Promise<{
     user: User | null;
     session: any;
   }> {
@@ -31,7 +34,11 @@ export class SupabaseAuthRepository implements IAuthRepository {
     }
   }
 
-  async signUp(email: string, password: string, metadata?: any): Promise<{
+  async signUp(
+    email: string,
+    password: string,
+    metadata?: any
+  ): Promise<{
     user: User | null;
     session: any;
   }> {
@@ -72,7 +79,10 @@ export class SupabaseAuthRepository implements IAuthRepository {
 
   async getCurrentUser(): Promise<User | null> {
     try {
-      const { data: { user }, error } = await this.supabase.auth.getUser();
+      const {
+        data: { user },
+        error,
+      } = await this.supabase.auth.getUser();
       if (error) {
         // Auth session yoksa null döndür, hata fırlatma
         if (error.message?.includes('Auth session missing')) {
@@ -92,8 +102,10 @@ export class SupabaseAuthRepository implements IAuthRepository {
   }
 
   onAuthStateChange(callback: (user: User | null) => void): () => void {
-    const { data: { subscription } } = this.supabase.auth.onAuthStateChange((event, session) => {
-      callback(session?.user as User | null || null);
+    const {
+      data: { subscription },
+    } = this.supabase.auth.onAuthStateChange((event, session) => {
+      callback((session?.user as User | null) || null);
     });
 
     return () => {
@@ -116,11 +128,11 @@ export class SupabaseAuthRepository implements IAuthRepository {
   async updateUser(updates: { data?: any; email?: string }): Promise<void> {
     try {
       const updateData: any = {};
-      
+
       if (updates.data) {
         updateData.data = updates.data;
       }
-      
+
       if (updates.email) {
         updateData.email = updates.email;
       }
@@ -140,7 +152,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
       const { error } = await this.supabase.auth.updateUser({
         password: newPassword,
       });
-      
+
       if (error) {
         throw error;
       }
@@ -162,4 +174,3 @@ export class SupabaseAuthRepository implements IAuthRepository {
     }
   }
 }
-

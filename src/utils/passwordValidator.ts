@@ -91,7 +91,7 @@ export const validatePassword = (password: string): PasswordValidationResult => 
   // Güçlülük hesaplama
   let strength: 'weak' | 'medium' | 'strong' = 'weak';
   const metRequirements = Object.values(requirements).filter(Boolean).length;
-  
+
   if (metRequirements >= 5 && requirements.minLength && requirements.notCommon) {
     strength = 'strong';
   } else if (metRequirements >= 3) {
@@ -135,4 +135,3 @@ export const getPasswordStrengthColor = (strength: 'weak' | 'medium' | 'strong')
       return '#666666';
   }
 };
-

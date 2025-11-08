@@ -88,7 +88,7 @@ describe('ChatService', () => {
     it('should send message and get AI response', async () => {
       const mockUser = { id: 'user1', email: 'test@example.com' } as any;
       const mockAIResponse = 'Hello! How can I help you?';
-      
+
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockChatRepository.getAIResponse.mockResolvedValue(mockAIResponse);
       mockChatRepository.getFallbackResponse.mockResolvedValue('Fallback');
@@ -109,7 +109,7 @@ describe('ChatService', () => {
 
     it('should handle errors gracefully', async () => {
       const mockUser = { id: 'user1', email: 'test@example.com' } as any;
-      
+
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockChatRepository.getAIResponse.mockRejectedValue(new Error('Network error'));
       mockChatRepository.getFallbackResponse.mockResolvedValue('Fallback response');
@@ -167,9 +167,9 @@ describe('ChatService', () => {
       const mockError = new Error('Database error');
       mockMessageRepository.findBySessionId.mockRejectedValue(mockError);
 
-      await expect(
-        chatService.loadSessionMessages('session1', 'user1')
-      ).rejects.toThrow('Database error');
+      await expect(chatService.loadSessionMessages('session1', 'user1')).rejects.toThrow(
+        'Database error'
+      );
     });
   });
 
@@ -190,9 +190,7 @@ describe('ChatService', () => {
 
       await AsyncStorage.setItem('appLanguage', 'tr');
 
-      await expect(
-        chatService.saveMessages(mockMessages, 'user1')
-      ).resolves.not.toThrow();
+      await expect(chatService.saveMessages(mockMessages, 'user1')).resolves.not.toThrow();
 
       expect(mockSessionRepository.findOrCreateActiveSession).toHaveBeenCalledWith('user1');
       expect(mockMessageRepository.save).toHaveBeenCalledWith(mockMessages, 'session1', 'user1');
@@ -214,9 +212,7 @@ describe('ChatService', () => {
 
       await AsyncStorage.setItem('appLanguage', 'tr');
 
-      await expect(
-        chatService.saveMessages(mockMessages, 'user1')
-      ).resolves.not.toThrow();
+      await expect(chatService.saveMessages(mockMessages, 'user1')).resolves.not.toThrow();
 
       expect(mockSessionRepository.findOrCreateActiveSession).toHaveBeenCalled();
     });
@@ -232,7 +228,7 @@ describe('ChatService', () => {
 
       const mockUser = { id: 'user1', email: 'test@example.com' } as any;
       const mockAIResponse = 'Hello!';
-      
+
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
       mockChatRepository.getAIResponse.mockResolvedValue(mockAIResponse);
       mockChatRepository.getFallbackResponse.mockResolvedValue('Fallback');

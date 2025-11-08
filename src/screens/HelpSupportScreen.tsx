@@ -30,57 +30,63 @@ export default function HelpSupportScreen({ navigation }: any) {
     {
       id: '1',
       question: 'Emora AI nasıl çalışır?',
-      answer: 'Emora AI, yapay zeka teknolojisi kullanarak sizinle doğal bir şekilde sohbet eder. Duygularınızı anlar ve size destek olur.',
+      answer:
+        'Emora AI, yapay zeka teknolojisi kullanarak sizinle doğal bir şekilde sohbet eder. Duygularınızı anlar ve size destek olur.',
     },
     {
       id: '2',
       question: 'Verilerim güvenli mi?',
-      answer: 'Evet, tüm verileriniz şifrelenir ve güvenli sunucularda saklanır. Gizliliğiniz bizim için çok önemli.',
+      answer:
+        'Evet, tüm verileriniz şifrelenir ve güvenli sunucularda saklanır. Gizliliğiniz bizim için çok önemli.',
     },
     {
       id: '3',
       question: 'Premium üyelik nedir?',
-      answer: 'Premium üyelik ile sınırsız sohbet, özel özellikler ve öncelikli destek alabilirsiniz.',
+      answer:
+        'Premium üyelik ile sınırsız sohbet, özel özellikler ve öncelikli destek alabilirsiniz.',
     },
     {
       id: '4',
       question: 'Nasıl şifre değiştirebilirim?',
-      answer: 'Profil > Hesap Bilgileri > Şifre Değiştir bölümünden şifrenizi güncelleyebilirsiniz.',
+      answer:
+        'Profil > Hesap Bilgileri > Şifre Değiştir bölümünden şifrenizi güncelleyebilirsiniz.',
     },
     {
       id: '5',
       question: 'Uygulama çöküyor, ne yapmalıyım?',
-      answer: 'Uygulamayı kapatıp yeniden açmayı deneyin. Sorun devam ederse destek ekibimizle iletişime geçin.',
+      answer:
+        'Uygulamayı kapatıp yeniden açmayı deneyin. Sorun devam ederse destek ekibimizle iletişime geçin.',
     },
   ];
 
   const handleContactSupport = () => {
-    Alert.alert(
-      'Destek İletişim',
-      'E-posta ile destek talebinizi gönderebilirsiniz.',
-      [
-        { text: 'İptal', style: 'cancel' },
-        { 
-          text: 'E-posta Gönder', 
-          onPress: () => {
-            Linking.openURL('mailto:emoraaiapp@gmail.com?subject=Destek Talebi');
-          }
-        }
-      ]
-    );
+    Alert.alert('Destek İletişim', 'E-posta ile destek talebinizi gönderebilirsiniz.', [
+      { text: 'İptal', style: 'cancel' },
+      {
+        text: 'E-posta Gönder',
+        onPress: () => {
+          Linking.openURL('mailto:emoraaiapp@gmail.com?subject=Destek Talebi');
+        },
+      },
+    ]);
   };
 
   const handleRateApp = () => {
-    Alert.alert(
-      'Uygulamayı Değerlendir',
-      'Emora AI\'yı nasıl buluyorsunuz?',
-      [
-        { text: 'İptal', style: 'cancel' },
-        { text: '⭐ Çok İyi', onPress: () => Alert.alert('Teşekkürler!', 'Görüşünüz bizim için değerli.') },
-        { text: '👍 İyi', onPress: () => Alert.alert('Teşekkürler!', 'Görüşünüz bizim için değerli.') },
-        { text: '👎 Geliştirilebilir', onPress: () => Alert.alert('Teşekkürler!', 'Görüşlerinizi dikkate alacağız.') },
-      ]
-    );
+    Alert.alert('Uygulamayı Değerlendir', "Emora AI'yı nasıl buluyorsunuz?", [
+      { text: 'İptal', style: 'cancel' },
+      {
+        text: '⭐ Çok İyi',
+        onPress: () => Alert.alert('Teşekkürler!', 'Görüşünüz bizim için değerli.'),
+      },
+      {
+        text: '👍 İyi',
+        onPress: () => Alert.alert('Teşekkürler!', 'Görüşünüz bizim için değerli.'),
+      },
+      {
+        text: '👎 Geliştirilebilir',
+        onPress: () => Alert.alert('Teşekkürler!', 'Görüşlerinizi dikkate alacağız.'),
+      },
+    ]);
   };
 
   const toggleFAQ = (id: string) => {
@@ -93,17 +99,17 @@ export default function HelpSupportScreen({ navigation }: any) {
         <View style={styles.faqContent}>
           <View style={styles.faqHeader}>
             <View style={styles.faqIcon}>
-              <Ionicons 
-                name={expandedFAQ === item.id ? 'help-circle' : 'help-circle-outline'} 
-                size={20} 
-                color={darkTheme.colors.primary} 
+              <Ionicons
+                name={expandedFAQ === item.id ? 'help-circle' : 'help-circle-outline'}
+                size={20}
+                color={darkTheme.colors.primary}
               />
             </View>
             <Text style={styles.faqQuestion}>{item.question}</Text>
-            <Ionicons 
-              name={expandedFAQ === item.id ? 'chevron-up' : 'chevron-down'} 
-              size={20} 
-              color={darkTheme.colors.primary} 
+            <Ionicons
+              name={expandedFAQ === item.id ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={darkTheme.colors.primary}
             />
           </View>
           {expandedFAQ === item.id && (
@@ -118,8 +124,8 @@ export default function HelpSupportScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -153,15 +159,25 @@ export default function HelpSupportScreen({ navigation }: any) {
           <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
           <View style={styles.quickActionsGrid}>
             <TouchableOpacity style={styles.quickActionCard} onPress={handleContactSupport}>
-              <View style={[styles.quickActionIcon, { backgroundColor: darkTheme.colors.primary + '20' }]}>
+              <View
+                style={[
+                  styles.quickActionIcon,
+                  { backgroundColor: darkTheme.colors.primary + '20' },
+                ]}
+              >
                 <Ionicons name="chatbubbles" size={24} color={darkTheme.colors.primary} />
               </View>
               <Text style={styles.quickActionTitle}>{t('help.contact')}</Text>
               <Text style={styles.quickActionSubtitle}>7/24 destek</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity style={styles.quickActionCard} onPress={handleRateApp}>
-              <View style={[styles.quickActionIcon, { backgroundColor: darkTheme.colors.success + '20' }]}>
+              <View
+                style={[
+                  styles.quickActionIcon,
+                  { backgroundColor: darkTheme.colors.success + '20' },
+                ]}
+              >
                 <Ionicons name="star" size={24} color={darkTheme.colors.success} />
               </View>
               <Text style={styles.quickActionTitle}>Uygulamayı Değerlendir</Text>
@@ -182,13 +198,15 @@ export default function HelpSupportScreen({ navigation }: any) {
         {/* Contact Info - Modern Cards */}
         <View style={styles.contactSection}>
           <Text style={styles.sectionTitle}>İletişim Bilgileri</Text>
-          
+
           <View style={styles.contactCards}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.contactCard}
               onPress={() => Linking.openURL('mailto:emoraaiapp@gmail.com?subject=Destek Talebi')}
             >
-              <View style={[styles.contactIcon, { backgroundColor: darkTheme.colors.primary + '20' }]}>
+              <View
+                style={[styles.contactIcon, { backgroundColor: darkTheme.colors.primary + '20' }]}
+              >
                 <Ionicons name="mail" size={20} color={darkTheme.colors.primary} />
               </View>
               <View style={styles.contactInfo}>
@@ -229,7 +247,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 100, // Bottom navigation için boşluk
   },
-  
+
   // Modern Header
   header: {
     flexDirection: 'row',

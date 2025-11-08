@@ -127,43 +127,36 @@ describe('Error Handler', () => {
     it('should show alert with error message', () => {
       const error = { message: 'Network request failed' };
       showErrorAlert(error, mockT);
-      
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Hata',
-        'Ağ hatası oluştu',
-        [{ text: 'Tamam', style: 'cancel' }]
-      );
+
+      expect(Alert.alert).toHaveBeenCalledWith('Hata', 'Ağ hatası oluştu', [
+        { text: 'Tamam', style: 'cancel' },
+      ]);
     });
 
     it('should show alert with retry button when onRetry provided', () => {
       const error = { message: 'Network request failed' };
       const onRetry = jest.fn();
-      
+
       showErrorAlert(error, mockT, onRetry);
-      
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Hata',
-        'Ağ hatası oluştu',
-        [
-          { text: 'Tekrar Dene', onPress: onRetry },
-          { text: 'Tamam', style: 'cancel' }
-        ]
-      );
+
+      expect(Alert.alert).toHaveBeenCalledWith('Hata', 'Ağ hatası oluştu', [
+        { text: 'Tekrar Dene', onPress: onRetry },
+        { text: 'Tamam', style: 'cancel' },
+      ]);
     });
 
     it('should call onRetry when retry button is pressed', () => {
       const error = { message: 'Network request failed' };
       const onRetry = jest.fn();
-      
+
       showErrorAlert(error, mockT, onRetry);
-      
+
       // Alert.alert'ın çağrıldığını kontrol et
       expect(Alert.alert).toHaveBeenCalled();
-      
+
       // onRetry fonksiyonunu manuel olarak çağır (test için)
       onRetry();
       expect(onRetry).toHaveBeenCalled();
     });
   });
 });
-

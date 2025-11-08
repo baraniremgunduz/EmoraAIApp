@@ -29,10 +29,8 @@ export const checkNetworkStatus = async (): Promise<NetworkState> => {
 };
 
 // Network durumunu dinle (real-time)
-export const subscribeToNetworkStatus = (
-  callback: (state: NetworkState) => void
-): (() => void) => {
-  const unsubscribe = NetInfo.addEventListener((state) => {
+export const subscribeToNetworkStatus = (callback: (state: NetworkState) => void): (() => void) => {
+  const unsubscribe = NetInfo.addEventListener(state => {
     callback({
       isConnected: state.isConnected ?? false,
       isInternetReachable: state.isInternetReachable,
@@ -48,4 +46,3 @@ export const isOnline = async (): Promise<boolean> => {
   const status = await checkNetworkStatus();
   return status.isConnected && (status.isInternetReachable ?? true);
 };
-

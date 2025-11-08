@@ -54,7 +54,7 @@ describe('RegisterScreen', () => {
     const { getByPlaceholderText, getByText } = render(
       <RegisterScreen navigation={mockNavigation} />
     );
-    
+
     expect(getByPlaceholderText('Enter your name')).toBeTruthy();
     expect(getByPlaceholderText('Enter your email')).toBeTruthy();
     expect(getByPlaceholderText('Enter your password')).toBeTruthy();
@@ -63,13 +63,11 @@ describe('RegisterScreen', () => {
   });
 
   it('should show error when name is empty', async () => {
-    const { getByText } = render(
-      <RegisterScreen navigation={mockNavigation} />
-    );
-    
+    const { getByText } = render(<RegisterScreen navigation={mockNavigation} />);
+
     const registerButton = getByText('Register');
     fireEvent.press(registerButton);
-    
+
     // Form validation should prevent submission
     await waitFor(() => {
       expect(getByText('Register')).toBeTruthy();
@@ -80,15 +78,15 @@ describe('RegisterScreen', () => {
     const { getByPlaceholderText, getByText } = render(
       <RegisterScreen navigation={mockNavigation} />
     );
-    
+
     const nameInput = getByPlaceholderText('Enter your name');
     const emailInput = getByPlaceholderText('Enter your email');
     const registerButton = getByText('Register');
-    
+
     fireEvent.changeText(nameInput, 'Test User');
     fireEvent.changeText(emailInput, 'invalid-email');
     fireEvent.press(registerButton);
-    
+
     // Form validation should prevent submission
     await waitFor(() => {
       expect(getByText('Register')).toBeTruthy();
@@ -99,19 +97,19 @@ describe('RegisterScreen', () => {
     const { getByPlaceholderText, getByText } = render(
       <RegisterScreen navigation={mockNavigation} />
     );
-    
+
     const nameInput = getByPlaceholderText('Enter your name');
     const emailInput = getByPlaceholderText('Enter your email');
     const passwordInput = getByPlaceholderText('Enter your password');
     const confirmPasswordInput = getByPlaceholderText('Confirm your password');
     const registerButton = getByText('Register');
-    
+
     fireEvent.changeText(nameInput, 'Test User');
     fireEvent.changeText(emailInput, 'test@example.com');
     fireEvent.changeText(passwordInput, 'Password123!');
     fireEvent.changeText(confirmPasswordInput, 'Different123!');
     fireEvent.press(registerButton);
-    
+
     // Form validation should prevent submission
     await waitFor(() => {
       expect(getByText('Register')).toBeTruthy();
@@ -127,19 +125,19 @@ describe('RegisterScreen', () => {
     const { getByPlaceholderText, getByText } = render(
       <RegisterScreen navigation={mockNavigation} />
     );
-    
+
     const nameInput = getByPlaceholderText('Enter your name');
     const emailInput = getByPlaceholderText('Enter your email');
     const passwordInput = getByPlaceholderText('Enter your password');
     const confirmPasswordInput = getByPlaceholderText('Confirm your password');
     const registerButton = getByText('Register');
-    
+
     fireEvent.changeText(nameInput, 'Test User');
     fireEvent.changeText(emailInput, 'test@example.com');
     fireEvent.changeText(passwordInput, 'StrongP@ss123');
     fireEvent.changeText(confirmPasswordInput, 'StrongP@ss123');
     fireEvent.press(registerButton);
-    
+
     await waitFor(() => {
       expect(AuthService.signUp).toHaveBeenCalledWith(
         'test@example.com',
@@ -158,33 +156,30 @@ describe('RegisterScreen', () => {
     const { getByPlaceholderText, getByText } = render(
       <RegisterScreen navigation={mockNavigation} />
     );
-    
+
     const nameInput = getByPlaceholderText('Enter your name');
     const emailInput = getByPlaceholderText('Enter your email');
     const passwordInput = getByPlaceholderText('Enter your password');
     const confirmPasswordInput = getByPlaceholderText('Confirm your password');
     const registerButton = getByText('Register');
-    
+
     fireEvent.changeText(nameInput, 'Test User');
     fireEvent.changeText(emailInput, 'test@example.com');
     fireEvent.changeText(passwordInput, 'StrongP@ss123');
     fireEvent.changeText(confirmPasswordInput, 'StrongP@ss123');
     fireEvent.press(registerButton);
-    
+
     await waitFor(() => {
       expect(AuthService.signUp).toHaveBeenCalled();
     });
   });
 
   it('should navigate to login screen', () => {
-    const { getByText } = render(
-      <RegisterScreen navigation={mockNavigation} />
-    );
-    
+    const { getByText } = render(<RegisterScreen navigation={mockNavigation} />);
+
     const loginLink = getByText('Login');
     fireEvent.press(loginLink);
-    
+
     expect(mockNavigation.navigate).toHaveBeenCalledWith('Login');
   });
 });
-

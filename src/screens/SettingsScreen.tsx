@@ -83,13 +83,11 @@ export default function SettingsScreen({ navigation }: any) {
         ...prev,
         [key]: value,
       }));
-      
+
       // Ayarları anında kaydet
       saveSettings(key, value);
-      
     }
   };
-
 
   const handleChangePassword = () => {
     setShowPasswordModal(true);
@@ -111,7 +109,7 @@ export default function SettingsScreen({ navigation }: any) {
 
     try {
       const result = await AuthService.updatePassword(newPassword);
-      
+
       if (result.error) {
         Alert.alert(t('messages.error'), t('errors.password_failed') + ' ' + result.error.message);
       } else {
@@ -122,84 +120,75 @@ export default function SettingsScreen({ navigation }: any) {
       }
     } catch (error: any) {
       console.error('Şifre değiştirme hatası:', error);
-      Alert.alert(t('messages.error'), 'Şifre değiştirme sırasında bir hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
+      Alert.alert(
+        t('messages.error'),
+        'Şifre değiştirme sırasında bir hata oluştu: ' + (error.message || 'Bilinmeyen hata')
+      );
     }
   };
 
   const handleLogout = async () => {
-    Alert.alert(
-      t('profile.logout'),
-      t('profile.logout_confirm'),
-      [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
+    Alert.alert(t('profile.logout'), t('profile.logout_confirm'), [
+      {
+        text: t('common.cancel'),
+        style: 'cancel',
+      },
+      {
+        text: t('profile.logout'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await AuthService.signOut();
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
+          } catch (error) {
+            logger.error('Çıkış yapma hatası:', error);
+            Alert.alert(t('common.error'), t('profile.logout_error'));
+          }
         },
-        {
-          text: t('profile.logout'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AuthService.signOut();
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-              });
-            } catch (error) {
-              logger.error('Çıkış yapma hatası:', error);
-              Alert.alert(t('common.error'), t('profile.logout_error'));
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      t('account.delete_account'),
-      t('account.delete_warning'),
-      [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
+    Alert.alert(t('account.delete_account'), t('account.delete_warning'), [
+      {
+        text: t('common.cancel'),
+        style: 'cancel',
+      },
+      {
+        text: t('account.delete_confirm'),
+        style: 'destructive',
+        onPress: () => {
+          Alert.alert(t('account.final_confirmation'), t('account.final_warning'), [
+            {
+              text: t('common.cancel'),
+              style: 'cancel',
+            },
+            {
+              text: t('account.delete_final'),
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  await AuthService.deleteAccount();
+                  Alert.alert(t('common.success'), t('account.delete_success'));
+                  // Kayıt ol sayfasına yönlendir
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Register' }],
+                  });
+                } catch (error) {
+                  logger.error('Hesap silme hatası:', error);
+                  Alert.alert(t('common.error'), t('account.delete_error'));
+                }
+              },
+            },
+          ]);
         },
-        {
-          text: t('account.delete_confirm'),
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              t('account.final_confirmation'),
-              t('account.final_warning'),
-              [
-                {
-                  text: t('common.cancel'),
-                  style: 'cancel',
-                },
-                {
-                  text: t('account.delete_final'),
-                  style: 'destructive',
-                  onPress: async () => {
-                    try {
-                      await AuthService.deleteAccount();
-                      Alert.alert(t('common.success'), t('account.delete_success'));
-                      // Kayıt ol sayfasına yönlendir
-                      navigation.reset({
-                        index: 0,
-                        routes: [{ name: 'Register' }],
-                      });
-                    } catch (error) {
-                      logger.error('Hesap silme hatası:', error);
-                      Alert.alert(t('common.error'), t('account.delete_error'));
-                    }
-                  },
-                },
-              ]
-            );
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleExportData = async () => {
@@ -209,71 +198,62 @@ export default function SettingsScreen({ navigation }: any) {
         user: user,
         settings: settings,
         exportDate: new Date().toISOString(),
-        appVersion: '1.0.0'
+        appVersion: '1.0.0',
       };
 
       // JSON formatında veri hazırla
       const jsonData = JSON.stringify(userData, null, 2);
-      
+
       // Dosya adı oluştur
       const fileName = `emora_ai_data_${new Date().toISOString().split('T')[0]}.json`;
-      
-      Alert.alert(
-        t('account.export_data'),
-        t('account.export_ready', { fileName }),
-        [
-          {
-            text: t('common.ok'),
-            onPress: () => {
-              // Burada dosya paylaşımı veya indirme işlemi yapılabilir
-              logger.log('Export data:', jsonData);
-            }
-          }
-        ]
-      );
+
+      Alert.alert(t('account.export_data'), t('account.export_ready', { fileName }), [
+        {
+          text: t('common.ok'),
+          onPress: () => {
+            // Burada dosya paylaşımı veya indirme işlemi yapılabilir
+            logger.log('Export data:', jsonData);
+          },
+        },
+      ]);
     } catch (error) {
       Alert.alert(t('common.error'), t('account.export_error'));
     }
   };
 
   const handleClearCache = () => {
-    Alert.alert(
-      t('advanced.clear_cache'),
-      t('advanced.clear_cache_warning'),
-      [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('advanced.clear_cache_button'),
-          onPress: async () => {
-            try {
-              // AsyncStorage'dan tüm verileri temizle (ayarlar hariç)
-              const keys = await AsyncStorage.getAllKeys();
-              const keysToRemove = keys.filter(key => 
-                !key.includes('userSettings') && 
-                !key.includes('onboardingCompleted')
-              );
-              
-              if (keysToRemove.length > 0) {
-                await AsyncStorage.multiRemove(keysToRemove);
-              }
-              
-              Alert.alert(t('common.success'), t('advanced.clear_cache_success'));
-            } catch (error) {
-              Alert.alert(t('common.error'), t('advanced.clear_cache_error'));
+    Alert.alert(t('advanced.clear_cache'), t('advanced.clear_cache_warning'), [
+      {
+        text: t('common.cancel'),
+        style: 'cancel',
+      },
+      {
+        text: t('advanced.clear_cache_button'),
+        onPress: async () => {
+          try {
+            // AsyncStorage'dan tüm verileri temizle (ayarlar hariç)
+            const keys = await AsyncStorage.getAllKeys();
+            const keysToRemove = keys.filter(
+              key => !key.includes('userSettings') && !key.includes('onboardingCompleted')
+            );
+
+            if (keysToRemove.length > 0) {
+              await AsyncStorage.multiRemove(keysToRemove);
             }
-          },
+
+            Alert.alert(t('common.success'), t('advanced.clear_cache_success'));
+          } catch (error) {
+            Alert.alert(t('common.error'), t('advanced.clear_cache_error'));
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -285,56 +265,63 @@ export default function SettingsScreen({ navigation }: any) {
         {/* Account Settings - Minimal List */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionLabel}>{t('settings.account')}</Text>
-          
+
           <TouchableOpacity style={styles.settingItem} onPress={handleChangePassword}>
             <Ionicons name="lock-closed-outline" size={20} color={darkTheme.colors.primary} />
             <Text style={styles.settingTitle}>{t('account.change_password')}</Text>
             <Ionicons name="chevron-forward" size={16} color={darkTheme.colors.primary} />
           </TouchableOpacity>
-          
+
           <View style={styles.settingDivider} />
-          
+
           <TouchableOpacity style={styles.settingItem} onPress={handleExportData}>
             <Ionicons name="download-outline" size={20} color={darkTheme.colors.primary} />
             <Text style={styles.settingTitle}>{t('account.export_data')}</Text>
             <Ionicons name="chevron-forward" size={16} color={darkTheme.colors.primary} />
           </TouchableOpacity>
-          
+
           <View style={styles.settingDivider} />
-          
-          <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('PrivacyPolicy')}>
+
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+          >
             <Ionicons name="shield-outline" size={20} color={darkTheme.colors.primary} />
             <Text style={styles.settingTitle}>{t('privacy.title')}</Text>
             <Ionicons name="chevron-forward" size={16} color={darkTheme.colors.primary} />
           </TouchableOpacity>
-          
         </View>
 
         {/* AI Personality Settings - Priority Section */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionLabel}>{t('settings.ai_interaction')}</Text>
-          
-          <TouchableOpacity style={styles.settingItem} onPress={() => setShowPersonalityModal(true)}>
+
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={() => setShowPersonalityModal(true)}
+          >
             <Ionicons name="sparkles-outline" size={20} color={darkTheme.colors.primary} />
             <View style={styles.settingContent}>
               <Text style={styles.personalityTitle}>{t('ai.personality')}</Text>
               <Text style={styles.settingSubtitle}>
-                {settings.aiPersonality === 'friendly' ? t('personality.friendly') :
-                 settings.aiPersonality === 'professional' ? t('personality.professional') :
-                 t('personality.casual')}
+                {settings.aiPersonality === 'friendly'
+                  ? t('personality.friendly')
+                  : settings.aiPersonality === 'professional'
+                    ? t('personality.professional')
+                    : t('personality.casual')}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={darkTheme.colors.primary} />
           </TouchableOpacity>
-          
+
           <View style={styles.settingDivider} />
-          
+
           <View style={styles.settingItem}>
             <Ionicons name="save-outline" size={20} color={darkTheme.colors.primary} />
             <Text style={styles.settingTitle}>{t('ai.auto_save')}</Text>
             <Switch
               value={settings.autoSaveChats}
-              onValueChange={(value) => handleSettingChange('autoSaveChats', value)}
+              onValueChange={value => handleSettingChange('autoSaveChats', value)}
               trackColor={{ false: darkTheme.colors.border, true: darkTheme.colors.primary }}
               thumbColor={settings.autoSaveChats ? 'white' : darkTheme.colors.textSecondary}
               style={styles.switchStyle}
@@ -345,70 +332,69 @@ export default function SettingsScreen({ navigation }: any) {
         {/* Notification Settings - Minimal List */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionLabel}>{t('settings.notifications')}</Text>
-          
+
           <View style={styles.settingItem}>
             <Ionicons name="notifications-outline" size={20} color={darkTheme.colors.primary} />
             <Text style={styles.settingTitle}>{t('notifications.title')}</Text>
             <Switch
               value={settings.notifications}
-              onValueChange={(value) => handleSettingChange('notifications', value)}
+              onValueChange={value => handleSettingChange('notifications', value)}
               trackColor={{ false: darkTheme.colors.border, true: darkTheme.colors.primary }}
               thumbColor={settings.notifications ? 'white' : darkTheme.colors.textSecondary}
               style={styles.switchStyle}
             />
           </View>
-          
+
           <View style={styles.settingDivider} />
-          
+
           <View style={styles.settingItem}>
             <Ionicons name="volume-high-outline" size={20} color={darkTheme.colors.primary} />
             <Text style={styles.settingTitle}>{t('notifications.sound')}</Text>
             <Switch
               value={settings.soundEnabled}
-              onValueChange={(value) => handleSettingChange('soundEnabled', value)}
+              onValueChange={value => handleSettingChange('soundEnabled', value)}
               trackColor={{ false: darkTheme.colors.border, true: darkTheme.colors.primary }}
               thumbColor={settings.soundEnabled ? 'white' : darkTheme.colors.textSecondary}
               style={styles.switchStyle}
             />
           </View>
-          
+
           <View style={styles.settingDivider} />
-          
+
           <View style={styles.settingItem}>
             <Ionicons name="phone-portrait-outline" size={20} color={darkTheme.colors.primary} />
             <Text style={styles.settingTitle}>{t('notifications.vibration')}</Text>
             <Switch
               value={settings.vibrationEnabled}
-              onValueChange={(value) => handleSettingChange('vibrationEnabled', value)}
+              onValueChange={value => handleSettingChange('vibrationEnabled', value)}
               trackColor={{ false: darkTheme.colors.border, true: darkTheme.colors.primary }}
               thumbColor={settings.vibrationEnabled ? 'white' : darkTheme.colors.textSecondary}
               style={styles.switchStyle}
             />
           </View>
-          
         </View>
 
         {/* App Settings */}
         <Card style={styles.sectionCard}>
           <Card.Content>
             <Text style={styles.sectionTitle}>{t('settings.advanced')}</Text>
-            
+
             <List.Item
               title={t('advanced.language')}
               description={t('advanced.language_desc')}
-              left={(props) => <List.Icon {...props} icon="translate" />}
-              right={(props) => <List.Icon {...props} icon="chevron-right" />}
+              left={props => <List.Icon {...props} icon="translate" />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
               onPress={() => setShowLanguageModal(true)}
               titleStyle={styles.listTitle}
               descriptionStyle={styles.listDescription}
             />
             <Divider />
-            
+
             <List.Item
               title={t('advanced.clear_cache')}
               description={t('advanced.clear_cache_desc')}
-              left={(props) => <List.Icon {...props} icon="delete-sweep" />}
-              right={(props) => <List.Icon {...props} icon="chevron-right" />}
+              left={props => <List.Icon {...props} icon="delete-sweep" />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
               onPress={handleClearCache}
               titleStyle={styles.listTitle}
               descriptionStyle={styles.listDescription}
@@ -428,7 +414,9 @@ export default function SettingsScreen({ navigation }: any) {
         <View style={styles.deleteAccountSection}>
           <TouchableOpacity style={styles.deleteAccountButton} onPress={handleDeleteAccount}>
             <Ionicons name="trash-outline" size={20} color={darkTheme.colors.error} />
-            <Text style={[styles.deleteAccountText, { color: darkTheme.colors.error }]}>{t('account.delete_account')}</Text>
+            <Text style={[styles.deleteAccountText, { color: darkTheme.colors.error }]}>
+              {t('account.delete_account')}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -450,19 +438,19 @@ export default function SettingsScreen({ navigation }: any) {
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('modal.personality_title')}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setShowPersonalityModal(false)}
               >
                 <Ionicons name="close" size={24} color={darkTheme.colors.primary} />
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.personalityOptions}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
                   styles.personalityOption,
-                  settings.aiPersonality === 'friendly' && styles.personalityOptionSelected
+                  settings.aiPersonality === 'friendly' && styles.personalityOptionSelected,
                 ]}
                 onPress={() => {
                   handleSettingChange('aiPersonality', 'friendly');
@@ -483,10 +471,10 @@ export default function SettingsScreen({ navigation }: any) {
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
                   styles.personalityOption,
-                  settings.aiPersonality === 'professional' && styles.personalityOptionSelected
+                  settings.aiPersonality === 'professional' && styles.personalityOptionSelected,
                 ]}
                 onPress={() => {
                   handleSettingChange('aiPersonality', 'professional');
@@ -513,10 +501,10 @@ export default function SettingsScreen({ navigation }: any) {
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
                   styles.personalityOption,
-                  settings.aiPersonality === 'casual' && styles.personalityOptionSelected
+                  settings.aiPersonality === 'casual' && styles.personalityOptionSelected,
                 ]}
                 onPress={() => {
                   handleSettingChange('aiPersonality', 'casual');
@@ -528,9 +516,7 @@ export default function SettingsScreen({ navigation }: any) {
                 </View>
                 <View style={styles.personalityContent}>
                   <Text style={styles.personalityTitle}>{t('personality.casual')}</Text>
-                  <Text style={styles.personalityDescription}>
-                    {t('personality.casual_desc')}
-                  </Text>
+                  <Text style={styles.personalityDescription}>{t('personality.casual_desc')}</Text>
                 </View>
                 {settings.aiPersonality === 'casual' && (
                   <Ionicons name="checkmark-circle" size={24} color={darkTheme.colors.primary} />
@@ -552,14 +538,14 @@ export default function SettingsScreen({ navigation }: any) {
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('advanced.language')}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setShowLanguageModal(false)}
               >
                 <Ionicons name="close" size={24} color={darkTheme.colors.text} />
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.languageGrid}>
               {[
                 { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -574,13 +560,13 @@ export default function SettingsScreen({ navigation }: any) {
                 { code: 'sv', name: 'Svenska', flag: '🇸🇪' },
                 { code: 'no', name: 'Norsk', flag: '🇳🇴' },
                 { code: 'fi', name: 'Suomi', flag: '🇫🇮' },
-                { code: 'da', name: 'Dansk', flag: '🇩🇰' }
-              ].map((lang) => (
+                { code: 'da', name: 'Dansk', flag: '🇩🇰' },
+              ].map(lang => (
                 <TouchableOpacity
                   key={lang.code}
                   style={[
                     styles.languageOption,
-                    language === lang.code && styles.languageOptionSelected
+                    language === lang.code && styles.languageOptionSelected,
                   ]}
                   onPress={() => {
                     handleSettingChange('language', lang.code);
@@ -610,7 +596,7 @@ export default function SettingsScreen({ navigation }: any) {
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('account.change_password')}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => {
                   setShowPasswordModal(false);
@@ -621,7 +607,7 @@ export default function SettingsScreen({ navigation }: any) {
                 <Ionicons name="close" size={24} color={darkTheme.colors.primary} />
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.passwordModalContent}>
               <TextInput
                 label={t('account.new_password') || 'Yeni Şifre'}
@@ -639,7 +625,7 @@ export default function SettingsScreen({ navigation }: any) {
                   },
                 }}
               />
-              
+
               <TextInput
                 label={t('account.confirm_password') || 'Şifreyi Onayla'}
                 value={confirmPassword}
@@ -656,7 +642,7 @@ export default function SettingsScreen({ navigation }: any) {
                   },
                 }}
               />
-              
+
               <View style={styles.passwordButtonContainer}>
                 <Button
                   mode="outlined"

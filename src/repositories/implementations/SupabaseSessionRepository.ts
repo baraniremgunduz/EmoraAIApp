@@ -21,9 +21,9 @@ export class SupabaseSessionRepository implements ISessionRepository {
 
       if (sessionError && sessionError.code === 'PGRST116') {
         // Session yoksa yeni oluştur
-        const userLanguage = await AsyncStorage.getItem('appLanguage') || 'tr';
+        const userLanguage = (await AsyncStorage.getItem('appLanguage')) || 'tr';
         const sessionTitle = title || (userLanguage === 'en' ? 'New Chat' : 'Yeni Sohbet');
-        
+
         const { data: newSession, error: createError } = await this.supabase
           .from('chat_sessions')
           .insert({
@@ -148,4 +148,3 @@ export class SupabaseSessionRepository implements ISessionRepository {
     }
   }
 }
-

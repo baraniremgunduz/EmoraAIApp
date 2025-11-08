@@ -1,13 +1,6 @@
 // Glass Button Component with Animations
 import React from 'react';
-import {
-  View,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-} from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -99,9 +92,7 @@ export default function GlassButton({
       {/* BlurView alternatifi - Expo Go uyumlu */}
       <View style={styles.blurView} />
       {children || (
-        <Text style={[getTextStyle(), textStyle]}>
-          {loading ? 'Yükleniyor...' : title}
-        </Text>
+        <Text style={[getTextStyle(), textStyle]}>{loading ? 'Yükleniyor...' : title}</Text>
       )}
     </AnimatedTouchableOpacity>
   );

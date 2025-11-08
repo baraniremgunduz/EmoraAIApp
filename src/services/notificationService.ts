@@ -11,7 +11,7 @@ Notifications.setNotificationHandler({
   handleNotification: async () => {
     // Kullanıcı ayarlarını al
     const settings = await getNotificationSettings();
-    
+
     return {
       shouldShowAlert: true,
       shouldPlaySound: settings.soundEnabled,
@@ -55,7 +55,7 @@ export class NotificationService {
   static async initialize(): Promise<boolean> {
     try {
       console.log('NotificationService: Push notification servisi başlatılıyor...');
-      
+
       // İzin iste
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== 'granted') {
@@ -65,13 +65,13 @@ export class NotificationService {
 
       // Expo push token al
       await this.getExpoToken();
-      
+
       // Bildirim dinleyicilerini kur
       this.setupNotificationListeners();
-      
+
       this.isInitialized = true;
       console.log('NotificationService: Push notification servisi başarıyla başlatıldı');
-      
+
       return true;
     } catch (error) {
       console.error('NotificationService başlatma hatası:', error);
@@ -85,24 +85,22 @@ export class NotificationService {
       const token = await Notifications.getExpoPushTokenAsync();
       this.expoToken = token.data;
       console.log('NotificationService: Expo push token alındı:', token.data);
-      
+
       // Token'ı Supabase'e kaydet
-      const { error } = await supabase
-        .from('user_push_tokens')
-        .upsert({
-          token: token.data,
-          platform: Platform.OS,
-          updated_at: new Date().toISOString()
-        });
-      
+      const { error } = await supabase.from('user_push_tokens').upsert({
+        token: token.data,
+        platform: Platform.OS,
+        updated_at: new Date().toISOString(),
+      });
+
       if (error) throw error;
-      
+
       // Token'ı analytics'e gönder
       await AnalyticsService.logEvent('push_token_received', {
         token: token.data,
         platform: Platform.OS,
       });
-      
+
       return token.data;
     } catch (error) {
       console.error('Expo push token alma hatası:', error);
@@ -115,7 +113,7 @@ export class NotificationService {
     // Foreground bildirimleri
     Notifications.addNotificationReceivedListener(notification => {
       console.log('NotificationService: Foreground bildirim alındı:', notification);
-      
+
       // Analytics'e bildirim alındı olayını gönder
       AnalyticsService.logEvent('notification_received', {
         notification_id: notification.request.identifier,
@@ -128,7 +126,7 @@ export class NotificationService {
     // Bildirim tıklama olayları
     Notifications.addNotificationResponseReceivedListener(response => {
       console.log('NotificationService: Bildirim tıklandı:', response);
-      
+
       // Analytics'e bildirim tıklama olayını gönder
       AnalyticsService.logEvent('notification_tapped', {
         notification_id: response.notification.request.identifier,
@@ -140,7 +138,7 @@ export class NotificationService {
     // Expo push notification dinleyicileri
     Notifications.addNotificationReceivedListener(notification => {
       console.log('NotificationService: Push notification alındı:', notification);
-      
+
       // Analytics'e notification alındı olayını gönder
       AnalyticsService.logEvent('push_notification_received', {
         notification_id: notification.request.identifier,
@@ -161,7 +159,7 @@ export class NotificationService {
     try {
       // Kullanıcı ayarlarını kontrol et
       const settings = await getNotificationSettings();
-      
+
       if (!settings.notifications) {
         console.log('NotificationService: Bildirimler kullanıcı tarafından kapatılmış');
         return;
@@ -181,12 +179,12 @@ export class NotificationService {
       if (settings.vibrationEnabled) {
         Vibration.vibrate(500); // 500ms titreşim
       }
-      
+
       console.log('NotificationService: Yerel bildirim gönderildi:', title, {
         sound: settings.soundEnabled,
-        vibration: settings.vibrationEnabled
+        vibration: settings.vibrationEnabled,
       });
-      
+
       // Analytics'e yerel bildirim olayını gönder
       await AnalyticsService.logEvent('local_notification_sent', {
         title: title,
@@ -202,15 +200,15 @@ export class NotificationService {
 
   // Zamanlanmış bildirim gönder
   static async scheduleNotification(
-    title: string, 
-    body: string, 
-    triggerDate: Date, 
+    title: string,
+    body: string,
+    triggerDate: Date,
     data?: any
   ): Promise<void> {
     try {
       // Kullanıcı ayarlarını kontrol et
       const settings = await getNotificationSettings();
-      
+
       if (!settings.notifications) {
         console.log('NotificationService: Bildirimler kullanıcı tarafından kapatılmış');
         return;
@@ -227,12 +225,12 @@ export class NotificationService {
           date: triggerDate,
         },
       });
-      
+
       console.log('NotificationService: Zamanlanmış bildirim ayarlandı:', title, {
         sound: settings.soundEnabled,
-        vibration: settings.vibrationEnabled
+        vibration: settings.vibrationEnabled,
       });
-      
+
       // Analytics'e zamanlanmış bildirim olayını gönder
       await AnalyticsService.logEvent('scheduled_notification_created', {
         title: title,
@@ -252,7 +250,7 @@ export class NotificationService {
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
       console.log('NotificationService: Tüm bildirimler iptal edildi');
-      
+
       // Analytics'e bildirim iptal olayını gönder
       await AnalyticsService.logEvent('all_notifications_cancelled', {
         platform: Platform.OS,
@@ -267,7 +265,7 @@ export class NotificationService {
     try {
       await Notifications.cancelScheduledNotificationAsync(notificationId);
       console.log('NotificationService: Bildirim iptal edildi:', notificationId);
-      
+
       // Analytics'e bildirim iptal olayını gönder
       await AnalyticsService.logEvent('notification_cancelled', {
         notification_id: notificationId,
@@ -352,7 +350,7 @@ export class NotificationService {
           },
         },
       ]);
-      
+
       console.log('NotificationService: Bildirim kategorileri ayarlandı');
     } catch (error) {
       console.error('Bildirim kategorileri ayarlama hatası:', error);
@@ -413,13 +411,13 @@ export class NotificationService {
     try {
       // Tüm bildirimleri iptal et
       await this.cancelAllNotifications();
-      
+
       // Badge sayısını temizle
       await this.clearBadgeCount();
-      
+
       this.isInitialized = false;
       this.expoToken = null;
-      
+
       console.log('NotificationService: Temizlik tamamlandı');
     } catch (error) {
       console.error('NotificationService temizlik hatası:', error);

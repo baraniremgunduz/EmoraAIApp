@@ -1,5 +1,9 @@
 // Password validator test
-import { validatePassword, getPasswordStrengthText, getPasswordStrengthColor } from '../passwordValidator';
+import {
+  validatePassword,
+  getPasswordStrengthText,
+  getPasswordStrengthColor,
+} from '../passwordValidator';
 
 describe('Password Validator', () => {
   describe('validatePassword', () => {
@@ -73,4 +77,3 @@ describe('Password Validator', () => {
     });
   });
 });
-

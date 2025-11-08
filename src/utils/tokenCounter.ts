@@ -12,7 +12,7 @@ export class TokenCounter {
    */
   static estimateTokens(text: string): number {
     if (!text || text.length === 0) return 0;
-    
+
     // Basit hesaplama: karakter sayısı / 4
     // Daha doğru için tiktoken kullanılabilir ama React Native'de zor
     return Math.ceil(text.length / this.CHARS_PER_TOKEN);
@@ -23,7 +23,7 @@ export class TokenCounter {
    */
   static countTokens(messages: Array<{ content: string; role?: string }>): number {
     if (!messages || messages.length === 0) return 0;
-    
+
     return messages.reduce((total, msg) => {
       const contentTokens = this.estimateTokens(msg.content || '');
       // Role için ekstra token (yaklaşık 2 token)
@@ -47,15 +47,15 @@ export class TokenCounter {
     maxTokens: number
   ): Array<{ content: string; role?: string }> {
     if (!messages || messages.length === 0) return [];
-    
+
     let totalTokens = 0;
     const filteredMessages: Array<{ content: string; role?: string }> = [];
-    
+
     // En yeni mesajlardan başla (ters sıra)
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
       const msgTokens = this.estimateTokens(msg.content || '') + (msg.role ? 2 : 0);
-      
+
       if (totalTokens + msgTokens <= maxTokens) {
         filteredMessages.unshift(msg); // Başa ekle (kronolojik sıra)
         totalTokens += msgTokens;
@@ -63,7 +63,7 @@ export class TokenCounter {
         break; // Token limiti aşıldı
       }
     }
-    
+
     return filteredMessages;
   }
 
@@ -78,4 +78,3 @@ export class TokenCounter {
     logger.log(`[TokenCounter] ${label}: ${messages.length} messages, ~${totalTokens} tokens`);
   }
 }
-

@@ -13,7 +13,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  
+
   // Actions
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
@@ -35,7 +35,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true, error: null });
           const { user, session } = await AuthService.signIn(email, password);
-          
+
           if (user && session) {
             set({
               user,
@@ -43,10 +43,10 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
               error: null,
             });
-            
+
             // Token refresh'i başlat
             TokenRefreshManager.startAutoRefresh();
-            
+
             logger.log('Login successful:', user.email);
           } else {
             throw new Error('Login failed: No user or session returned');
@@ -68,7 +68,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true, error: null });
           const { user, session } = await AuthService.signUp(email, password, name);
-          
+
           if (user && session) {
             set({
               user,
@@ -76,10 +76,10 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
               error: null,
             });
-            
+
             // Token refresh'i başlat
             TokenRefreshManager.startAutoRefresh();
-            
+
             logger.log('Registration successful:', user.email);
           } else {
             throw new Error('Registration failed: No user or session returned');
@@ -100,16 +100,16 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         try {
           set({ isLoading: true });
-          
+
           // Token refresh'i durdur
           TokenRefreshManager.stopAutoRefresh();
-          
+
           // Encryption key'leri temizle
           const currentUser = get().user;
           if (currentUser) {
             await MessageEncryption.deleteEncryptionKey(currentUser.id);
           }
-          
+
           await AuthService.signOut();
           set({
             user: null,
@@ -133,14 +133,14 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true });
           const user = await AuthService.getCurrentUser();
-          
+
           set({
             user,
             isAuthenticated: !!user,
             isLoading: false,
             error: null,
           });
-          
+
           if (user) {
             logger.log('Auth check: User authenticated', user.email);
           } else {
@@ -179,11 +179,10 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({
+      partialize: state => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
     }
   )
 );
-

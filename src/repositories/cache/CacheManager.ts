@@ -23,10 +23,7 @@ export class CacheManager {
         expiresAt: Date.now() + ttl,
       };
 
-      await AsyncStorage.setItem(
-        `${this.CACHE_PREFIX}${key}`,
-        JSON.stringify(entry)
-      );
+      await AsyncStorage.setItem(`${this.CACHE_PREFIX}${key}`, JSON.stringify(entry));
 
       logger.log(`Cache set: ${key}`);
     } catch (error) {
@@ -40,7 +37,7 @@ export class CacheManager {
   static async get<T>(key: string): Promise<T | null> {
     try {
       const cached = await AsyncStorage.getItem(`${this.CACHE_PREFIX}${key}`);
-      
+
       if (!cached) {
         return null;
       }
@@ -81,7 +78,7 @@ export class CacheManager {
     try {
       const keys = await AsyncStorage.getAllKeys();
       const cacheKeys = keys.filter(key => key.startsWith(this.CACHE_PREFIX));
-      
+
       await AsyncStorage.multiRemove(cacheKeys);
       logger.log('Cache cleared');
     } catch (error) {
@@ -103,7 +100,7 @@ export class CacheManager {
   static async isValid(key: string): Promise<boolean> {
     try {
       const cached = await AsyncStorage.getItem(`${this.CACHE_PREFIX}${key}`);
-      
+
       if (!cached) {
         return false;
       }
@@ -115,4 +112,3 @@ export class CacheManager {
     }
   }
 }
-

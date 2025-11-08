@@ -7,12 +7,7 @@ export class RepositoryError extends Error implements AppError {
   status?: number;
   originalError?: any;
 
-  constructor(
-    message: string,
-    code?: string,
-    status?: number,
-    originalError?: any
-  ) {
+  constructor(message: string, code?: string, status?: number, originalError?: any) {
     super(message);
     this.name = 'RepositoryError';
     this.code = code;
@@ -62,22 +57,14 @@ export class RepositoryError extends Error implements AppError {
    * Server hatası mı?
    */
   isServerError(): boolean {
-    return (
-      this.status !== undefined &&
-      this.status >= 500 &&
-      this.status < 600
-    );
+    return this.status !== undefined && this.status >= 500 && this.status < 600;
   }
 
   /**
    * Client hatası mı?
    */
   isClientError(): boolean {
-    return (
-      this.status !== undefined &&
-      this.status >= 400 &&
-      this.status < 500
-    );
+    return this.status !== undefined && this.status >= 400 && this.status < 500;
   }
 
   /**
@@ -87,19 +74,19 @@ export class RepositoryError extends Error implements AppError {
     if (this.isNetworkError()) {
       return 'İnternet bağlantınızı kontrol edin';
     }
-    
+
     if (this.isAuthError()) {
       return 'Oturum süreniz dolmuş. Lütfen tekrar giriş yapın';
     }
-    
+
     if (this.isServerError()) {
       return 'Sunucu hatası. Lütfen daha sonra tekrar deneyin';
     }
-    
+
     if (this.isClientError()) {
       return 'İstek geçersiz. Lütfen tekrar deneyin';
     }
-    
+
     return this.message || 'Bilinmeyen bir hata oluştu';
   }
 
@@ -115,12 +102,6 @@ export class RepositoryError extends Error implements AppError {
     const code = error?.code;
     const status = error?.status || error?.response?.status;
 
-    return new RepositoryError(
-      context ? `${context}: ${message}` : message,
-      code,
-      status,
-      error
-    );
+    return new RepositoryError(context ? `${context}: ${message}` : message, code, status, error);
   }
 }
-

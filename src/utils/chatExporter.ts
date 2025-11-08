@@ -21,7 +21,7 @@ export class ChatExporter {
     options: ExportOptions
   ): string {
     let content = `=== ${sessionTitle} ===\n\n`;
-    
+
     if (options.includeMetadata) {
       content += `Export Date: ${new Date().toLocaleString('tr-TR')}\n`;
       content += `Total Messages: ${messages.length}\n\n`;
@@ -33,7 +33,7 @@ export class ChatExporter {
       const timestamp = options.includeTimestamps
         ? `[${new Date(msg.timestamp).toLocaleString('tr-TR')}] `
         : '';
-      
+
       content += `${timestamp}${role}:\n${msg.content}\n\n`;
     });
 
@@ -51,11 +51,13 @@ export class ChatExporter {
     const data = {
       sessionTitle,
       exportDate: new Date().toISOString(),
-      metadata: options.includeMetadata ? {
-        totalMessages: messages.length,
-        platform: Platform.OS,
-        appVersion: '1.0.0',
-      } : undefined,
+      metadata: options.includeMetadata
+        ? {
+            totalMessages: messages.length,
+            platform: Platform.OS,
+            appVersion: '1.0.0',
+          }
+        : undefined,
       messages: messages.map(msg => ({
         id: msg.id,
         role: msg.role,
@@ -147,7 +149,7 @@ export class ChatExporter {
   ): Promise<void> {
     try {
       const fileUri = await this.exportChat(messages, sessionTitle, options);
-      
+
       if (!fileUri) {
         throw new Error('Dosya oluşturulamadı');
       }
@@ -155,18 +157,13 @@ export class ChatExporter {
       // Sharing kontrolü
       const isAvailable = await Sharing.isAvailableAsync();
       if (!isAvailable) {
-        Alert.alert(
-          'Paylaşım Hatası',
-          'Bu cihazda paylaşım özelliği kullanılamıyor.'
-        );
+        Alert.alert('Paylaşım Hatası', 'Bu cihazda paylaşım özelliği kullanılamıyor.');
         return;
       }
 
       // Dosyayı paylaş
       await Sharing.shareAsync(fileUri, {
-        mimeType: options.format === 'json' 
-          ? 'application/json' 
-          : 'text/plain',
+        mimeType: options.format === 'json' ? 'application/json' : 'text/plain',
         dialogTitle: `Sohbeti Paylaş: ${sessionTitle}`,
       });
 
@@ -205,4 +202,3 @@ export class ChatExporter {
     ];
   }
 }
-

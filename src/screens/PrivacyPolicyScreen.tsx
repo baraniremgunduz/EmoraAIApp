@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { darkTheme } from '../utils/theme';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -18,17 +11,14 @@ export default function PrivacyPolicyScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={darkTheme.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('privacy.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -36,44 +26,28 @@ export default function PrivacyPolicyScreen({ navigation }: any) {
         {/* Privacy Policy Content */}
         <View style={styles.contentContainer}>
           <Text style={styles.sectionTitle}>{t('privacy.introduction')}</Text>
-          <Text style={styles.contentText}>
-            {t('privacy.introduction_text')}
-          </Text>
+          <Text style={styles.contentText}>{t('privacy.introduction_text')}</Text>
 
           <Text style={styles.sectionTitle}>{t('privacy.data_collection')}</Text>
-          <Text style={styles.contentText}>
-            {t('privacy.data_collection_text')}
-          </Text>
+          <Text style={styles.contentText}>{t('privacy.data_collection_text')}</Text>
 
           <Text style={styles.sectionTitle}>{t('privacy.data_usage')}</Text>
-          <Text style={styles.contentText}>
-            {t('privacy.data_usage_text')}
-          </Text>
+          <Text style={styles.contentText}>{t('privacy.data_usage_text')}</Text>
 
           <Text style={styles.sectionTitle}>{t('privacy.data_sharing')}</Text>
-          <Text style={styles.contentText}>
-            {t('privacy.data_sharing_text')}
-          </Text>
+          <Text style={styles.contentText}>{t('privacy.data_sharing_text')}</Text>
 
           <Text style={styles.sectionTitle}>{t('privacy.data_security')}</Text>
-          <Text style={styles.contentText}>
-            {t('privacy.data_security_text')}
-          </Text>
+          <Text style={styles.contentText}>{t('privacy.data_security_text')}</Text>
 
           <Text style={styles.sectionTitle}>{t('privacy.user_rights')}</Text>
-          <Text style={styles.contentText}>
-            {t('privacy.user_rights_text')}
-          </Text>
+          <Text style={styles.contentText}>{t('privacy.user_rights_text')}</Text>
 
           <Text style={styles.sectionTitle}>{t('privacy.contact')}</Text>
-          <Text style={styles.contentText}>
-            {t('privacy.contact_text')}
-          </Text>
+          <Text style={styles.contentText}>{t('privacy.contact_text')}</Text>
 
           <Text style={styles.sectionTitle}>{t('privacy.changes')}</Text>
-          <Text style={styles.contentText}>
-            {t('privacy.changes_text')}
-          </Text>
+          <Text style={styles.contentText}>{t('privacy.changes_text')}</Text>
 
           <View style={styles.lastUpdated}>
             <Text style={styles.lastUpdatedText}>

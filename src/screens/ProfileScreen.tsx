@@ -83,7 +83,7 @@ export default function ProfileScreen({ navigation, route }: any) {
     try {
       const currentUser = await AuthService.getCurrentUser();
       setUser(currentUser);
-      
+
       if (currentUser) {
         // Kullanıcı istatistiklerini yükle
         await loadUserStats(currentUser.id);
@@ -101,15 +101,15 @@ export default function ProfileScreen({ navigation, route }: any) {
     try {
       // Mesaj sayısını al
       const messages = await ChatService.getChatHistory(userId);
-      
+
       // Gerçek chat session sayısını al
       const { data: sessions, error: sessionsError } = await supabase
         .from('chat_sessions')
         .select('id')
         .eq('user_id', userId);
-      
+
       const totalSessions = sessions?.length || 0;
-      
+
       setStats({
         totalMessages: messages.length,
         totalSessions: totalSessions, // Gerçek session sayısı
@@ -138,16 +138,16 @@ export default function ProfileScreen({ navigation, route }: any) {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selectedImageUri = result.assets[0].uri;
       setProfileImage(selectedImageUri);
-      
+
       // AsyncStorage'a kaydet (hızlı erişim için)
       await AsyncStorage.setItem('profileImage', selectedImageUri);
-      
+
       // Supabase'e kaydet (kalıcılık için)
       try {
         await AuthService.updateUser({
           data: {
-            avatar_url: selectedImageUri
-          }
+            avatar_url: selectedImageUri,
+          },
         });
         // Kullanıcı verisini yenile
         await loadUserData();
@@ -162,7 +162,7 @@ export default function ProfileScreen({ navigation, route }: any) {
   const loadProfileImage = async (currentUser?: User | null) => {
     try {
       const userToCheck = currentUser || user;
-      
+
       // Önce Supabase'den (user_metadata) kontrol et
       if (userToCheck?.user_metadata?.avatar_url) {
         setProfileImage(userToCheck.user_metadata.avatar_url);
@@ -170,7 +170,7 @@ export default function ProfileScreen({ navigation, route }: any) {
         await AsyncStorage.setItem('profileImage', userToCheck.user_metadata.avatar_url);
         return;
       }
-      
+
       // Fallback: AsyncStorage'dan yükle
       const storedImage = await AsyncStorage.getItem('profileImage');
       if (storedImage) {
@@ -180,8 +180,8 @@ export default function ProfileScreen({ navigation, route }: any) {
           try {
             await AuthService.updateUser({
               data: {
-                avatar_url: storedImage
-              }
+                avatar_url: storedImage,
+              },
             });
           } catch (error) {
             logger.error('Profil fotoğrafı senkronizasyon hatası:', error);
@@ -193,7 +193,6 @@ export default function ProfileScreen({ navigation, route }: any) {
     }
   };
 
-
   // Günlük sayaç hesaplama
   const calculateRelationshipDays = async () => {
     try {
@@ -202,11 +201,14 @@ export default function ProfileScreen({ navigation, route }: any) {
         const userCreatedAt = new Date(user.created_at);
         const today = new Date();
         // Bugünü de dahil et (en az 1 gün)
-        const days = Math.max(1, Math.floor((today.getTime() - userCreatedAt.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+        const days = Math.max(
+          1,
+          Math.floor((today.getTime() - userCreatedAt.getTime()) / (1000 * 60 * 60 * 24)) + 1
+        );
         setRelationshipDays(days);
         return;
       }
-      
+
       // Fallback: AsyncStorage'dan appInstallDate kullan
       const appInstallDate = await AsyncStorage.getItem('appInstallDate');
       if (!appInstallDate) {
@@ -217,7 +219,10 @@ export default function ProfileScreen({ navigation, route }: any) {
         const installDate = new Date(appInstallDate);
         const today = new Date();
         // Bugünü de dahil et (en az 1 gün)
-        const days = Math.max(1, Math.floor((today.getTime() - installDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+        const days = Math.max(
+          1,
+          Math.floor((today.getTime() - installDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+        );
         setRelationshipDays(days);
       }
     } catch (error) {
@@ -227,33 +232,29 @@ export default function ProfileScreen({ navigation, route }: any) {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      t('messages.logout_confirm_title'),
-      t('messages.logout_confirm_message'),
-      [
-        {
-          text: t('messages.cancel'),
-          style: 'cancel',
+    Alert.alert(t('messages.logout_confirm_title'), t('messages.logout_confirm_message'), [
+      {
+        text: t('messages.cancel'),
+        style: 'cancel',
+      },
+      {
+        text: t('profile.logout'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await AuthService.signOut();
+            // Giriş sayfasına yönlendir
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
+          } catch (error) {
+            logger.error('Çıkış hatası:', error);
+            Alert.alert(t('common.error'), t('profile.logout_error'));
+          }
         },
-        {
-          text: t('profile.logout'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AuthService.signOut();
-              // Giriş sayfasına yönlendir
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-              });
-            } catch (error) {
-              logger.error('Çıkış hatası:', error);
-              Alert.alert(t('common.error'), t('profile.logout_error'));
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleEditProfile = () => {
@@ -272,8 +273,8 @@ export default function ProfileScreen({ navigation, route }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -284,21 +285,21 @@ export default function ProfileScreen({ navigation, route }: any) {
               <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}>
                 <View style={styles.avatarBackground}>
                   {profileImage ? (
-                    <Image 
-                      source={{ uri: profileImage }} 
-                      style={styles.avatarImage} 
-                    />
+                    <Image source={{ uri: profileImage }} style={styles.avatarImage} />
                   ) : user?.user_metadata?.avatar_url ? (
-                    <Image 
-                      source={{ uri: user.user_metadata.avatar_url }} 
-                      style={styles.avatarImage} 
+                    <Image
+                      source={{ uri: user.user_metadata.avatar_url }}
+                      style={styles.avatarImage}
                     />
                   ) : (
                     <Text style={styles.avatarText}>
-                      {user?.user_metadata?.name ? 
-                        user.user_metadata.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 
-                        'ID'
-                      }
+                      {user?.user_metadata?.name
+                        ? user.user_metadata.name
+                            .split(' ')
+                            .map((n: string) => n[0])
+                            .join('')
+                            .toUpperCase()
+                        : 'ID'}
                     </Text>
                   )}
                 </View>
@@ -343,16 +344,16 @@ export default function ProfileScreen({ navigation, route }: any) {
               <Ionicons name="heart" size={18} color={darkTheme.colors.premium} />
             </View>
             <View style={styles.relationshipTextContainer}>
-                <Text style={styles.relationshipText}>
+              <Text style={styles.relationshipText}>
                 {relationshipDays} {t('profile.relationship')}
               </Text>
               <Text style={styles.relationshipSubtext}>
-                {stats.totalMessages} {t('profile.messages')} • {stats.totalSessions} {t('profile.active_days')}
+                {stats.totalMessages} {t('profile.messages')} • {stats.totalSessions}{' '}
+                {t('profile.active_days')}
               </Text>
             </View>
           </View>
         </View>
-
 
         {/* Duygu Grafiği (Premium) - Tertiary Content */}
         {isPremium ? (
@@ -370,16 +371,19 @@ export default function ProfileScreen({ navigation, route }: any) {
             <View style={styles.moodChart}>
               {moodData.map((item, index) => (
                 <View key={index} style={styles.moodBar}>
-                  <View 
+                  <View
                     style={[
-                      styles.moodBarFill, 
-                      { 
+                      styles.moodBarFill,
+                      {
                         height: item.value * 2,
-                        backgroundColor: item.mood === 'happy' ? darkTheme.colors.success : 
-                                       item.mood === 'neutral' ? darkTheme.colors.warning : 
-                                       darkTheme.colors.error
-                      }
-                    ]} 
+                        backgroundColor:
+                          item.mood === 'happy'
+                            ? darkTheme.colors.success
+                            : item.mood === 'neutral'
+                              ? darkTheme.colors.warning
+                              : darkTheme.colors.error,
+                      },
+                    ]}
                   />
                   <Text style={styles.moodDay}>{item.day}</Text>
                 </View>
@@ -392,12 +396,10 @@ export default function ProfileScreen({ navigation, route }: any) {
               <Ionicons name="lock-closed" size={16} color={darkTheme.colors.premium} />
               <View style={styles.premiumPromptTextContainer}>
                 <Text style={styles.premiumPromptTitle}>{t('profile.mood_analysis')}</Text>
-                <Text style={styles.premiumPromptText}>
-                  {t('profile.mood_desc')}
-                </Text>
+                <Text style={styles.premiumPromptText}>{t('profile.mood_desc')}</Text>
               </View>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.premiumPromptButton}
               activeOpacity={0.7}
               onPress={() => navigation.navigate('PremiumFeatures')}
@@ -414,9 +416,9 @@ export default function ProfileScreen({ navigation, route }: any) {
             <Text style={styles.reviewsTitle}>{t('reviews.title')}</Text>
             <Text style={styles.reviewsSubtitle}>{t('reviews.subtitle')}</Text>
           </View>
-          
-          <ScrollView 
-            horizontal 
+
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalReviewsContainer}
             style={styles.horizontalScrollView}
@@ -434,7 +436,7 @@ export default function ProfileScreen({ navigation, route }: any) {
               </View>
               <Text style={styles.reviewText}>"{t('reviews.review_1')}"</Text>
             </View>
-            
+
             <View style={styles.reviewCard}>
               <View style={styles.reviewHeader}>
                 <View style={styles.starsContainer}>
@@ -448,7 +450,7 @@ export default function ProfileScreen({ navigation, route }: any) {
               </View>
               <Text style={styles.reviewText}>"{t('reviews.review_2')}"</Text>
             </View>
-            
+
             <View style={styles.reviewCard}>
               <View style={styles.reviewHeader}>
                 <View style={styles.starsContainer}>
@@ -462,7 +464,7 @@ export default function ProfileScreen({ navigation, route }: any) {
               </View>
               <Text style={styles.reviewText}>"{t('reviews.review_3')}"</Text>
             </View>
-            
+
             <View style={styles.reviewCard}>
               <View style={styles.reviewHeader}>
                 <View style={styles.starsContainer}>
@@ -476,7 +478,7 @@ export default function ProfileScreen({ navigation, route }: any) {
               </View>
               <Text style={styles.reviewText}>"{t('reviews.review_4')}"</Text>
             </View>
-            
+
             <View style={styles.reviewCard}>
               <View style={styles.reviewHeader}>
                 <View style={styles.starsContainer}>
@@ -497,7 +499,10 @@ export default function ProfileScreen({ navigation, route }: any) {
         <View style={styles.optionsSection}>
           <Text style={styles.sectionTitle}>{t('profile.quick_access')}</Text>
           <View style={styles.optionsContainer}>
-            <TouchableOpacity style={styles.optionItem} onPress={() => navigation.navigate('ChatHistory')}>
+            <TouchableOpacity
+              style={styles.optionItem}
+              onPress={() => navigation.navigate('ChatHistory')}
+            >
               <View style={styles.optionIconContainer}>
                 <Ionicons name="time" size={18} color={darkTheme.colors.primary} />
               </View>
@@ -507,7 +512,10 @@ export default function ProfileScreen({ navigation, route }: any) {
               </View>
               <Ionicons name="chevron-forward" size={14} color={darkTheme.colors.primary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.optionItem} onPress={() => navigation.navigate('HelpSupport')}>
+            <TouchableOpacity
+              style={styles.optionItem}
+              onPress={() => navigation.navigate('HelpSupport')}
+            >
               <View style={styles.optionIconContainer}>
                 <Ionicons name="help-circle" size={18} color={darkTheme.colors.premium} />
               </View>
@@ -519,7 +527,6 @@ export default function ProfileScreen({ navigation, route }: any) {
             </TouchableOpacity>
           </View>
         </View>
-
 
         {/* App Info */}
         <View style={styles.appInfoContainer}>
@@ -962,5 +969,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontStyle: 'italic',
   },
-
 });

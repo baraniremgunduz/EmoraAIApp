@@ -10,14 +10,12 @@ export class SupabaseAnalyticsRepository implements IAnalyticsRepository {
 
   async track(event: AnalyticsEvent): Promise<void> {
     try {
-      const { error } = await this.supabase
-        .from('analytics_events')
-        .insert({
-          event_name: event.name,
-          event_data: event.properties || {},
-          user_id: event.userId || this.currentUserId,
-          timestamp: event.timestamp || new Date().toISOString(),
-        });
+      const { error } = await this.supabase.from('analytics_events').insert({
+        event_name: event.name,
+        event_data: event.properties || {},
+        user_id: event.userId || this.currentUserId,
+        timestamp: event.timestamp || new Date().toISOString(),
+      });
 
       if (error) {
         logger.error('Analytics event tracking error:', error);
@@ -44,13 +42,11 @@ export class SupabaseAnalyticsRepository implements IAnalyticsRepository {
 
   async setUserProperty(userId: string, properties: Record<string, any>): Promise<void> {
     try {
-      const { error } = await this.supabase
-        .from('analytics_user_properties')
-        .upsert({
-          user_id: userId,
-          properties,
-          updated_at: new Date().toISOString(),
-        });
+      const { error } = await this.supabase.from('analytics_user_properties').upsert({
+        user_id: userId,
+        properties,
+        updated_at: new Date().toISOString(),
+      });
 
       if (error) {
         logger.error('Set user property error:', error);
@@ -73,4 +69,3 @@ export class SupabaseAnalyticsRepository implements IAnalyticsRepository {
     logger.log('Analytics user ID cleared');
   }
 }
-

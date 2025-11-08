@@ -9,10 +9,10 @@ export class AnalyticsService {
   static async initialize(): Promise<boolean> {
     try {
       logger.log('AnalyticsService: Supabase Analytics başlatılıyor...');
-      
+
       this.isInitialized = true;
       logger.log('AnalyticsService: Supabase Analytics başarıyla başlatıldı');
-      
+
       return true;
     } catch (error) {
       logger.error('AnalyticsService başlatma hatası:', error);
@@ -24,13 +24,11 @@ export class AnalyticsService {
   static async setUserId(userId: string): Promise<void> {
     try {
       // Supabase'de analytics tablosuna kullanıcı bilgisi kaydet
-      const { error } = await supabase
-        .from('analytics_users')
-        .upsert({
-          user_id: userId,
-          updated_at: new Date().toISOString()
-        });
-      
+      const { error } = await supabase.from('analytics_users').upsert({
+        user_id: userId,
+        updated_at: new Date().toISOString(),
+      });
+
       if (error) throw error;
       logger.log('AnalyticsService: Kullanıcı kimliği ayarlandı:', userId);
     } catch (error) {
@@ -41,13 +39,11 @@ export class AnalyticsService {
   // Kullanıcı özelliklerini ayarla
   static async setUserProperties(properties: Record<string, string>): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('analytics_user_properties')
-        .upsert({
-          properties: properties,
-          updated_at: new Date().toISOString()
-        });
-      
+      const { error } = await supabase.from('analytics_user_properties').upsert({
+        properties: properties,
+        updated_at: new Date().toISOString(),
+      });
+
       if (error) throw error;
       logger.log('AnalyticsService: Kullanıcı özellikleri ayarlandı:', properties);
     } catch (error) {
@@ -58,17 +54,15 @@ export class AnalyticsService {
   // Ekran görüntüleme olayı
   static async logScreenView(screenName: string, screenClass?: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('analytics_events')
-        .insert({
-          event_name: 'screen_view',
-          event_data: {
-            screen_name: screenName,
-            screen_class: screenClass || screenName,
-          },
-          timestamp: new Date().toISOString()
-        });
-      
+      const { error } = await supabase.from('analytics_events').insert({
+        event_name: 'screen_view',
+        event_data: {
+          screen_name: screenName,
+          screen_class: screenClass || screenName,
+        },
+        timestamp: new Date().toISOString(),
+      });
+
       if (error) throw error;
       logger.log('AnalyticsService: Ekran görüntüleme loglandı:', screenName);
     } catch (error) {
@@ -79,14 +73,12 @@ export class AnalyticsService {
   // Özel olay logla
   static async logEvent(eventName: string, parameters?: Record<string, any>): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('analytics_events')
-        .insert({
-          event_name: eventName,
-          event_data: parameters || {},
-          timestamp: new Date().toISOString()
-        });
-      
+      const { error } = await supabase.from('analytics_events').insert({
+        event_name: eventName,
+        event_data: parameters || {},
+        timestamp: new Date().toISOString(),
+      });
+
       if (error) throw error;
       logger.log('AnalyticsService: Özel olay loglandı:', eventName, parameters);
     } catch (error) {
@@ -171,17 +163,15 @@ export class AnalyticsService {
   static async logError(error: Error, context?: string): Promise<void> {
     try {
       // Supabase'e hata bilgisi kaydet
-      const { error: insertError } = await supabase
-        .from('analytics_errors')
-        .insert({
-          error_message: error.message,
-          error_stack: error.stack,
-          context: context || 'unknown',
-          timestamp: new Date().toISOString(),
-        });
-      
+      const { error: insertError } = await supabase.from('analytics_errors').insert({
+        error_message: error.message,
+        error_stack: error.stack,
+        context: context || 'unknown',
+        timestamp: new Date().toISOString(),
+      });
+
       if (insertError) throw insertError;
-      
+
       logger.log('AnalyticsService: Hata loglandı:', error.message);
     } catch (logError) {
       logger.error('Hata loglama hatası:', logError);

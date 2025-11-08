@@ -45,19 +45,23 @@ export class ChatService {
   // Mesajdan dil algılama fonksiyonu - refactored
   private detectLanguageFromMessage(message: string): string | null {
     const text = message.toLowerCase();
-    
+
     // Merkezi pattern config'inden dil algılama
     for (const langPattern of LANGUAGE_PATTERNS) {
       if (langPattern.patterns.some(pattern => pattern.test(text))) {
         return langPattern.code;
       }
     }
-    
+
     return null; // Dil algılanamadı
   }
 
   // Yeni mesaj gönder ve AI'dan cevap al
-  async sendMessage(content: string, userId: string, conversationHistory?: Message[]): Promise<Message> {
+  async sendMessage(
+    content: string,
+    userId: string,
+    conversationHistory?: Message[]
+  ): Promise<Message> {
     try {
       // Kullanıcı mesajını oluştur
       const userMessage: Message = {
@@ -70,7 +74,7 @@ export class ChatService {
 
       // AI'dan cevap al (conversation history ile)
       const aiResponse = await this.getAIResponse(content, userId, conversationHistory);
-      
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: aiResponse,
@@ -90,7 +94,11 @@ export class ChatService {
   }
 
   // Backend Edge Function ile AI'dan cevap al
-  private async getAIResponse(userMessage: string, userId?: string, conversationHistory?: Message[]): Promise<string> {
+  private async getAIResponse(
+    userMessage: string,
+    userId?: string,
+    conversationHistory?: Message[]
+  ): Promise<string> {
     try {
       // Auth kontrolü - kullanıcı oturum açmış mı?
       const user = await this.authRepository.getCurrentUser();
@@ -100,8 +108,8 @@ export class ChatService {
         return await this.chatRepository.getFallbackResponse(userMessage);
       }
 
-      const userLanguage = await AsyncStorage.getItem('appLanguage') || 'tr';
-      const aiPersonality = await AsyncStorage.getItem('aiPersonality') || 'friendly';
+      const userLanguage = (await AsyncStorage.getItem('appLanguage')) || 'tr';
+      const aiPersonality = (await AsyncStorage.getItem('aiPersonality')) || 'friendly';
 
       // Kullanıcı mesajından dil algılama
       const detectedLanguage = this.detectLanguageFromMessage(userMessage);
@@ -117,23 +125,24 @@ export class ChatService {
       let recentMessages: Message[] = [];
       if (conversationHistory && conversationHistory.length > 0) {
         // State'teki mesajları kullan (welcome mesajını ve boş mesajları hariç tut)
-        const filteredMessages = conversationHistory.filter(msg => 
-          msg.id !== 'welcome' && 
-          msg.content && 
-          msg.content.trim() !== '' && 
-          msg.role && 
-          (msg.role === 'user' || msg.role === 'assistant')
+        const filteredMessages = conversationHistory.filter(
+          msg =>
+            msg.id !== 'welcome' &&
+            msg.content &&
+            msg.content.trim() !== '' &&
+            msg.role &&
+            (msg.role === 'user' || msg.role === 'assistant')
         );
-        
+
         // Son mesajı çıkar (yeni kullanıcı mesajı)
         const messagesWithoutLast = filteredMessages.slice(0, -1);
-        
+
         // Token limitine göre mesajları filtrele
         const messagesForTokenCount = messagesWithoutLast.map(msg => ({
           content: msg.content,
-          role: msg.role
+          role: msg.role,
         }));
-        
+
         recentMessages = TokenCounter.filterMessagesByTokenLimit(
           messagesForTokenCount,
           AVAILABLE_TOKENS
@@ -147,13 +156,13 @@ export class ChatService {
       } else {
         // Fallback: veritabanından al (daha fazla mesaj al, sonra token limitine göre filtrele)
         const allRecentMessages = await this.messageRepository.findRecentByUserId(userId || '', 50);
-        
+
         // Token limitine göre filtrele
         const messagesForTokenCount = allRecentMessages.map(msg => ({
           content: msg.content,
-          role: msg.role
+          role: msg.role,
         }));
-        
+
         recentMessages = TokenCounter.filterMessagesByTokenLimit(
           messagesForTokenCount,
           AVAILABLE_TOKENS
@@ -164,13 +173,13 @@ export class ChatService {
           return allRecentMessages[originalIndex >= 0 ? originalIndex : index];
         });
       }
-      
+
       // Token kullanımını logla (debug için)
       TokenCounter.logTokenUsage(
         recentMessages.map(msg => ({ content: msg.content, role: msg.role })),
         'Context window'
       );
-      
+
       // Kullanıcı tercihlerini al
       const userPreferences = await this.getUserPreferences(userId || '');
 
@@ -181,18 +190,24 @@ export class ChatService {
       const messages = [
         {
           role: 'system' as const,
-          content: systemPrompt
+          content: systemPrompt,
         },
         ...recentMessages
-          .filter(msg => msg.content && msg.content.trim() !== '' && msg.role && (msg.role === 'user' || msg.role === 'assistant'))
+          .filter(
+            msg =>
+              msg.content &&
+              msg.content.trim() !== '' &&
+              msg.role &&
+              (msg.role === 'user' || msg.role === 'assistant')
+          )
           .map(msg => ({
             role: msg.role as 'user' | 'assistant',
-            content: msg.content.trim()
+            content: msg.content.trim(),
           })),
         {
           role: 'user' as const,
-          content: userMessage.trim()
-        }
+          content: userMessage.trim(),
+        },
       ];
 
       // Debug log
@@ -211,19 +226,21 @@ export class ChatService {
             maxRetries: 3,
             delay: 1000,
             backoff: true,
-            retryCondition: (error) => {
-              return error?.message?.includes('network') || 
-                     error?.message?.includes('fetch') ||
-                     error?.message?.includes('timeout') ||
-                     error?.message?.includes('Network request failed') ||
-                     error?.code === 'NETWORK_ERROR' ||
-                     error?.code === 'ECONNABORTED' ||
-                     error?.code === 'ETIMEDOUT';
-            }
+            retryCondition: error => {
+              return (
+                error?.message?.includes('network') ||
+                error?.message?.includes('fetch') ||
+                error?.message?.includes('timeout') ||
+                error?.message?.includes('Network request failed') ||
+                error?.code === 'NETWORK_ERROR' ||
+                error?.code === 'ECONNABORTED' ||
+                error?.code === 'ETIMEDOUT'
+              );
+            },
           }
         );
 
-        return aiResponse || await this.chatRepository.getFallbackResponse(userMessage);
+        return aiResponse || (await this.chatRepository.getFallbackResponse(userMessage));
       } catch (error) {
         logger.error('Backend chat function hatası:', error);
         return await this.chatRepository.getFallbackResponse(userMessage);
@@ -240,7 +257,7 @@ export class ChatService {
   private async getUserPreferences(userId: string): Promise<UserPreferences> {
     try {
       const preferences = await AsyncStorage.getItem(`userPreferences_${userId}`);
-      return preferences ? JSON.parse(preferences) as UserPreferences : {};
+      return preferences ? (JSON.parse(preferences) as UserPreferences) : {};
     } catch (error) {
       logger.error('Kullanıcı tercihleri alma hatası:', error);
       return {};
@@ -248,10 +265,14 @@ export class ChatService {
   }
 
   // Gelişmiş system prompt oluştur - refactored
-  private createSystemPrompt(language: string, personality: string, userPreferences: UserPreferences = {}): string {
+  private createSystemPrompt(
+    language: string,
+    personality: string,
+    userPreferences: UserPreferences = {}
+  ): string {
     // Kısıtlı konular metnini al
     const restrictedTopicsText = getRestrictedTopicsText(language);
-    
+
     // Merkezi prompt generator kullan
     return createSystemPrompt(
       personality,
@@ -306,7 +327,11 @@ export class ChatService {
   }
 
   // Static methods for backward compatibility
-  static async sendMessage(content: string, userId: string, conversationHistory?: Message[]): Promise<Message> {
+  static async sendMessage(
+    content: string,
+    userId: string,
+    conversationHistory?: Message[]
+  ): Promise<Message> {
     return ChatService.getInstance().sendMessage(content, userId, conversationHistory);
   }
 

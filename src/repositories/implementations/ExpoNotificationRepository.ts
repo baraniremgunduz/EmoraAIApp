@@ -12,13 +12,13 @@ export class ExpoNotificationRepository implements INotificationRepository {
     try {
       const { status } = await Notifications.requestPermissionsAsync();
       const granted = status === 'granted';
-      
+
       if (granted) {
         logger.log('Notification permission granted');
       } else {
         logger.warn('Notification permission denied');
       }
-      
+
       return granted;
     } catch (error) {
       logger.error('Request notification permission error:', error);
@@ -46,11 +46,12 @@ export class ExpoNotificationRepository implements INotificationRepository {
     }
   }
 
-  async scheduleNotification(notification: NotificationData, trigger: Date | number): Promise<string> {
+  async scheduleNotification(
+    notification: NotificationData,
+    trigger: Date | number
+  ): Promise<string> {
     try {
-      const triggerConfig = typeof trigger === 'number' 
-        ? { seconds: trigger }
-        : { date: trigger };
+      const triggerConfig = typeof trigger === 'number' ? { seconds: trigger } : { date: trigger };
 
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
@@ -103,7 +104,7 @@ export class ExpoNotificationRepository implements INotificationRepository {
 
   addNotificationListener(callback: (notification: any) => void): () => void {
     const subscription = Notifications.addNotificationReceivedListener(callback);
-    
+
     this.listeners.push(() => {
       subscription.remove();
     });
@@ -114,4 +115,3 @@ export class ExpoNotificationRepository implements INotificationRepository {
     };
   }
 }
-

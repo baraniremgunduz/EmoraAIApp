@@ -65,10 +65,10 @@ export const usePremium = () => {
   // Belirli bir özelliği kullanabilir mi kontrol et
   const canUseFeature = (featureId: string): boolean => {
     if (premiumContext.isPremium) return true;
-    
+
     const feature = PREMIUM_FEATURES.find(f => f.id === featureId);
     if (!feature) return true; // Bilinmeyen özellikler için varsayılan olarak izin ver
-    
+
     return !feature.requiresPremium;
   };
 

@@ -42,7 +42,7 @@ describe('AuthService', () => {
     it('should sign in successfully', async () => {
       const mockUser = { id: 'user1', email: 'test@example.com' } as User;
       const mockSession = { access_token: 'token123' };
-      
+
       mockAuthRepository.signInWithPassword.mockResolvedValue({
         user: mockUser,
         session: mockSession,
@@ -60,12 +60,12 @@ describe('AuthService', () => {
 
     it('should throw error on failed sign in', async () => {
       const mockError = new Error('Invalid credentials');
-      
+
       mockAuthRepository.signInWithPassword.mockRejectedValue(mockError);
 
-      await expect(
-        authService.signIn('test@example.com', 'wrongpassword')
-      ).rejects.toThrow('Invalid credentials');
+      await expect(authService.signIn('test@example.com', 'wrongpassword')).rejects.toThrow(
+        'Invalid credentials'
+      );
     });
   });
 
@@ -73,7 +73,7 @@ describe('AuthService', () => {
     it('should sign up successfully', async () => {
       const mockUser = { id: 'user1', email: 'test@example.com' } as User;
       const mockSession = { access_token: 'token123' };
-      
+
       mockAuthRepository.signUp.mockResolvedValue({
         user: mockUser,
         session: mockSession,
@@ -83,16 +83,14 @@ describe('AuthService', () => {
 
       expect(result.user).toEqual(mockUser);
       expect(result.session).toEqual(mockSession);
-      expect(mockAuthRepository.signUp).toHaveBeenCalledWith(
-        'test@example.com',
-        'password123',
-        { name: 'Test User' }
-      );
+      expect(mockAuthRepository.signUp).toHaveBeenCalledWith('test@example.com', 'password123', {
+        name: 'Test User',
+      });
     });
 
     it('should sign up without name', async () => {
       const mockUser = { id: 'user1', email: 'test@example.com' } as User;
-      
+
       mockAuthRepository.signUp.mockResolvedValue({
         user: mockUser,
         session: null,
@@ -100,11 +98,9 @@ describe('AuthService', () => {
 
       await authService.signUp('test@example.com', 'password123');
 
-      expect(mockAuthRepository.signUp).toHaveBeenCalledWith(
-        'test@example.com',
-        'password123',
-        { name: '' }
-      );
+      expect(mockAuthRepository.signUp).toHaveBeenCalledWith('test@example.com', 'password123', {
+        name: '',
+      });
     });
   });
 
@@ -121,7 +117,7 @@ describe('AuthService', () => {
   describe('getCurrentUser', () => {
     it('should return user when authenticated', async () => {
       const mockUser = { id: 'user1', email: 'test@example.com' } as User;
-      
+
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
 
       const result = await authService.getCurrentUser();
@@ -142,7 +138,7 @@ describe('AuthService', () => {
     it('should subscribe to auth state changes', () => {
       const callback = jest.fn();
       const unsubscribe = jest.fn();
-      
+
       mockAuthRepository.onAuthStateChange.mockReturnValue(unsubscribe);
 
       const result = authService.onAuthStateChange(callback);
@@ -205,7 +201,7 @@ describe('AuthService', () => {
       (container.getAuthRepository as jest.Mock).mockReturnValue(mockAuthRepository);
 
       const mockUser = { id: 'user1', email: 'test@example.com' } as User;
-      
+
       mockAuthRepository.getCurrentUser.mockResolvedValue(mockUser);
 
       // Reset singleton instance

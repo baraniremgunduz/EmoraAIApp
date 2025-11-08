@@ -1,13 +1,6 @@
 // Loading ekranı - Uygulama başlangıcında güzel animasyon
 import React, { useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Animated,
-  Dimensions,
-  Easing,
-} from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { darkTheme } from '../utils/theme';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -44,7 +37,7 @@ export default function LoadingScreen({ onFinish }: LoadingScreenProps) {
           useNativeDriver: true,
         }),
       ]),
-      
+
       // Rotate animasyonu
       Animated.timing(rotateAnim, {
         toValue: 1,
@@ -52,7 +45,7 @@ export default function LoadingScreen({ onFinish }: LoadingScreenProps) {
         easing: Easing.inOut(Easing.cubic),
         useNativeDriver: true,
       }),
-      
+
       // Pulse animasyonu
       Animated.loop(
         Animated.sequence([
@@ -71,7 +64,7 @@ export default function LoadingScreen({ onFinish }: LoadingScreenProps) {
         ]),
         { iterations: 2 }
       ),
-      
+
       // Text fade in
       Animated.timing(textFadeAnim, {
         toValue: 1,
@@ -100,17 +93,14 @@ export default function LoadingScreen({ onFinish }: LoadingScreenProps) {
     <View style={styles.container}>
       {/* Arka plan gradient efekti */}
       <View style={styles.backgroundGradient} />
-      
+
       {/* Ana logo ve animasyon */}
       <Animated.View
         style={[
           styles.logoContainer,
           {
             opacity: fadeAnim,
-            transform: [
-              { scale: scaleAnim },
-              { rotate: rotateInterpolate },
-            ],
+            transform: [{ scale: scaleAnim }, { rotate: rotateInterpolate }],
           },
         ]}
       >
@@ -122,11 +112,7 @@ export default function LoadingScreen({ onFinish }: LoadingScreenProps) {
             },
           ]}
         >
-          <Ionicons 
-            name="chatbubbles" 
-            size={80} 
-            color={darkTheme.colors.primary} 
-          />
+          <Ionicons name="chatbubbles" size={80} color={darkTheme.colors.primary} />
         </Animated.View>
       </Animated.View>
 
@@ -136,10 +122,14 @@ export default function LoadingScreen({ onFinish }: LoadingScreenProps) {
           styles.titleContainer,
           {
             opacity: fadeAnim,
-            transform: [{ translateY: fadeAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [30, 0],
-            })}],
+            transform: [
+              {
+                translateY: fadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [30, 0],
+                }),
+              },
+            ],
           },
         ]}
       >

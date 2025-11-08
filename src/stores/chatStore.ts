@@ -11,7 +11,7 @@ interface ChatState {
   isLoading: boolean;
   isSending: boolean;
   error: string | null;
-  
+
   // Actions
   sendMessage: (content: string, userId: string) => Promise<Message | null>;
   loadSession: (sessionId: string, userId: string) => Promise<void>;
@@ -33,10 +33,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   sendMessage: async (content: string, userId: string) => {
     try {
       set({ isSending: true, error: null });
-      
+
       const currentMessages = get().messages;
       const aiMessage = await ChatService.sendMessage(content, userId, currentMessages);
-      
+
       // Mesajları state'e ekle
       const userMessage: Message = {
         id: Date.now().toString(),
@@ -45,13 +45,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         timestamp: new Date().toISOString(),
         user_id: userId,
       };
-      
-      set((state) => ({
+
+      set(state => ({
         messages: [...state.messages, userMessage, aiMessage],
         isSending: false,
         error: null,
       }));
-      
+
       logger.log('Message sent successfully');
       return aiMessage;
     } catch (error: any) {
@@ -68,16 +68,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loadSession: async (sessionId: string, userId: string) => {
     try {
       set({ isLoading: true, error: null });
-      
+
       const messages = await ChatService.loadSessionMessages(sessionId, userId);
-      
+
       set({
         messages,
         currentSessionId: sessionId,
         isLoading: false,
         error: null,
       });
-      
+
       logger.log(`Session loaded: ${sessionId} with ${messages.length} messages`);
     } catch (error: any) {
       const errorMessage = error.message || 'Session yüklenirken bir hata oluştu';
@@ -93,10 +93,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loadSessions: async (userId: string) => {
     try {
       set({ isLoading: true });
-      
+
       // ChatHistoryScreen'deki repository kullanılabilir
       // Şimdilik boş bırakıyoruz, ChatHistoryScreen kendi yüklemesini yapıyor
-      
+
       set({ isLoading: false });
     } catch (error: any) {
       set({
@@ -116,7 +116,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   addMessage: (message: Message) => {
-    set((state) => ({
+    set(state => ({
       messages: [...state.messages, message],
     }));
   },
@@ -129,4 +129,3 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ error: null });
   },
 }));
-

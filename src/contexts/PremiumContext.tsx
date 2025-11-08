@@ -39,9 +39,11 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
   const checkPremiumStatus = async () => {
     try {
       setIsLoading(true);
-      
+
       // Mevcut kullanıcıyı al
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         setIsPremium(false);
         setSubscription(null);
@@ -66,12 +68,12 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
 
       if (premiumData && premiumData.length > 0) {
         const activeSubscription = premiumData[0];
-        
+
         // Süre kontrolü (abonelikler için)
         if (activeSubscription.expires_at) {
           const expiresAt = new Date(activeSubscription.expires_at);
           const now = new Date();
-          
+
           if (expiresAt > now) {
             setIsPremium(true);
             setSubscription(activeSubscription);
@@ -107,30 +109,33 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
   // IAP ile Supabase'i senkronize et
   const syncIAPWithSupabase = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // IAP'dan aktif satın almaları al
       const purchases = await PurchaseService.getAvailablePurchases();
-      const premiumPurchases = purchases.filter(purchase => 
+      const premiumPurchases = purchases.filter(purchase =>
         Object.values(PurchaseService.PRODUCT_IDS).includes(purchase.productId)
       );
 
       if (premiumPurchases.length > 0) {
         const latestPurchase = premiumPurchases[0];
-        
+
         // Supabase'e kaydet
-        const { error } = await supabase
-          .from('premium_subscriptions')
-          .insert({
-            user_id: user.id,
-            product_id: latestPurchase.productId,
-            purchase_token: latestPurchase.transactionReceipt,
-            is_active: true,
-            expires_at: latestPurchase.originalTransactionDateIOS ? 
-              new Date(new Date(latestPurchase.originalTransactionDateIOS).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString() : 
-              null // Ömür boyu
-          });
+        const { error } = await supabase.from('premium_subscriptions').insert({
+          user_id: user.id,
+          product_id: latestPurchase.productId,
+          purchase_token: latestPurchase.transactionReceipt,
+          is_active: true,
+          expires_at: latestPurchase.originalTransactionDateIOS
+            ? new Date(
+                new Date(latestPurchase.originalTransactionDateIOS).getTime() +
+                  365 * 24 * 60 * 60 * 1000
+              ).toISOString()
+            : null, // Ömür boyu
+        });
 
         if (!error) {
           await checkPremiumStatus();
@@ -144,19 +149,19 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
   // Premium'u aktifleştir
   const activatePremium = async (purchaseData: any) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Supabase'e kaydet
-      const { error } = await supabase
-        .from('premium_subscriptions')
-        .insert({
-          user_id: user.id,
-          product_id: purchaseData.productId,
-          purchase_token: purchaseData.transactionReceipt,
-          is_active: true,
-          expires_at: purchaseData.expiresAt || null
-        });
+      const { error } = await supabase.from('premium_subscriptions').insert({
+        user_id: user.id,
+        product_id: purchaseData.productId,
+        purchase_token: purchaseData.transactionReceipt,
+        is_active: true,
+        expires_at: purchaseData.expiresAt || null,
+      });
 
       if (!error) {
         // Local storage'a kaydet
@@ -171,7 +176,9 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
   // Premium'u pasifleştir
   const deactivatePremium = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Supabase'de pasif yap
@@ -211,11 +218,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
     refreshPremiumStatus,
   };
 
-  return (
-    <PremiumContext.Provider value={value}>
-      {children}
-    </PremiumContext.Provider>
-  );
+  return <PremiumContext.Provider value={value}>{children}</PremiumContext.Provider>;
 };
 
 export const usePremium = (): PremiumContextType => {

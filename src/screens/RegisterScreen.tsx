@@ -16,7 +16,11 @@ import { AuthService } from '../services/authService';
 import GlassInput from '../components/GlassInput';
 import GlassButton from '../components/GlassButton';
 import { useLanguage } from '../contexts/LanguageContext';
-import { validatePassword, getPasswordStrengthText, getPasswordStrengthColor } from '../utils/passwordValidator';
+import {
+  validatePassword,
+  getPasswordStrengthText,
+  getPasswordStrengthColor,
+} from '../utils/passwordValidator';
 
 export default function RegisterScreen({ navigation }: any) {
   const { t } = useLanguage();
@@ -25,7 +29,9 @@ export default function RegisterScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong' | null>(null);
+  const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong' | null>(
+    null
+  );
 
   const validateForm = () => {
     if (!name.trim()) {
@@ -40,7 +46,7 @@ export default function RegisterScreen({ navigation }: any) {
       Alert.alert(t('messages.error'), t('auth.invalid_email'));
       return false;
     }
-    
+
     // Güçlü şifre validasyonu
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
@@ -48,14 +54,14 @@ export default function RegisterScreen({ navigation }: any) {
       Alert.alert(t('messages.error'), `Şifre gereksinimleri:\n\n${errorMessage}`);
       return false;
     }
-    
+
     if (password !== confirmPassword) {
       Alert.alert(t('messages.error'), t('auth.password_mismatch'));
       return false;
     }
     return true;
   };
-  
+
   // Şifre değiştiğinde güçlülük kontrolü
   const handlePasswordChange = (text: string) => {
     setPassword(text);
@@ -73,18 +79,17 @@ export default function RegisterScreen({ navigation }: any) {
     setIsLoading(true);
     try {
       await AuthService.signUp(email.trim(), password, name.trim());
-      Alert.alert(
-        t('alert.registration_success'),
-        t('alert.registration_success_message'),
-        [
-          {
-            text: t('common.ok'),
-            onPress: () => navigation.navigate('Login'),
-          },
-        ]
-      );
+      Alert.alert(t('alert.registration_success'), t('alert.registration_success_message'), [
+        {
+          text: t('common.ok'),
+          onPress: () => navigation.navigate('Login'),
+        },
+      ]);
     } catch (error: any) {
-      Alert.alert(t('alert.registration_error'), error.message || t('alert.registration_error_message'));
+      Alert.alert(
+        t('alert.registration_error'),
+        error.message || t('alert.registration_error_message')
+      );
     } finally {
       setIsLoading(false);
     }
@@ -148,20 +153,27 @@ export default function RegisterScreen({ navigation }: any) {
                   {passwordStrength && (
                     <View style={styles.passwordStrengthContainer}>
                       <View style={styles.passwordStrengthBar}>
-                        <View 
+                        <View
                           style={[
-                            styles.passwordStrengthFill, 
-                            { 
-                              width: passwordStrength === 'weak' ? '33%' : passwordStrength === 'medium' ? '66%' : '100%',
-                              backgroundColor: getPasswordStrengthColor(passwordStrength)
-                            }
-                          ]} 
+                            styles.passwordStrengthFill,
+                            {
+                              width:
+                                passwordStrength === 'weak'
+                                  ? '33%'
+                                  : passwordStrength === 'medium'
+                                    ? '66%'
+                                    : '100%',
+                              backgroundColor: getPasswordStrengthColor(passwordStrength),
+                            },
+                          ]}
                         />
                       </View>
-                      <Text style={[
-                        styles.passwordStrengthText,
-                        { color: getPasswordStrengthColor(passwordStrength) }
-                      ]}>
+                      <Text
+                        style={[
+                          styles.passwordStrengthText,
+                          { color: getPasswordStrengthColor(passwordStrength) },
+                        ]}
+                      >
                         Şifre Güçlülüğü: {getPasswordStrengthText(passwordStrength)}
                       </Text>
                     </View>

@@ -37,13 +37,13 @@ export class ErrorBoundary extends Component<Props, State> {
     // Hata loglama
     logger.error('ErrorBoundary caught an error:', error);
     logger.error('Error Info:', errorInfo);
-    
+
     // Sentry'ye gönder
     captureException(error, {
       errorInfo: errorInfo.componentStack,
       errorBoundary: true,
     });
-    
+
     this.setState({
       error,
       errorInfo,
@@ -74,20 +74,15 @@ export class ErrorBoundary extends Component<Props, State> {
               <Text style={styles.errorMessage}>
                 {this.state.error?.message || 'Bilinmeyen bir hata oluştu'}
               </Text>
-              
+
               {__DEV__ && this.state.errorInfo && (
                 <View style={styles.errorDetails}>
                   <Text style={styles.errorDetailsTitle}>Hata Detayları (Development):</Text>
-                  <Text style={styles.errorDetailsText}>
-                    {this.state.errorInfo.componentStack}
-                  </Text>
+                  <Text style={styles.errorDetailsText}>{this.state.errorInfo.componentStack}</Text>
                 </View>
               )}
-              
-              <TouchableOpacity
-                style={styles.resetButton}
-                onPress={this.handleReset}
-              >
+
+              <TouchableOpacity style={styles.resetButton} onPress={this.handleReset}>
                 <Text style={styles.resetButtonText}>Tekrar Dene</Text>
               </TouchableOpacity>
             </View>
@@ -164,4 +159,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

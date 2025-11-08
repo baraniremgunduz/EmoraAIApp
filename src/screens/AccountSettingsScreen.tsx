@@ -66,8 +66,8 @@ export default function AccountSettingsScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -96,7 +96,9 @@ export default function AccountSettingsScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
           <Text style={styles.heroTitle}>Hesap Ayarları</Text>
-          <Text style={styles.heroSubtitle}>Profil bilgilerinizi güncelleyin ve güvenliğinizi artırın</Text>
+          <Text style={styles.heroSubtitle}>
+            Profil bilgilerinizi güncelleyin ve güvenliğinizi artırın
+          </Text>
         </View>
 
         {/* Profile Info - Modern Card */}
@@ -194,10 +196,12 @@ export default function AccountSettingsScreen({ navigation }: any) {
             <Text style={styles.sectionTitle}>Güvenlik Durumu</Text>
             <Text style={styles.sectionSubtitle}>Hesabınızın güvenlik durumu</Text>
           </View>
-          
+
           <View style={styles.securityCards}>
             <View style={styles.securityCard}>
-              <View style={[styles.securityIcon, { backgroundColor: darkTheme.colors.success + '20' }]}>
+              <View
+                style={[styles.securityIcon, { backgroundColor: darkTheme.colors.success + '20' }]}
+              >
                 <Ionicons name="shield-checkmark" size={24} color={darkTheme.colors.success} />
               </View>
               <View style={styles.securityContent}>
@@ -208,9 +212,11 @@ export default function AccountSettingsScreen({ navigation }: any) {
                 <Ionicons name="checkmark" size={12} color="white" />
               </View>
             </View>
-            
+
             <View style={styles.securityCard}>
-              <View style={[styles.securityIcon, { backgroundColor: darkTheme.colors.primary + '20' }]}>
+              <View
+                style={[styles.securityIcon, { backgroundColor: darkTheme.colors.primary + '20' }]}
+              >
                 <Ionicons name="lock-closed" size={24} color={darkTheme.colors.primary} />
               </View>
               <View style={styles.securityContent}>
@@ -223,7 +229,9 @@ export default function AccountSettingsScreen({ navigation }: any) {
             </View>
 
             <View style={styles.securityCard}>
-              <View style={[styles.securityIcon, { backgroundColor: darkTheme.colors.premium + '20' }]}>
+              <View
+                style={[styles.securityIcon, { backgroundColor: darkTheme.colors.premium + '20' }]}
+              >
                 <Ionicons name="eye-off" size={24} color={darkTheme.colors.premium} />
               </View>
               <View style={styles.securityContent}>
@@ -252,7 +260,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 100, // Bottom navigation için boşluk
   },
-  
+
   // Modern Header
   header: {
     flexDirection: 'row',

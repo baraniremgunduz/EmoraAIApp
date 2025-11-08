@@ -44,7 +44,7 @@ const mockAuthRepository: jest.Mocked<IAuthRepository> = {
 describe('Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock container
     container.setMessageRepository(mockMessageRepository);
     container.setChatRepository(mockChatRepository);
@@ -192,7 +192,7 @@ describe('Integration Tests', () => {
       });
 
       const chatService = new ChatService();
-      
+
       // Create session
       const session = await mockSessionRepository.create(userId, 'New Chat');
       expect(session).toEqual(mockSession);
@@ -213,10 +213,10 @@ describe('Integration Tests', () => {
       mockMessageRepository.findBySessionId.mockRejectedValue(error);
 
       const chatService = new ChatService();
-      
-      await expect(
-        chatService.loadSessionMessages('session-id', 'user-id')
-      ).rejects.toThrow('Repository error');
+
+      await expect(chatService.loadSessionMessages('session-id', 'user-id')).rejects.toThrow(
+        'Repository error'
+      );
     });
 
     it('should handle auth repository errors', async () => {
@@ -224,11 +224,10 @@ describe('Integration Tests', () => {
       mockAuthRepository.signInWithPassword.mockRejectedValue(error);
 
       const authService = new AuthService();
-      
-      await expect(
-        authService.signIn('test@example.com', 'password')
-      ).rejects.toThrow('Auth error');
+
+      await expect(authService.signIn('test@example.com', 'password')).rejects.toThrow(
+        'Auth error'
+      );
     });
   });
 });
-

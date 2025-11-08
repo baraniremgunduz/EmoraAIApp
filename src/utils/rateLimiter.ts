@@ -18,8 +18,10 @@ const RATE_LIMIT_CONFIG = {
 const rateLimitStates = new Map<string, RateLimitState>();
 
 // Rate limit kontrolü
-export const checkRateLimit = (userId: string): { 
-  allowed: boolean; 
+export const checkRateLimit = (
+  userId: string
+): {
+  allowed: boolean;
   error?: string;
   waitTime?: number; // Bekleme süresi (ms)
 } => {
@@ -75,4 +77,3 @@ export const clearRateLimit = (userId: string): void => {
 export const clearAllRateLimits = (): void => {
   rateLimitStates.clear();
 };
-

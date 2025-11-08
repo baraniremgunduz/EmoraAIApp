@@ -70,9 +70,7 @@ describe('ChatScreen', () => {
   });
 
   it('should render chat screen', () => {
-    const { getByText } = render(
-      <ChatScreen navigation={mockNavigation} route={mockRoute} />
-    );
+    const { getByText } = render(<ChatScreen navigation={mockNavigation} route={mockRoute} />);
 
     expect(getByText('Emora AI')).toBeTruthy();
   });
@@ -159,9 +157,7 @@ describe('ChatScreen', () => {
 
     mockChatService.loadSessionMessages = jest.fn().mockResolvedValue(mockMessages);
 
-    const { getByTestId } = render(
-      <ChatScreen navigation={mockNavigation} route={mockRoute} />
-    );
+    const { getByTestId } = render(<ChatScreen navigation={mockNavigation} route={mockRoute} />);
 
     await waitFor(() => {
       const exportButton = getByTestId('export-button');
@@ -172,4 +168,3 @@ describe('ChatScreen', () => {
     // Note: This test may need adjustment based on actual implementation
   });
 });
-

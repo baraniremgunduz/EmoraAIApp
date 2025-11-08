@@ -75,7 +75,7 @@ export class PurchaseService {
   static async initialize(): Promise<boolean> {
     try {
       console.log('PurchaseService: Gerçek IAP bağlantısı başlatılıyor...');
-      
+
       const result = await initConnection();
       if (result) {
         this.setupPurchaseListeners();
@@ -86,7 +86,10 @@ export class PurchaseService {
       return false;
     } catch (error: any) {
       // Simülatörde veya IAP mevcut olmadığında bu hata normal
-      if (error?.code === 'E_IAP_NOT_AVAILABLE' || error?.message?.includes('E_IAP_NOT_AVAILABLE')) {
+      if (
+        error?.code === 'E_IAP_NOT_AVAILABLE' ||
+        error?.message?.includes('E_IAP_NOT_AVAILABLE')
+      ) {
         console.log('PurchaseService: IAP mevcut değil (simülatör veya test ortamı)');
         return false;
       }
@@ -99,55 +102,51 @@ export class PurchaseService {
   // Satın alma dinleyicilerini kur (Gerçek App Store/Google Play)
   private static setupPurchaseListeners() {
     console.log('PurchaseService: Gerçek satın alma dinleyicileri kuruluyor...');
-    
-    this.purchaseUpdateSubscription = purchaseUpdatedListener(
-      async (purchase: Purchase) => {
-        console.log('PurchaseService: Satın alma güncellendi:', purchase);
-        
-        try {
-          // Receipt doğrulama
-          const receipt = await validateReceiptIos({
-            'receipt-data': purchase.transactionReceipt,
-            password: process.env.APP_STORE_SHARED_SECRET || 'YOUR_APP_STORE_SHARED_SECRET',
-          });
-          
-          if (receipt.status === 0) {
-            // Satın alma başarılı - Premium'u aktifleştir
-            await this.activatePremiumFromPurchase(purchase);
-            await finishTransaction({ purchase, isConsumable: false });
-            console.log('PurchaseService: Satın alma tamamlandı ve premium aktifleştirildi');
-          }
-        } catch (error) {
-          console.error('Receipt doğrulama hatası:', error);
-        }
-      }
-    );
 
-    this.purchaseErrorSubscription = purchaseErrorListener(
-      (error: any) => {
-        console.error('PurchaseService: Satın alma hatası:', error);
+    this.purchaseUpdateSubscription = purchaseUpdatedListener(async (purchase: Purchase) => {
+      console.log('PurchaseService: Satın alma güncellendi:', purchase);
+
+      try {
+        // Receipt doğrulama
+        const receipt = await validateReceiptIos({
+          'receipt-data': purchase.transactionReceipt,
+          password: process.env.APP_STORE_SHARED_SECRET || 'YOUR_APP_STORE_SHARED_SECRET',
+        });
+
+        if (receipt.status === 0) {
+          // Satın alma başarılı - Premium'u aktifleştir
+          await this.activatePremiumFromPurchase(purchase);
+          await finishTransaction({ purchase, isConsumable: false });
+          console.log('PurchaseService: Satın alma tamamlandı ve premium aktifleştirildi');
+        }
+      } catch (error) {
+        console.error('Receipt doğrulama hatası:', error);
       }
-    );
-    
+    });
+
+    this.purchaseErrorSubscription = purchaseErrorListener((error: any) => {
+      console.error('PurchaseService: Satın alma hatası:', error);
+    });
+
     console.log('PurchaseService: Gerçek satın alma dinleyicileri kuruldu');
   }
 
   // Satın alım sonrası premium aktivasyonu
   private static async activatePremiumFromPurchase(purchase: Purchase) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Supabase'e premium aboneliği kaydet
-      const { error } = await supabase
-        .from('premium_subscriptions')
-        .insert({
-          user_id: user.id,
-          product_id: purchase.productId,
-          purchase_token: purchase.transactionReceipt,
-          is_active: true,
-          expires_at: this.calculateExpirationDate(purchase.productId)
-        });
+      const { error } = await supabase.from('premium_subscriptions').insert({
+        user_id: user.id,
+        product_id: purchase.productId,
+        purchase_token: purchase.transactionReceipt,
+        is_active: true,
+        expires_at: this.calculateExpirationDate(purchase.productId),
+      });
 
       if (error) {
         console.error('Premium aktivasyon hatası:', error);
@@ -162,7 +161,7 @@ export class PurchaseService {
   // Abonelik süresini hesapla
   private static calculateExpirationDate(productId: string): string | null {
     const now = new Date();
-    
+
     if (productId.includes('monthly')) {
       // Aylık abonelik - 1 ay sonra
       const expiration = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -175,7 +174,7 @@ export class PurchaseService {
       // Ömür boyu - süre yok
       return null;
     }
-    
+
     return null;
   }
 
@@ -184,10 +183,13 @@ export class PurchaseService {
     try {
       if (Platform.OS === 'ios') {
         // iOS için App Store receipt doğrulama
-        const result = await validateReceiptIos({
-          'receipt-data': receipt,
-          password: 'your-app-specific-shared-secret', // App Store Connect'ten alınacak
-        }, false);
+        const result = await validateReceiptIos(
+          {
+            'receipt-data': receipt,
+            password: 'your-app-specific-shared-secret', // App Store Connect'ten alınacak
+          },
+          false
+        );
         return result.status === 0;
       } else {
         // Android için Google Play receipt doğrulama
@@ -228,7 +230,7 @@ export class PurchaseService {
 
       const subscriptionIds = [this.PRODUCT_IDS.monthly, this.PRODUCT_IDS.yearly];
       const subscriptions = await getSubscriptions({ skus: subscriptionIds });
-      
+
       console.log('PurchaseService: Mevcut abonelikler:', subscriptions);
       return subscriptions;
     } catch (error) {
@@ -287,7 +289,7 @@ export class PurchaseService {
       console.log('PurchaseService: Aktif satın almalar:', purchases);
 
       // Premium üyelik kontrolü
-      const hasActiveSubscription = purchases.some(purchase => 
+      const hasActiveSubscription = purchases.some(purchase =>
         Object.values(this.PRODUCT_IDS).includes(purchase.productId)
       );
 
@@ -313,7 +315,7 @@ export class PurchaseService {
 
       await endConnection();
       this.isInitialized = false;
-      
+
       console.log('PurchaseService: Temizlik tamamlandı');
     } catch (error) {
       console.error('PurchaseService temizlik hatası:', error);

@@ -48,7 +48,7 @@ export default function EditProfileScreen({ navigation, route }: EditProfileScre
     try {
       const currentUser = await AuthService.getCurrentUser();
       setUser(currentUser);
-      
+
       if (currentUser) {
         setFormData({
           name: currentUser.user_metadata?.name || '',
@@ -152,40 +152,28 @@ export default function EditProfileScreen({ navigation, route }: EditProfileScre
     } catch (error) {
       logger.error('Fotoğraf çekme hatası:', error);
       // Simülatörde kamera yoksa sadece galeri seçeneğini göster
-      Alert.alert(
-        t('messages.camera_unavailable'), 
-        t('edit_profile.camera_unavailable'),
-        [
-          { text: t('messages.ok'), style: 'default' },
-          { text: t('edit_profile.change_photo'), onPress: pickImage }
-        ]
-      );
+      Alert.alert(t('messages.camera_unavailable'), t('edit_profile.camera_unavailable'), [
+        { text: t('messages.ok'), style: 'default' },
+        { text: t('edit_profile.change_photo'), onPress: pickImage },
+      ]);
     }
   };
 
   const showImagePicker = () => {
     // Simülatörde sadece galeri seçeneğini göster
     const isSimulator = __DEV__ && Platform.OS === 'ios';
-    
+
     if (isSimulator) {
-      Alert.alert(
-        t('edit_profile.photo_title'),
-        t('edit_profile.simulator_note'),
-        [
-          { text: t('edit_profile.cancel'), style: 'cancel' },
-          { text: t('edit_profile.change_photo'), onPress: pickImage },
-        ]
-      );
+      Alert.alert(t('edit_profile.photo_title'), t('edit_profile.simulator_note'), [
+        { text: t('edit_profile.cancel'), style: 'cancel' },
+        { text: t('edit_profile.change_photo'), onPress: pickImage },
+      ]);
     } else {
-      Alert.alert(
-        t('edit_profile.photo_title'),
-        t('edit_profile.choose_option'),
-        [
-          { text: t('edit_profile.cancel'), style: 'cancel' },
-          { text: t('edit_profile.change_photo'), onPress: pickImage },
-          { text: t('edit_profile.take_photo'), onPress: takePhoto },
-        ]
-      );
+      Alert.alert(t('edit_profile.photo_title'), t('edit_profile.choose_option'), [
+        { text: t('edit_profile.cancel'), style: 'cancel' },
+        { text: t('edit_profile.change_photo'), onPress: pickImage },
+        { text: t('edit_profile.take_photo'), onPress: takePhoto },
+      ]);
     }
   };
 
@@ -197,8 +185,8 @@ export default function EditProfileScreen({ navigation, route }: EditProfileScre
           <Ionicons name="arrow-back" size={24} color={darkTheme.colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('edit_profile.title')}</Text>
-        <TouchableOpacity 
-          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]} 
+        <TouchableOpacity
+          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
           onPress={handleSave}
           disabled={isLoading}
         >
@@ -217,10 +205,13 @@ export default function EditProfileScreen({ navigation, route }: EditProfileScre
                 <Image source={{ uri: profileImage }} style={styles.avatarImage} />
               ) : (
                 <Text style={styles.avatarText}>
-                  {formData.name ? 
-                    formData.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 
-                    'ID'
-                  }
+                  {formData.name
+                    ? formData.name
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .toUpperCase()
+                    : 'ID'}
                 </Text>
               )}
             </View>
@@ -239,7 +230,7 @@ export default function EditProfileScreen({ navigation, route }: EditProfileScre
               <TextInput
                 style={styles.textInput}
                 value={formData.name}
-                onChangeText={(text) => setFormData({ ...formData, name: text })}
+                onChangeText={text => setFormData({ ...formData, name: text })}
                 placeholder={t('edit_profile.name_placeholder')}
                 placeholderTextColor={darkTheme.colors.textSecondary}
                 autoCapitalize="words"
@@ -253,7 +244,7 @@ export default function EditProfileScreen({ navigation, route }: EditProfileScre
               <TextInput
                 style={styles.textInput}
                 value={formData.email}
-                onChangeText={(text) => setFormData({ ...formData, email: text })}
+                onChangeText={text => setFormData({ ...formData, email: text })}
                 placeholder={t('edit_profile.email_placeholder')}
                 placeholderTextColor={darkTheme.colors.textSecondary}
                 keyboardType="email-address"
@@ -269,9 +260,7 @@ export default function EditProfileScreen({ navigation, route }: EditProfileScre
             <Ionicons name="information-circle" size={20} color={darkTheme.colors.primary} />
             <View style={styles.infoContent}>
               <Text style={styles.infoTitle}>{t('edit_profile.info_title')}</Text>
-              <Text style={styles.infoText}>
-                {t('edit_profile.info_text')}
-              </Text>
+              <Text style={styles.infoText}>{t('edit_profile.info_text')}</Text>
             </View>
           </View>
         </View>

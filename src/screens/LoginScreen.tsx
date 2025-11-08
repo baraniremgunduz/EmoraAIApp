@@ -52,10 +52,7 @@ export default function LoginScreen({ navigation }: any) {
 
     try {
       await AuthService.resetPassword(email);
-      Alert.alert(
-        t('auth.password_reset_title'),
-        t('auth.password_reset_sent')
-      );
+      Alert.alert(t('auth.password_reset_title'), t('auth.password_reset_sent'));
     } catch (error: any) {
       Alert.alert(t('alert.error'), error.message || t('alert.password_reset_failed'));
     }
@@ -105,9 +102,7 @@ export default function LoginScreen({ navigation }: any) {
                   />
                   {/* Forgot Password */}
                   <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotButton}>
-                    <Text style={styles.forgotButtonText}>
-                      {t('auth.forgot_password')}
-                    </Text>
+                    <Text style={styles.forgotButtonText}>{t('auth.forgot_password')}</Text>
                   </TouchableOpacity>
                 </View>
 

@@ -19,7 +19,7 @@ import { INotificationRepository } from '../repositories/interfaces/INotificatio
  */
 export class DIContainer {
   private static instance: DIContainer;
-  
+
   // Repository instances
   private _messageRepository: IMessageRepository | null = null;
   private _chatRepository: IChatRepository | null = null;
@@ -144,4 +144,3 @@ export class DIContainer {
 
 // Export singleton instance
 export const container = DIContainer.getInstance();
-

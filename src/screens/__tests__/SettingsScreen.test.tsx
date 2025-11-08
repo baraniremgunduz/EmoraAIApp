@@ -45,9 +45,7 @@ describe('SettingsScreen', () => {
   });
 
   it('should render settings screen', () => {
-    const { getByText } = render(
-      <SettingsScreen navigation={mockNavigation} />
-    );
+    const { getByText } = render(<SettingsScreen navigation={mockNavigation} />);
 
     // Settings screen should render
     expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
@@ -62,9 +60,7 @@ describe('SettingsScreen', () => {
       currency: 'TRY',
     } as any);
 
-    const { getByText } = render(
-      <SettingsScreen navigation={mockNavigation} />
-    );
+    const { getByText } = render(<SettingsScreen navigation={mockNavigation} />);
 
     // Find and press language option
     const languageOption = getByText('English'); // Adjust based on actual text
@@ -78,9 +74,7 @@ describe('SettingsScreen', () => {
   it('should handle password change', async () => {
     mockAuthService.updatePassword = jest.fn().mockResolvedValue({ error: null });
 
-    const { getByText } = render(
-      <SettingsScreen navigation={mockNavigation} />
-    );
+    const { getByText } = render(<SettingsScreen navigation={mockNavigation} />);
 
     // Find and press change password button
     const changePasswordButton = getByText('Şifre Değiştir'); // Adjust based on actual text
@@ -93,9 +87,7 @@ describe('SettingsScreen', () => {
   it('should handle logout', async () => {
     mockAuthService.signOut = jest.fn().mockResolvedValue(undefined);
 
-    const { getByText } = render(
-      <SettingsScreen navigation={mockNavigation} />
-    );
+    const { getByText } = render(<SettingsScreen navigation={mockNavigation} />);
 
     // Find and press logout button
     const logoutButton = getByText('Çıkış Yap'); // Adjust based on actual text
@@ -110,9 +102,7 @@ describe('SettingsScreen', () => {
   it('should handle account deletion', async () => {
     mockAuthService.deleteAccount = jest.fn().mockResolvedValue(undefined);
 
-    const { getByText } = render(
-      <SettingsScreen navigation={mockNavigation} />
-    );
+    const { getByText } = render(<SettingsScreen navigation={mockNavigation} />);
 
     // Find and press delete account button
     const deleteButton = getByText('Hesabı Sil'); // Adjust based on actual text
@@ -125,9 +115,7 @@ describe('SettingsScreen', () => {
   });
 
   it('should toggle notification settings', async () => {
-    const { getByTestId } = render(
-      <SettingsScreen navigation={mockNavigation} />
-    );
+    const { getByTestId } = render(<SettingsScreen navigation={mockNavigation} />);
 
     // Find notification toggle
     const notificationToggle = getByTestId('notification-toggle');
@@ -136,4 +124,3 @@ describe('SettingsScreen', () => {
     // Notification setting should be toggled
   });
 });
-

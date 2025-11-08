@@ -23,16 +23,12 @@ export class MessageEncryption {
 
       // Keychain'de yoksa yeni key oluştur
       const newKey = this.generateEncryptionKey(userId);
-      
+
       // Keychain'e kaydet
-      await Keychain.setGenericPassword(
-        `encryption_key_${userId}`,
-        newKey,
-        {
-          service: this.KEYCHAIN_SERVICE,
-          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-        }
-      );
+      await Keychain.setGenericPassword(`encryption_key_${userId}`, newKey, {
+        service: this.KEYCHAIN_SERVICE,
+        accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
 
       logger.log('New encryption key generated and stored');
       return newKey;
@@ -54,7 +50,7 @@ export class MessageEncryption {
       keySize: 256 / 32,
       iterations: this.KEY_DERIVATION_ITERATIONS,
     });
-    
+
     return key.toString();
   }
 
@@ -69,7 +65,7 @@ export class MessageEncryption {
 
       const key = await this.getEncryptionKey(userId);
       const encrypted = CryptoJS.AES.encrypt(message, key).toString();
-      
+
       logger.log('Message encrypted successfully');
       return encrypted;
     } catch (error) {
@@ -131,4 +127,3 @@ export class MessageEncryption {
     }
   }
 }
-

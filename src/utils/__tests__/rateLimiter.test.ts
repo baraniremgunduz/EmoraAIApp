@@ -23,7 +23,7 @@ describe('Rate Limiter', () => {
 
     it('should reject messages sent too quickly', () => {
       const userId = 'user1';
-      
+
       // İlk mesaj
       const firstResult = checkRateLimit(userId);
       expect(firstResult.allowed).toBe(true);
@@ -37,13 +37,13 @@ describe('Rate Limiter', () => {
 
     it('should allow messages after minimum time interval', () => {
       const userId = 'user1';
-      
+
       // İlk mesaj
       checkRateLimit(userId);
-      
+
       // 1 saniye ilerlet
       jest.advanceTimersByTime(1100);
-      
+
       // İkinci mesaj gönderebilmeli
       const result = checkRateLimit(userId);
       expect(result.allowed).toBe(true);
@@ -51,7 +51,7 @@ describe('Rate Limiter', () => {
 
     it('should enforce per-minute message limit', () => {
       const userId = 'user2';
-      
+
       // 30 mesaj gönder (limit 30)
       for (let i = 0; i < 30; i++) {
         // Her mesaj arasında 1 saniye bekle
@@ -61,7 +61,7 @@ describe('Rate Limiter', () => {
         const result = checkRateLimit(userId);
         expect(result.allowed).toBe(true);
       }
-      
+
       // 31. mesaj reddedilmeli (hala aynı dakika içinde)
       jest.advanceTimersByTime(1100);
       const result = checkRateLimit(userId);
@@ -71,7 +71,7 @@ describe('Rate Limiter', () => {
 
     it('should reset limit window after one minute', () => {
       const userId = 'user3';
-      
+
       // 30 mesaj gönder
       for (let i = 0; i < 30; i++) {
         if (i > 0) {
@@ -79,10 +79,10 @@ describe('Rate Limiter', () => {
         }
         checkRateLimit(userId);
       }
-      
+
       // 1 dakika sonra limit sıfırlanmalı
       jest.advanceTimersByTime(61000); // 61 saniye
-      
+
       const result = checkRateLimit(userId);
       expect(result.allowed).toBe(true);
     });
@@ -90,11 +90,11 @@ describe('Rate Limiter', () => {
     it('should track different users separately', () => {
       const user1 = 'user1';
       const user2 = 'user2';
-      
+
       // User1 mesaj gönder
       const result1 = checkRateLimit(user1);
       expect(result1.allowed).toBe(true);
-      
+
       // User2 hemen mesaj gönderebilmeli
       const result2 = checkRateLimit(user2);
       expect(result2.allowed).toBe(true);
@@ -102,10 +102,10 @@ describe('Rate Limiter', () => {
 
     it('should provide wait time when rate limited', () => {
       const userId = 'user4';
-      
+
       // İlk mesaj
       checkRateLimit(userId);
-      
+
       // Hemen ikinci mesaj
       const result = checkRateLimit(userId);
       expect(result.allowed).toBe(false);
@@ -117,13 +117,13 @@ describe('Rate Limiter', () => {
   describe('clearRateLimit', () => {
     it('should clear rate limit for specific user', () => {
       const userId = 'user5';
-      
+
       // Mesaj gönder
       checkRateLimit(userId);
-      
+
       // Rate limit'i temizle
       clearRateLimit(userId);
-      
+
       // Tekrar mesaj gönderebilmeli (state sıfırlandı)
       const result = checkRateLimit(userId);
       expect(result.allowed).toBe(true);
@@ -132,14 +132,14 @@ describe('Rate Limiter', () => {
     it('should not affect other users when clearing one', () => {
       const user1 = 'user1';
       const user2 = 'user2';
-      
+
       // Her iki kullanıcı da mesaj gönder
       checkRateLimit(user1);
       checkRateLimit(user2);
-      
+
       // User1'in rate limit'ini temizle
       clearRateLimit(user1);
-      
+
       // User2 hala rate limited olmalı
       const result2 = checkRateLimit(user2);
       expect(result2.allowed).toBe(false);
@@ -150,14 +150,14 @@ describe('Rate Limiter', () => {
     it('should clear all rate limits', () => {
       const user1 = 'user1';
       const user2 = 'user2';
-      
+
       // Her iki kullanıcı da mesaj gönder
       checkRateLimit(user1);
       checkRateLimit(user2);
-      
+
       // Tüm rate limit'leri temizle
       clearAllRateLimits();
-      
+
       // Her iki kullanıcı da tekrar mesaj gönderebilmeli
       const result1 = checkRateLimit(user1);
       const result2 = checkRateLimit(user2);
@@ -166,4 +166,3 @@ describe('Rate Limiter', () => {
     });
   });
 });
-

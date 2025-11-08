@@ -43,7 +43,11 @@ export default function OnboardingScreen({ navigation, onComplete }: OnboardingS
       title: t('onboarding.slide1_title'),
       description: t('onboarding.slide1_desc'),
       icon: 'chatbubbles-outline',
-      features: [t('onboarding.slide1_feature1'), t('onboarding.slide1_feature2'), t('onboarding.slide1_feature3')],
+      features: [
+        t('onboarding.slide1_feature1'),
+        t('onboarding.slide1_feature2'),
+        t('onboarding.slide1_feature3'),
+      ],
       accentColor: darkTheme.colors.primary,
     },
     {
@@ -51,7 +55,11 @@ export default function OnboardingScreen({ navigation, onComplete }: OnboardingS
       title: t('onboarding.slide2_title'),
       description: t('onboarding.slide2_desc'),
       icon: 'shield-checkmark-outline',
-      features: [t('onboarding.slide2_feature1'), t('onboarding.slide2_feature2'), t('onboarding.slide2_feature3')],
+      features: [
+        t('onboarding.slide2_feature1'),
+        t('onboarding.slide2_feature2'),
+        t('onboarding.slide2_feature3'),
+      ],
       accentColor: darkTheme.colors.success,
     },
     {
@@ -59,7 +67,11 @@ export default function OnboardingScreen({ navigation, onComplete }: OnboardingS
       title: t('onboarding.slide3_title'),
       description: t('onboarding.slide3_desc'),
       icon: 'heart-outline',
-      features: [t('onboarding.slide3_feature1'), t('onboarding.slide3_feature2'), t('onboarding.slide3_feature3')],
+      features: [
+        t('onboarding.slide3_feature1'),
+        t('onboarding.slide3_feature2'),
+        t('onboarding.slide3_feature3'),
+      ],
       accentColor: darkTheme.colors.premium,
     },
   ];
@@ -88,7 +100,6 @@ export default function OnboardingScreen({ navigation, onComplete }: OnboardingS
     }
   };
 
-
   const currentData = onboardingData[currentSlide];
 
   return (
@@ -112,11 +123,7 @@ export default function OnboardingScreen({ navigation, onComplete }: OnboardingS
       <View style={styles.content}>
         {/* Icon Container */}
         <View style={[styles.iconContainer, { backgroundColor: currentData.accentColor + '20' }]}>
-          <Ionicons 
-            name={currentData.icon} 
-            size={64} 
-            color={currentData.accentColor} 
-          />
+          <Ionicons name={currentData.icon} size={64} color={currentData.accentColor} />
         </View>
 
         {/* Title */}
@@ -130,11 +137,7 @@ export default function OnboardingScreen({ navigation, onComplete }: OnboardingS
           <View style={styles.featuresContainer}>
             {currentData.features.map((feature, index) => (
               <View key={index} style={styles.featureItem}>
-                <Ionicons 
-                  name="checkmark-circle" 
-                  size={16} 
-                  color={currentData.accentColor} 
-                />
+                <Ionicons name="checkmark-circle" size={16} color={currentData.accentColor} />
                 <Text style={styles.featureText}>{feature}</Text>
               </View>
             ))}
@@ -151,7 +154,10 @@ export default function OnboardingScreen({ navigation, onComplete }: OnboardingS
               key={index}
               style={[
                 styles.dot,
-                index === currentSlide && [styles.activeDot, { backgroundColor: currentData.accentColor }],
+                index === currentSlide && [
+                  styles.activeDot,
+                  { backgroundColor: currentData.accentColor },
+                ],
               ]}
             />
           ))}
@@ -160,7 +166,11 @@ export default function OnboardingScreen({ navigation, onComplete }: OnboardingS
         {/* Navigation Buttons */}
         <View style={styles.buttonContainer}>
           <GlassButton
-            title={currentSlide === onboardingData.length - 1 ? t('onboarding.start') : t('onboarding.next')}
+            title={
+              currentSlide === onboardingData.length - 1
+                ? t('onboarding.start')
+                : t('onboarding.next')
+            }
             onPress={nextSlide}
             variant="primary"
             style={styles.singleButton}

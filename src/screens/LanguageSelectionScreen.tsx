@@ -29,7 +29,10 @@ interface LanguageSelectionScreenProps {
   onLanguageSelected?: (language: string) => void;
 }
 
-export default function LanguageSelectionScreen({ navigation, onLanguageSelected }: LanguageSelectionScreenProps) {
+export default function LanguageSelectionScreen({
+  navigation,
+  onLanguageSelected,
+}: LanguageSelectionScreenProps) {
   const { setLanguage, t } = useLanguage();
   const [selectedLanguage, setSelectedLanguage] = useState('en'); // Varsayılan İngilizce
 
@@ -59,7 +62,7 @@ export default function LanguageSelectionScreen({ navigation, onLanguageSelected
     try {
       // Seçilen dili kaydet
       await setLanguage(selectedLanguage as any);
-      
+
       // Onboarding'e geç
       if (onLanguageSelected) {
         onLanguageSelected(selectedLanguage);
@@ -77,48 +80,48 @@ export default function LanguageSelectionScreen({ navigation, onLanguageSelected
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>{t('language_selection.title')}</Text>
-          <Text style={styles.description}>
-            {t('language_selection.description')}
-          </Text>
+          <Text style={styles.description}>{t('language_selection.description')}</Text>
         </View>
 
         {/* Language Options */}
         <View style={styles.languageContainer}>
-          {languages.map((language) => (
+          {languages.map(language => (
             <TouchableOpacity
               key={language.code}
               style={[
                 styles.languageOption,
-                selectedLanguage === language.code && styles.selectedLanguageOption
+                selectedLanguage === language.code && styles.selectedLanguageOption,
               ]}
               onPress={() => handleLanguageSelect(language.code)}
             >
-              <GlassCard style={[
-                styles.languageCard,
-                selectedLanguage === language.code && styles.selectedLanguageCard
-              ]}>
+              <GlassCard
+                style={[
+                  styles.languageCard,
+                  selectedLanguage === language.code && styles.selectedLanguageCard,
+                ]}
+              >
                 <View style={styles.languageContent}>
                   <Text style={styles.flag}>{language.flag}</Text>
                   <View style={styles.languageText}>
-                    <Text style={[
-                      styles.languageName,
-                      selectedLanguage === language.code && styles.selectedLanguageName
-                    ]}>
+                    <Text
+                      style={[
+                        styles.languageName,
+                        selectedLanguage === language.code && styles.selectedLanguageName,
+                      ]}
+                    >
                       {language.nativeName}
                     </Text>
-                    <Text style={[
-                      styles.languageEnglish,
-                      selectedLanguage === language.code && styles.selectedLanguageEnglish
-                    ]}>
+                    <Text
+                      style={[
+                        styles.languageEnglish,
+                        selectedLanguage === language.code && styles.selectedLanguageEnglish,
+                      ]}
+                    >
                       {language.name}
                     </Text>
                   </View>
                   {selectedLanguage === language.code && (
-                    <Ionicons 
-                      name="checkmark-circle" 
-                      size={24} 
-                      color={darkTheme.colors.primary} 
-                    />
+                    <Ionicons name="checkmark-circle" size={24} color={darkTheme.colors.primary} />
                   )}
                 </View>
               </GlassCard>

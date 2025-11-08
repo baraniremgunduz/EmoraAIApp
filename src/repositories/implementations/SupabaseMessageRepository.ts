@@ -35,10 +35,8 @@ export class SupabaseMessageRepository implements IMessageRepository {
       }
 
       // Mesajları decrypt et (async map için Promise.all)
-      const mappedMessages = await Promise.all(
-        messages.map(msg => this.mapToMessage(msg, userId))
-      );
-      
+      const mappedMessages = await Promise.all(messages.map(msg => this.mapToMessage(msg, userId)));
+
       // Cache'e kaydet (5 dakika)
       await CacheManager.set(cacheKey, mappedMessages, 5 * 60 * 1000);
 
@@ -71,9 +69,7 @@ export class SupabaseMessageRepository implements IMessageRepository {
 
       // Mesajları ters çevir ve decrypt et
       const reversedMessages = (messages || []).reverse();
-      return await Promise.all(
-        reversedMessages.map(msg => this.mapToMessage(msg, userId))
-      );
+      return await Promise.all(reversedMessages.map(msg => this.mapToMessage(msg, userId)));
     } catch (error) {
       logger.error('Son mesajları alma hatası:', error);
       return [];
@@ -84,9 +80,9 @@ export class SupabaseMessageRepository implements IMessageRepository {
     try {
       // Mesajları şifrele ve database formatına dönüştür
       const messagesToSave = await Promise.all(
-        messages.map(async (msg) => {
+        messages.map(async msg => {
           const dbFormat = this.mapToDatabase(msg, sessionId);
-          
+
           // E2E encryption: Mesaj içeriğini şifrele
           try {
             const encryptedContent = await MessageEncryption.encrypt(msg.content, userId);
@@ -96,14 +92,12 @@ export class SupabaseMessageRepository implements IMessageRepository {
             // Encryption başarısız olursa plain text kaydet (fallback)
             // Production'da bu durumda hata fırlatılmalı
           }
-          
+
           return dbFormat;
         })
       );
 
-      const { error: insertError } = await this.supabase
-        .from('messages')
-        .insert(messagesToSave);
+      const { error: insertError } = await this.supabase.from('messages').insert(messagesToSave);
 
       if (insertError) {
         throw RepositoryError.fromError(insertError, 'Save messages');
@@ -168,10 +162,8 @@ export class SupabaseMessageRepository implements IMessageRepository {
       }
 
       // Mesajları decrypt et
-      const mappedMessages = await Promise.all(
-        messages.map(msg => this.mapToMessage(msg, userId))
-      );
-      
+      const mappedMessages = await Promise.all(messages.map(msg => this.mapToMessage(msg, userId)));
+
       // Cache'e kaydet (2 dakika - pagination için daha kısa)
       await CacheManager.set(cacheKey, mappedMessages, 2 * 60 * 1000);
 
@@ -187,7 +179,7 @@ export class SupabaseMessageRepository implements IMessageRepository {
   async mapToMessage(dbMessage: DatabaseMessage, userId: string): Promise<Message> {
     // Mesaj şifreli mi kontrol et (encrypted_ prefix ile başlıyorsa)
     let content = dbMessage.content;
-    
+
     // E2E encryption: Eğer mesaj şifreliyse çöz
     if (content.startsWith('encrypted_')) {
       try {
@@ -199,7 +191,7 @@ export class SupabaseMessageRepository implements IMessageRepository {
         content = '[Encrypted message - decryption failed]';
       }
     }
-    
+
     return {
       id: dbMessage.id,
       content,
@@ -219,4 +211,3 @@ export class SupabaseMessageRepository implements IMessageRepository {
     };
   }
 }
-

@@ -47,23 +47,19 @@ describe('LoginScreen', () => {
   });
 
   it('should render login form', () => {
-    const { getByPlaceholderText, getByText } = render(
-      <LoginScreen navigation={mockNavigation} />
-    );
-    
+    const { getByPlaceholderText, getByText } = render(<LoginScreen navigation={mockNavigation} />);
+
     expect(getByPlaceholderText('Enter your email')).toBeTruthy();
     expect(getByPlaceholderText('Enter your password')).toBeTruthy();
     expect(getByText('Login')).toBeTruthy();
   });
 
   it('should show error when email is empty', async () => {
-    const { getByText } = render(
-      <LoginScreen navigation={mockNavigation} />
-    );
-    
+    const { getByText } = render(<LoginScreen navigation={mockNavigation} />);
+
     const loginButton = getByText('Login');
     fireEvent.press(loginButton);
-    
+
     // Alert mock'lanmış olabilir, bu yüzden sadece render'ı kontrol ediyoruz
     await waitFor(() => {
       expect(getByText('Login')).toBeTruthy();
@@ -76,18 +72,16 @@ describe('LoginScreen', () => {
       session: { access_token: 'token123' },
     });
 
-    const { getByPlaceholderText, getByText } = render(
-      <LoginScreen navigation={mockNavigation} />
-    );
-    
+    const { getByPlaceholderText, getByText } = render(<LoginScreen navigation={mockNavigation} />);
+
     const emailInput = getByPlaceholderText('Enter your email');
     const passwordInput = getByPlaceholderText('Enter your password');
     const loginButton = getByText('Login');
-    
+
     fireEvent.changeText(emailInput, 'test@example.com');
     fireEvent.changeText(passwordInput, 'password123');
     fireEvent.press(loginButton);
-    
+
     await waitFor(() => {
       expect(AuthService.signIn).toHaveBeenCalledWith('test@example.com', 'password123');
     });
@@ -97,50 +91,43 @@ describe('LoginScreen', () => {
     const error = { message: 'Invalid credentials' };
     (AuthService.signIn as jest.Mock).mockRejectedValue(error);
 
-    const { getByPlaceholderText, getByText } = render(
-      <LoginScreen navigation={mockNavigation} />
-    );
-    
+    const { getByPlaceholderText, getByText } = render(<LoginScreen navigation={mockNavigation} />);
+
     const emailInput = getByPlaceholderText('Enter your email');
     const passwordInput = getByPlaceholderText('Enter your password');
     const loginButton = getByText('Login');
-    
+
     fireEvent.changeText(emailInput, 'test@example.com');
     fireEvent.changeText(passwordInput, 'wrongpassword');
     fireEvent.press(loginButton);
-    
+
     await waitFor(() => {
       expect(AuthService.signIn).toHaveBeenCalled();
     });
   });
 
   it('should navigate to register screen', () => {
-    const { getByText } = render(
-      <LoginScreen navigation={mockNavigation} />
-    );
-    
+    const { getByText } = render(<LoginScreen navigation={mockNavigation} />);
+
     const registerLink = getByText('Register');
     fireEvent.press(registerLink);
-    
+
     expect(mockNavigation.navigate).toHaveBeenCalledWith('Register');
   });
 
   it('should handle forgot password', async () => {
     (AuthService.resetPassword as jest.Mock).mockResolvedValue(undefined);
 
-    const { getByPlaceholderText, getByText } = render(
-      <LoginScreen navigation={mockNavigation} />
-    );
-    
+    const { getByPlaceholderText, getByText } = render(<LoginScreen navigation={mockNavigation} />);
+
     const emailInput = getByPlaceholderText('Enter your email');
     fireEvent.changeText(emailInput, 'test@example.com');
-    
+
     const forgotPasswordLink = getByText('Forgot Password?');
     fireEvent.press(forgotPasswordLink);
-    
+
     await waitFor(() => {
       expect(AuthService.resetPassword).toHaveBeenCalledWith('test@example.com');
     });
   });
 });
-

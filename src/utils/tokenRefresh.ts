@@ -18,7 +18,7 @@ export class TokenRefreshManager {
     }
 
     this.isRunning = true;
-    
+
     // Her 10 dakikada bir kontrol et
     this.refreshInterval = setInterval(async () => {
       await this.checkAndRefreshToken();
@@ -47,8 +47,11 @@ export class TokenRefreshManager {
    */
   static async checkAndRefreshToken(): Promise<boolean> {
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+
       if (error || !session) {
         logger.log('No active session, stopping refresh');
         this.stopAutoRefresh();
@@ -85,19 +88,24 @@ export class TokenRefreshManager {
    */
   static async refreshToken(): Promise<boolean> {
     try {
-      const { data: { session }, error } = await supabase.auth.refreshSession();
-      
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.refreshSession();
+
       if (error || !session) {
         logger.error('Token refresh failed:', error);
-        
+
         // Refresh başarısız olursa, kullanıcıyı logout et
         // Bu durumda auth store'u güncelle
-        if (error?.message?.includes('refresh_token_not_found') || 
-            error?.message?.includes('JWT expired')) {
+        if (
+          error?.message?.includes('refresh_token_not_found') ||
+          error?.message?.includes('JWT expired')
+        ) {
           logger.log('Refresh token invalid, user needs to login again');
           await supabase.auth.signOut();
         }
-        
+
         return false;
       }
 
@@ -127,8 +135,10 @@ export class TokenRefreshManager {
     needsRefresh: boolean;
   }> {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       if (!session) {
         return {
           hasSession: false,
@@ -160,4 +170,3 @@ export class TokenRefreshManager {
     }
   }
 }
-

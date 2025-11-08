@@ -11,7 +11,7 @@ export const sanitizeInput = (input: string): string => {
 
   // Önce uzunluk kontrolü
   let sanitized = input.trim();
-  
+
   if (sanitized.length > MAX_MESSAGE_LENGTH) {
     sanitized = sanitized.substring(0, MAX_MESSAGE_LENGTH);
   }
@@ -37,7 +37,7 @@ export const detectPromptInjection = (input: string): boolean => {
   }
 
   const lowerInput = input.toLowerCase();
-  
+
   // Yaygın prompt injection pattern'leri
   const injectionPatterns = [
     'ignore previous instructions',
@@ -66,15 +66,15 @@ export const validateMessageLength = (input: string): { valid: boolean; error?: 
   }
 
   const trimmed = input.trim();
-  
+
   if (trimmed.length === 0) {
     return { valid: false, error: 'Mesaj boş olamaz' };
   }
 
   if (trimmed.length > MAX_MESSAGE_LENGTH) {
-    return { 
-      valid: false, 
-      error: `Mesaj ${MAX_MESSAGE_LENGTH} karakterden uzun olamaz` 
+    return {
+      valid: false,
+      error: `Mesaj ${MAX_MESSAGE_LENGTH} karakterden uzun olamaz`,
     };
   }
 
@@ -82,10 +82,12 @@ export const validateMessageLength = (input: string): { valid: boolean; error?: 
 };
 
 // Tam input validasyonu (sanitize + injection check + length)
-export const validateAndSanitizeInput = (input: string): { 
-  valid: boolean; 
-  sanitized?: string; 
-  error?: string 
+export const validateAndSanitizeInput = (
+  input: string
+): {
+  valid: boolean;
+  sanitized?: string;
+  error?: string;
 } => {
   // Uzunluk kontrolü
   const lengthCheck = validateMessageLength(input);
@@ -95,19 +97,18 @@ export const validateAndSanitizeInput = (input: string): {
 
   // Prompt injection kontrolü
   if (detectPromptInjection(input)) {
-    return { 
-      valid: false, 
-      error: 'Bu mesaj güvenlik nedeniyle gönderilemez' 
+    return {
+      valid: false,
+      error: 'Bu mesaj güvenlik nedeniyle gönderilemez',
     };
   }
 
   // Sanitize et
   const sanitized = sanitizeInput(input);
-  
+
   if (!sanitized || sanitized.length === 0) {
     return { valid: false, error: 'Geçerli bir mesaj giriniz' };
   }
 
   return { valid: true, sanitized };
 };
-

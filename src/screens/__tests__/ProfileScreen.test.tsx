@@ -56,9 +56,7 @@ describe('ProfileScreen', () => {
   });
 
   it('should render profile screen', () => {
-    const { getByText } = render(
-      <ProfileScreen navigation={mockNavigation} route={mockRoute} />
-    );
+    const { getByText } = render(<ProfileScreen navigation={mockNavigation} route={mockRoute} />);
 
     // Profile screen should render user information
     expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
@@ -73,9 +71,7 @@ describe('ProfileScreen', () => {
   });
 
   it('should navigate to edit profile', () => {
-    const { getByText } = render(
-      <ProfileScreen navigation={mockNavigation} route={mockRoute} />
-    );
+    const { getByText } = render(<ProfileScreen navigation={mockNavigation} route={mockRoute} />);
 
     // Find and press edit button
     const editButton = getByText('Düzenle'); // Adjust based on actual text
@@ -87,9 +83,7 @@ describe('ProfileScreen', () => {
   it('should handle logout', async () => {
     mockAuthService.signOut = jest.fn().mockResolvedValue(undefined);
 
-    const { getByText } = render(
-      <ProfileScreen navigation={mockNavigation} route={mockRoute} />
-    );
+    const { getByText } = render(<ProfileScreen navigation={mockNavigation} route={mockRoute} />);
 
     // Find and press logout button
     const logoutButton = getByText('Çıkış Yap'); // Adjust based on actual text
@@ -102,8 +96,20 @@ describe('ProfileScreen', () => {
 
   it('should display user statistics', async () => {
     const mockMessages = [
-      { id: '1', content: 'Message 1', role: 'user', timestamp: '2024-01-01', user_id: 'test-user-id' },
-      { id: '2', content: 'Message 2', role: 'assistant', timestamp: '2024-01-01', user_id: 'test-user-id' },
+      {
+        id: '1',
+        content: 'Message 1',
+        role: 'user',
+        timestamp: '2024-01-01',
+        user_id: 'test-user-id',
+      },
+      {
+        id: '2',
+        content: 'Message 2',
+        role: 'assistant',
+        timestamp: '2024-01-01',
+        user_id: 'test-user-id',
+      },
     ];
 
     mockChatService.getChatHistory = jest.fn().mockResolvedValue(mockMessages);
@@ -115,4 +121,3 @@ describe('ProfileScreen', () => {
     });
   });
 });
-

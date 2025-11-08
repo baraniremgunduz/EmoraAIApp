@@ -152,21 +152,18 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
     if (isLoading) return;
 
     setIsLoading(true);
-    
+
     try {
       // Gerçek satın alma işlemi
       const success = await PurchaseService.purchasePlan(selectedPlan);
-      
+
       if (success) {
         // Satın alma başarılı, kullanıcıyı ana sayfaya yönlendir
         navigation.navigate('Chat');
       }
     } catch (error) {
       console.error('Purchase error:', error);
-      Alert.alert(
-        t('messages.error'),
-        t('alert.purchase_error')
-      );
+      Alert.alert(t('messages.error'), t('alert.purchase_error'));
     } finally {
       setIsLoading(false);
     }
@@ -220,7 +217,7 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
               <Text style={styles.comparisonHeaderText}>{t('premium.free')}</Text>
               <Text style={styles.comparisonHeaderText}>{t('premium.premium')}</Text>
             </View>
-            
+
             <View style={styles.comparisonRow}>
               <Text style={styles.comparisonFeature}>{t('premium.unlimited')}</Text>
               <View style={styles.comparisonIconContainer}>
@@ -230,7 +227,7 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
                 <Ionicons name="checkmark" size={20} color={darkTheme.colors.success} />
               </View>
             </View>
-            
+
             <View style={styles.comparisonRow}>
               <Text style={styles.comparisonFeature}>{t('premium.fast_responses')}</Text>
               <View style={styles.comparisonIconContainer}>
@@ -240,7 +237,7 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
                 <Ionicons name="checkmark" size={20} color={darkTheme.colors.success} />
               </View>
             </View>
-            
+
             <View style={styles.comparisonRow}>
               <Text style={styles.comparisonFeature}>{t('premium.mood_analysis')}</Text>
               <View style={styles.comparisonIconContainer}>
@@ -250,7 +247,7 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
                 <Ionicons name="checkmark" size={20} color={darkTheme.colors.success} />
               </View>
             </View>
-            
+
             <View style={[styles.comparisonRow, styles.lastComparisonRow]}>
               <Text style={styles.comparisonFeature}>{t('premium.export_history')}</Text>
               <View style={styles.comparisonIconContainer}>
@@ -267,11 +264,11 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
         <View style={styles.featuresSection}>
           <Text style={styles.sectionTitle}>{t('premium.features_title')}</Text>
           <View style={styles.featuresGrid}>
-            {features.map((feature) => (
-              <View key={feature.id} style={[
-                styles.featureCard,
-                feature.highlight && styles.highlightedFeatureCard
-              ]}>
+            {features.map(feature => (
+              <View
+                key={feature.id}
+                style={[styles.featureCard, feature.highlight && styles.highlightedFeatureCard]}
+              >
                 {feature.highlight && (
                   <View style={styles.popularBadge}>
                     <Ionicons name="star" size={12} color="white" />
@@ -291,8 +288,12 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
         {/* Testimonials */}
         <View style={styles.testimonialsSection}>
           <Text style={styles.sectionTitle}>{t('premium.testimonials_title')}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.testimonialsScroll}>
-            {testimonials.map((testimonial) => (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.testimonialsScroll}
+          >
+            {testimonials.map(testimonial => (
               <View key={testimonial.id} style={styles.testimonialCard}>
                 <View style={styles.testimonialRating}>
                   {[...Array(testimonial.rating)].map((_, i) => (
@@ -322,17 +323,12 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
         <View style={styles.pricingPreview}>
           <Text style={styles.pricingTitle}>{t('premium.pricing_title')}</Text>
           <View style={styles.pricingCards}>
-            <TouchableOpacity 
-              style={[
-                styles.pricingCard,
-                selectedPlan === 'monthly' && styles.selectedPricingCard
-              ]}
+            <TouchableOpacity
+              style={[styles.pricingCard, selectedPlan === 'monthly' && styles.selectedPricingCard]}
               onPress={() => handlePlanSelect('monthly')}
             >
               <Text style={styles.pricingPlan}>{t('payment.monthly')}</Text>
-              <Text style={styles.pricingPrice}>
-                {currency === 'TRY' ? '₺129.99' : '$4.99'}
-              </Text>
+              <Text style={styles.pricingPrice}>{currency === 'TRY' ? '₺129.99' : '$4.99'}</Text>
               <Text style={styles.pricingPeriod}>{t('payment.monthly_period')}</Text>
               {selectedPlan === 'monthly' && (
                 <View style={styles.selectedIndicator}>
@@ -340,11 +336,11 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
                 </View>
               )}
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
-                styles.pricingCard, 
+                styles.pricingCard,
                 styles.recommendedCard,
-                selectedPlan === 'yearly' && styles.selectedPricingCard
+                selectedPlan === 'yearly' && styles.selectedPricingCard,
               ]}
               onPress={() => handlePlanSelect('yearly')}
             >
@@ -352,15 +348,15 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
                 <Text style={styles.recommendedText}>{t('premium.recommended')}</Text>
               </View>
               <Text style={styles.pricingPlan}>{t('payment.yearly')}</Text>
-              <Text style={styles.pricingPrice}>
-                {currency === 'TRY' ? '₺699.99' : '$49.99'}
-              </Text>
+              <Text style={styles.pricingPrice}>{currency === 'TRY' ? '₺699.99' : '$49.99'}</Text>
               <Text style={styles.pricingPeriod}>{t('payment.yearly_period')}</Text>
               <Text style={styles.monthlyEquivalent}>
                 {currency === 'TRY' ? '₺58.33/ay' : '$4.17/month'}
               </Text>
               <Text style={styles.savingsText}>
-                {currency === 'TRY' ? '₺860 ' + t('payment.savings') + ' (55%)' : '$10 ' + t('payment.savings') + ' (17%)'}
+                {currency === 'TRY'
+                  ? '₺860 ' + t('payment.savings') + ' (55%)'
+                  : '$10 ' + t('payment.savings') + ' (17%)'}
               </Text>
               {selectedPlan === 'yearly' && (
                 <View style={styles.selectedIndicator}>
@@ -373,15 +369,12 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
 
         {/* CTA Button */}
         <View style={styles.ctaSection}>
-          <TouchableOpacity 
-            style={[styles.upgradeButton, isLoading && styles.upgradeButtonDisabled]} 
+          <TouchableOpacity
+            style={[styles.upgradeButton, isLoading && styles.upgradeButtonDisabled]}
             onPress={handleUpgrade}
             disabled={isLoading}
           >
-            <LinearGradient
-              colors={['#6A5ACD', '#8A7FD1']}
-              style={styles.upgradeButtonGradient}
-            >
+            <LinearGradient colors={['#6A5ACD', '#8A7FD1']} style={styles.upgradeButtonGradient}>
               {isLoading ? (
                 <Ionicons name="hourglass" size={24} color="white" />
               ) : (
@@ -691,7 +684,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
-  
+
   // Pricing Preview
   pricingPreview: {
     paddingHorizontal: 24,
@@ -771,7 +764,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  
+
   // Selected pricing card
   selectedPricingCard: {
     borderColor: darkTheme.colors.primary,
@@ -783,7 +776,7 @@ const styles = StyleSheet.create({
     top: 8,
     right: 8,
   },
-  
+
   // Loading states
   upgradeButtonDisabled: {
     opacity: 0.7,

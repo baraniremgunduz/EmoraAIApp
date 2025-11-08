@@ -10,13 +10,13 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 // Güvenlik: Environment variables zorunlu
 if (!supabaseUrl || !supabaseAnonKey) {
-  const errorMessage = 
+  const errorMessage =
     '❌ Güvenlik Hatası: Supabase yapılandırma bilgileri bulunamadı!\n\n' +
     'Lütfen şunları yapın:\n' +
     '1. Development için: .env dosyası oluşturun ve EXPO_PUBLIC_SUPABASE_URL ile EXPO_PUBLIC_SUPABASE_ANON_KEY ekleyin\n' +
     '2. Production için: EAS secrets kullanın (eas secret:create komutu ile)\n\n' +
     'Daha fazla bilgi için: APP_STORE_SECURITY.md dosyasına bakın.';
-  
+
   if (__DEV__) {
     logger.error(errorMessage);
     // Development'ta uygulama çalışmaya devam edebilir ama uyarı verir

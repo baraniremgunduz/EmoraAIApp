@@ -43,7 +43,7 @@ export default function ChatHistoryScreen({ navigation }: any) {
     const now = new Date();
     const messageDate = new Date(timestamp);
     const diffInHours = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       return t('ui.just_now');
     } else if (diffInHours < 24) {
@@ -65,7 +65,7 @@ export default function ChatHistoryScreen({ navigation }: any) {
     try {
       // Kullanıcı kontrolü
       const user = await authRepository.getCurrentUser();
-      
+
       if (!user) {
         setSessions([]);
         setIsLoading(false);
@@ -77,19 +77,21 @@ export default function ChatHistoryScreen({ navigation }: any) {
 
       // Her session için son mesajı al
       const processedSessions: ChatSession[] = [];
-      
+
       for (const session of chatSessions) {
         try {
           const messages = await messageRepository.findBySessionId(session.id, user.id);
-          
+
           if (messages && messages.length > 0) {
             // En son mesajı bul
             const lastMessage = messages[messages.length - 1];
-            
+
             processedSessions.push({
               id: session.id,
               title: session.title,
-              lastMessage: lastMessage.content.substring(0, 50) + (lastMessage.content.length > 50 ? '...' : ''),
+              lastMessage:
+                lastMessage.content.substring(0, 50) +
+                (lastMessage.content.length > 50 ? '...' : ''),
               timestamp: lastMessage.timestamp || session.updated_at,
               messageCount: messages.length,
             });
@@ -147,7 +149,7 @@ export default function ChatHistoryScreen({ navigation }: any) {
 
       // Session mesajlarını yükle
       const messages = await messageRepository.findBySessionId(session.id, user.id);
-      
+
       if (!messages || messages.length === 0) {
         Alert.alert(t('messages.error'), 'Export edilecek mesaj yok');
         return;
@@ -166,15 +168,18 @@ export default function ChatHistoryScreen({ navigation }: any) {
             text: 'Metin (.txt)',
             onPress: async () => {
               try {
-                await ChatExporter.shareChat(
-                  messages,
-                  session.title,
-                  { format: 'txt', includeTimestamps: true, includeMetadata: true }
-                );
+                await ChatExporter.shareChat(messages, session.title, {
+                  format: 'txt',
+                  includeTimestamps: true,
+                  includeMetadata: true,
+                });
                 Alert.alert(t('messages.success') || 'Başarılı', 'Sohbet başarıyla paylaşıldı');
               } catch (error: any) {
                 logger.error('Export hatası:', error);
-                Alert.alert(t('messages.error') || 'Hata', error.message || 'Export başarısız oldu');
+                Alert.alert(
+                  t('messages.error') || 'Hata',
+                  error.message || 'Export başarısız oldu'
+                );
               }
             },
           },
@@ -182,15 +187,18 @@ export default function ChatHistoryScreen({ navigation }: any) {
             text: 'JSON (.json)',
             onPress: async () => {
               try {
-                await ChatExporter.shareChat(
-                  messages,
-                  session.title,
-                  { format: 'json', includeTimestamps: true, includeMetadata: true }
-                );
+                await ChatExporter.shareChat(messages, session.title, {
+                  format: 'json',
+                  includeTimestamps: true,
+                  includeMetadata: true,
+                });
                 Alert.alert(t('messages.success') || 'Başarılı', 'Sohbet başarıyla paylaşıldı');
               } catch (error: any) {
                 logger.error('Export hatası:', error);
-                Alert.alert(t('messages.error') || 'Hata', error.message || 'Export başarısız oldu');
+                Alert.alert(
+                  t('messages.error') || 'Hata',
+                  error.message || 'Export başarısız oldu'
+                );
               }
             },
           },
@@ -203,10 +211,7 @@ export default function ChatHistoryScreen({ navigation }: any) {
   };
 
   const renderSessionItem = ({ item }: { item: ChatSession }) => (
-    <TouchableOpacity
-      onPress={() => handleSessionPress(item)}
-      style={styles.sessionItem}
-    >
+    <TouchableOpacity onPress={() => handleSessionPress(item)} style={styles.sessionItem}>
       <GlassCard style={styles.sessionCard}>
         <View style={styles.sessionHeader}>
           <View style={styles.sessionInfo}>
@@ -214,26 +219,19 @@ export default function ChatHistoryScreen({ navigation }: any) {
             <Text style={styles.sessionTimestamp}>{formatTimestamp(item.timestamp)}</Text>
           </View>
           <View style={styles.sessionActions}>
-            <TouchableOpacity
-              onPress={() => handleExportSession(item)}
-              style={styles.exportButton}
-            >
+            <TouchableOpacity onPress={() => handleExportSession(item)} style={styles.exportButton}>
               <Ionicons name="download-outline" size={20} color={darkTheme.colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
-                Alert.alert(
-                  t('messages.confirm_delete'),
-                  t('messages.delete_session_confirm'),
-                  [
-                    { text: t('common.cancel'), style: 'cancel' },
-                    {
-                      text: t('common.delete'),
-                      style: 'destructive',
-                      onPress: () => handleDeleteSession(item.id),
-                    },
-                  ]
-                );
+                Alert.alert(t('messages.confirm_delete'), t('messages.delete_session_confirm'), [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  {
+                    text: t('common.delete'),
+                    style: 'destructive',
+                    onPress: () => handleDeleteSession(item.id),
+                  },
+                ]);
               }}
               style={styles.deleteButton}
             >
@@ -284,7 +282,7 @@ export default function ChatHistoryScreen({ navigation }: any) {
       <FlatList
         data={sessions}
         renderItem={renderSessionItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />

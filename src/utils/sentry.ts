@@ -11,7 +11,7 @@ export const initSentry = () => {
   // Production'da Sentry'yi başlat
   // DSN'i environment variable'dan al
   const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
-  
+
   if (!dsn) {
     // Sentry DSN yoksa uyarı ver (sadece development'ta)
     if (__DEV__) {
@@ -43,7 +43,7 @@ export const captureException = (error: Error, context?: Record<string, unknown>
     logger.error('Error (dev mode):', error, context);
     return;
   }
-  
+
   Sentry.captureException(error, {
     extra: context,
   });
@@ -55,7 +55,7 @@ export const captureMessage = (message: string, level: Sentry.SeverityLevel = 'i
     logger.log(`Message (dev mode): ${message}`);
     return;
   }
-  
+
   Sentry.captureMessage(message, level);
 };
 
@@ -64,7 +64,7 @@ export const setUserContext = (user: { id: string; email?: string; name?: string
   if (__DEV__) {
     return;
   }
-  
+
   Sentry.setUser({
     id: user.id,
     email: user.email,
@@ -77,7 +77,6 @@ export const clearUserContext = () => {
   if (__DEV__) {
     return;
   }
-  
+
   Sentry.setUser(null);
 };
-

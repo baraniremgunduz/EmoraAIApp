@@ -9,10 +9,9 @@ export interface IChatRepository {
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
     model?: string
   ): Promise<string>;
-  
+
   /**
    * Fallback response al (API çalışmazsa)
    */
   getFallbackResponse(userMessage: string): Promise<string>;
 }
-

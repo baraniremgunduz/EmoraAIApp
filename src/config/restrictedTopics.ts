@@ -4,7 +4,7 @@
 export const RESTRICTED_TOPICS = {
   technical: [
     'kod yazılım dilleri',
-    'API key\'ler',
+    "API key'ler",
     'kullanılan yapay zeka modeli',
     'teknik detaylar',
     'yazılım mimarisi',
@@ -18,7 +18,7 @@ export const RESTRICTED_TOPICS = {
     'software architecture',
     'database structure',
     'security information',
-    'system configurations'
+    'system configurations',
   ],
   health: [
     'tıbbi müdahale',
@@ -30,7 +30,7 @@ export const RESTRICTED_TOPICS = {
     'medication recommendation',
     'treatment recommendation',
     'diagnosis',
-    'health advice'
+    'health advice',
   ],
   sensitive: [
     'siyaset',
@@ -52,21 +52,79 @@ export const RESTRICTED_TOPICS = {
     'drugs',
     'alcohol use',
     'violence',
-    'terrorism'
-  ]
+    'terrorism',
+  ],
 };
 
 // Dil bazlı kısıtlı konular
 const RESTRICTED_TOPICS_TR = [
-  ...RESTRICTED_TOPICS.technical.filter(t => !t.includes('programming') && !t.includes('API keys') && !t.includes('AI models') && !t.includes('technical details') && !t.includes('software architecture') && !t.includes('database structure') && !t.includes('security information') && !t.includes('system configurations')),
-  ...RESTRICTED_TOPICS.health.filter(t => !t.includes('medical intervention') && !t.includes('medication recommendation') && !t.includes('treatment recommendation') && !t.includes('diagnosis') && !t.includes('health advice')),
-  ...RESTRICTED_TOPICS.sensitive.filter(t => !t.includes('politics') && !t.includes('political figures') && !t.includes('political views') && !t.includes('suicide') && !t.includes('self-harm') && !t.includes('sexuality') && !t.includes('drugs') && !t.includes('alcohol use') && !t.includes('violence') && !t.includes('terrorism'))
+  ...RESTRICTED_TOPICS.technical.filter(
+    t =>
+      !t.includes('programming') &&
+      !t.includes('API keys') &&
+      !t.includes('AI models') &&
+      !t.includes('technical details') &&
+      !t.includes('software architecture') &&
+      !t.includes('database structure') &&
+      !t.includes('security information') &&
+      !t.includes('system configurations')
+  ),
+  ...RESTRICTED_TOPICS.health.filter(
+    t =>
+      !t.includes('medical intervention') &&
+      !t.includes('medication recommendation') &&
+      !t.includes('treatment recommendation') &&
+      !t.includes('diagnosis') &&
+      !t.includes('health advice')
+  ),
+  ...RESTRICTED_TOPICS.sensitive.filter(
+    t =>
+      !t.includes('politics') &&
+      !t.includes('political figures') &&
+      !t.includes('political views') &&
+      !t.includes('suicide') &&
+      !t.includes('self-harm') &&
+      !t.includes('sexuality') &&
+      !t.includes('drugs') &&
+      !t.includes('alcohol use') &&
+      !t.includes('violence') &&
+      !t.includes('terrorism')
+  ),
 ];
 
 const RESTRICTED_TOPICS_EN = [
-  ...RESTRICTED_TOPICS.technical.filter(t => !t.includes('kod') && !t.includes('yazılım') && !t.includes('API key') && !t.includes('yapay zeka') && !t.includes('teknik') && !t.includes('mimari') && !t.includes('veritabanı') && !t.includes('güvenlik') && !t.includes('konfigürasyon')),
-  ...RESTRICTED_TOPICS.health.filter(t => !t.includes('tıbbi') && !t.includes('ilaç') && !t.includes('tedavi') && !t.includes('teşhis') && !t.includes('sağlık')),
-  ...RESTRICTED_TOPICS.sensitive.filter(t => !t.includes('siyaset') && !t.includes('siyasi') && !t.includes('intihar') && !t.includes('zarar') && !t.includes('cinsellik') && !t.includes('uyuşturucu') && !t.includes('alkol') && !t.includes('şiddet') && !t.includes('terör'))
+  ...RESTRICTED_TOPICS.technical.filter(
+    t =>
+      !t.includes('kod') &&
+      !t.includes('yazılım') &&
+      !t.includes('API key') &&
+      !t.includes('yapay zeka') &&
+      !t.includes('teknik') &&
+      !t.includes('mimari') &&
+      !t.includes('veritabanı') &&
+      !t.includes('güvenlik') &&
+      !t.includes('konfigürasyon')
+  ),
+  ...RESTRICTED_TOPICS.health.filter(
+    t =>
+      !t.includes('tıbbi') &&
+      !t.includes('ilaç') &&
+      !t.includes('tedavi') &&
+      !t.includes('teşhis') &&
+      !t.includes('sağlık')
+  ),
+  ...RESTRICTED_TOPICS.sensitive.filter(
+    t =>
+      !t.includes('siyaset') &&
+      !t.includes('siyasi') &&
+      !t.includes('intihar') &&
+      !t.includes('zarar') &&
+      !t.includes('cinsellik') &&
+      !t.includes('uyuşturucu') &&
+      !t.includes('alkol') &&
+      !t.includes('şiddet') &&
+      !t.includes('terör')
+  ),
 ];
 
 // Tüm diller için formatlanmış kısıtlama metni
@@ -77,4 +135,3 @@ export const getRestrictedTopicsText = (language: string = 'tr'): string => {
     return `NEVER discuss in conversation: ${RESTRICTED_TOPICS_EN.join(', ')}`;
   }
 };
-

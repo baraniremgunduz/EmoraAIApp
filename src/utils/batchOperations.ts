@@ -19,11 +19,7 @@ export class BatchProcessor {
     processor: (batch: T[]) => Promise<R[]>,
     options: BatchOperationOptions = {}
   ): Promise<R[]> {
-    const {
-      batchSize = 50,
-      delayBetweenBatches = 100,
-      continueOnError = true,
-    } = options;
+    const { batchSize = 50, delayBetweenBatches = 100, continueOnError = true } = options;
 
     const results: R[] = [];
     const batches: T[][] = [];
@@ -64,10 +60,14 @@ export class BatchProcessor {
     inserter: (batch: T[]) => Promise<void>,
     options: BatchOperationOptions = {}
   ): Promise<void> {
-    await this.processInBatches(items, async (batch) => {
-      await inserter(batch);
-      return [];
-    }, options);
+    await this.processInBatches(
+      items,
+      async batch => {
+        await inserter(batch);
+        return [];
+      },
+      options
+    );
   }
 
   /**
@@ -78,10 +78,14 @@ export class BatchProcessor {
     updater: (batch: T[]) => Promise<void>,
     options: BatchOperationOptions = {}
   ): Promise<void> {
-    await this.processInBatches(items, async (batch) => {
-      await updater(batch);
-      return [];
-    }, options);
+    await this.processInBatches(
+      items,
+      async batch => {
+        await updater(batch);
+        return [];
+      },
+      options
+    );
   }
 
   /**
@@ -92,10 +96,13 @@ export class BatchProcessor {
     deleter: (batch: string[]) => Promise<void>,
     options: BatchOperationOptions = {}
   ): Promise<void> {
-    await this.processInBatches(ids, async (batch) => {
-      await deleter(batch);
-      return [];
-    }, options);
+    await this.processInBatches(
+      ids,
+      async batch => {
+        await deleter(batch);
+        return [];
+      },
+      options
+    );
   }
 }
-

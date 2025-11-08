@@ -1,13 +1,6 @@
 // Glass Input Component with Animations
 import React, { useState } from 'react';
-import {
-  TextInput,
-  View,
-  Text,
-  StyleSheet,
-  TextInputProps,
-  TouchableOpacity,
-} from 'react-native';
+import { TextInput, View, Text, StyleSheet, TextInputProps, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -70,11 +63,7 @@ export default function GlassInput({
   };
 
   const animatedContainerStyle = useAnimatedStyle(() => {
-    const borderColor = interpolate(
-      focusAnimation.value,
-      [0, 1],
-      [0, 1]
-    );
+    const borderColor = interpolate(focusAnimation.value, [0, 1], [0, 1]);
 
     return {
       borderColor: borderColor === 1 ? darkTheme.colors.primary : darkTheme.colors.border,
@@ -83,27 +72,12 @@ export default function GlassInput({
   });
 
   const animatedLabelStyle = useAnimatedStyle(() => {
-    const translateY = interpolate(
-      labelAnimation.value,
-      [0, 1],
-      [0, -20]
-    );
-    const scale = interpolate(
-      labelAnimation.value,
-      [0, 1],
-      [1, 0.8]
-    );
-    const color = interpolate(
-      labelAnimation.value,
-      [0, 1],
-      [0, 1]
-    );
+    const translateY = interpolate(labelAnimation.value, [0, 1], [0, -20]);
+    const scale = interpolate(labelAnimation.value, [0, 1], [1, 0.8]);
+    const color = interpolate(labelAnimation.value, [0, 1], [0, 1]);
 
     return {
-      transform: [
-        { translateY },
-        { scale }
-      ],
+      transform: [{ translateY }, { scale }],
       color: color === 1 ? darkTheme.colors.primary : darkTheme.colors.textSecondary,
     };
   });
