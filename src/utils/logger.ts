@@ -19,10 +19,12 @@ export const logger = {
   },
 
   error: (...args: any[]) => {
-    // Error'lar her zaman loglanır
-    console.error(...args);
+    // Production'da console.error gösterilmez (sadece Sentry'ye gönderilir)
+    if (isDevelopment) {
+      console.error(...args);
+    }
     
-    // Production'da Sentry'ye gönder
+    // Production'da Sentry'ye gönder (kullanıcıya gösterilmez)
     if (!isDevelopment) {
       const error = args.find(arg => arg instanceof Error);
       if (error) {

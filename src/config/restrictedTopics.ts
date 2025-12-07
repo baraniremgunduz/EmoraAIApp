@@ -135,3 +135,52 @@ export const getRestrictedTopicsText = (language: string = 'tr'): string => {
     return `NEVER discuss in conversation: ${RESTRICTED_TOPICS_EN.join(', ')}`;
   }
 };
+
+// Tüm yasaklı konuları birleştir (kontrol için)
+const ALL_RESTRICTED_TOPICS = [
+  ...RESTRICTED_TOPICS.technical,
+  ...RESTRICTED_TOPICS.health,
+  ...RESTRICTED_TOPICS.sensitive,
+];
+
+// Kullanıcı mesajında yasaklı konu kontrolü
+export const checkRestrictedTopics = (message: string, language: string = 'tr'): {
+  isRestricted: boolean;
+  detectedTopics: string[];
+  message?: string;
+} => {
+  const lowerMessage = message.toLowerCase();
+  const detectedTopics: string[] = [];
+
+  // Dil bazlı yasaklı konuları kontrol et
+  const topicsToCheck = language === 'tr' ? RESTRICTED_TOPICS_TR : RESTRICTED_TOPICS_EN;
+
+  // Her yasaklı konuyu kontrol et
+  for (const topic of topicsToCheck) {
+    if (lowerMessage.includes(topic.toLowerCase())) {
+      detectedTopics.push(topic);
+    }
+  }
+
+  // Tüm yasaklı konuları da kontrol et (çok dilli mesajlar için)
+  for (const topic of ALL_RESTRICTED_TOPICS) {
+    if (lowerMessage.includes(topic.toLowerCase()) && !detectedTopics.includes(topic)) {
+      detectedTopics.push(topic);
+    }
+  }
+
+  if (detectedTopics.length > 0) {
+    return {
+      isRestricted: true,
+      detectedTopics,
+      message: language === 'tr'
+        ? 'Üzgünüz, bu konu hakkında konuşamıyorum. Lütfen başka bir konu seçin.'
+        : 'Sorry, I cannot discuss this topic. Please choose another topic.',
+    };
+  }
+
+  return {
+    isRestricted: false,
+    detectedTopics: [],
+  };
+};

@@ -21,9 +21,11 @@ import { NotificationService } from '../services/notificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from '../contexts/LanguageContext';
 import { validatePassword } from '../utils/passwordValidator';
+import { usePremiumContext } from '../contexts/PremiumContext';
 
 export default function SettingsScreen({ navigation }: any) {
   const { language, setLanguage, t } = useLanguage();
+  const { isPremium } = usePremiumContext();
   const [user, setUser] = useState<any>(null);
   const [showPersonalityModal, setShowPersonalityModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -108,18 +110,13 @@ export default function SettingsScreen({ navigation }: any) {
     }
 
     try {
-      const result = await AuthService.updatePassword(newPassword);
-
-      if (result.error) {
-        Alert.alert(t('messages.error'), t('errors.password_failed') + ' ' + result.error.message);
-      } else {
-        Alert.alert(t('messages.success'), t('errors.password_changed'));
-        setShowPasswordModal(false);
-        setNewPassword('');
-        setConfirmPassword('');
-      }
+      await AuthService.updatePassword(newPassword);
+      Alert.alert(t('messages.success'), t('errors.password_changed'));
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
     } catch (error: any) {
-      console.error('Şifre değiştirme hatası:', error);
+      logger.error('Şifre değiştirme hatası:', error);
       Alert.alert(
         t('messages.error'),
         'Şifre değiştirme sırasında bir hata oluştu: ' + (error.message || 'Bilinmeyen hata')
@@ -198,7 +195,7 @@ export default function SettingsScreen({ navigation }: any) {
         user: user,
         settings: settings,
         exportDate: new Date().toISOString(),
-        appVersion: '1.0.0',
+        appVersion: '1.0.2',
       };
 
       // JSON formatında veri hazırla
@@ -207,7 +204,7 @@ export default function SettingsScreen({ navigation }: any) {
       // Dosya adı oluştur
       const fileName = `emora_ai_data_${new Date().toISOString().split('T')[0]}.json`;
 
-      Alert.alert(t('account.export_data'), t('account.export_ready', { fileName }), [
+      Alert.alert(t('account.export_data'), t('account.export_ready').replace('{fileName}', fileName), [
         {
           text: t('common.ok'),
           onPress: () => {
@@ -248,6 +245,27 @@ export default function SettingsScreen({ navigation }: any) {
         },
       },
     ]);
+  };
+
+  // AI Personality seçimini handle eden fonksiyon
+  const handlePersonalitySelect = (personality: 'friendly' | 'professional' | 'casual') => {
+    // Dostane her zaman erişilebilir
+    if (personality === 'friendly') {
+      handleSettingChange('aiPersonality', personality);
+      setShowPersonalityModal(false);
+      return;
+    }
+
+    // Professional ve Casual premium gerektirir
+    if (!isPremium) {
+      setShowPersonalityModal(false);
+      navigation.navigate('PremiumFeatures');
+      return;
+    }
+
+    // Premium ise seçimi yap
+    handleSettingChange('aiPersonality', personality);
+    setShowPersonalityModal(false);
   };
 
   return (
@@ -422,7 +440,7 @@ export default function SettingsScreen({ navigation }: any) {
 
         {/* App Info */}
         <View style={styles.appInfoContainer}>
-          <Text style={styles.appInfoText}>{t('app.name')} v1.0.0</Text>
+          <Text style={styles.appInfoText}>{t('app.name')} v1.0.2</Text>
           <Text style={styles.appInfoSubtext}>{t('app.tagline')}</Text>
         </View>
       </ScrollView>
@@ -447,15 +465,13 @@ export default function SettingsScreen({ navigation }: any) {
             </View>
 
             <View style={styles.personalityOptions}>
+              {/* Friendly - Her zaman erişilebilir */}
               <TouchableOpacity
                 style={[
                   styles.personalityOption,
                   settings.aiPersonality === 'friendly' && styles.personalityOptionSelected,
                 ]}
-                onPress={() => {
-                  handleSettingChange('aiPersonality', 'friendly');
-                  setShowPersonalityModal(false);
-                }}
+                onPress={() => handlePersonalitySelect('friendly')}
               >
                 <View style={styles.personalityIcon}>
                   <Ionicons name="heart" size={24} color={darkTheme.colors.primary} />
@@ -471,15 +487,13 @@ export default function SettingsScreen({ navigation }: any) {
                 )}
               </TouchableOpacity>
 
+              {/* Professional - Premium */}
               <TouchableOpacity
                 style={[
                   styles.personalityOption,
                   settings.aiPersonality === 'professional' && styles.personalityOptionSelected,
                 ]}
-                onPress={() => {
-                  handleSettingChange('aiPersonality', 'professional');
-                  setShowPersonalityModal(false);
-                }}
+                onPress={() => handlePersonalitySelect('professional')}
               >
                 <View style={styles.personalityIcon}>
                   <Ionicons name="briefcase" size={24} color={darkTheme.colors.secondary} />
@@ -501,21 +515,25 @@ export default function SettingsScreen({ navigation }: any) {
                 )}
               </TouchableOpacity>
 
+              {/* Casual - Premium */}
               <TouchableOpacity
                 style={[
                   styles.personalityOption,
                   settings.aiPersonality === 'casual' && styles.personalityOptionSelected,
                 ]}
-                onPress={() => {
-                  handleSettingChange('aiPersonality', 'casual');
-                  setShowPersonalityModal(false);
-                }}
+                onPress={() => handlePersonalitySelect('casual')}
               >
                 <View style={styles.personalityIcon}>
                   <Ionicons name="happy" size={24} color={darkTheme.colors.primary} />
                 </View>
                 <View style={styles.personalityContent}>
+                  <View style={styles.personalityTitleRow}>
                   <Text style={styles.personalityTitle}>{t('personality.casual')}</Text>
+                    <View style={styles.premiumBadge}>
+                      <Ionicons name="star" size={12} color={darkTheme.colors.premium} />
+                      <Text style={styles.premiumBadgeText}>{t('personality.premium')}</Text>
+                    </View>
+                  </View>
                   <Text style={styles.personalityDescription}>{t('personality.casual_desc')}</Text>
                 </View>
                 {settings.aiPersonality === 'casual' && (
@@ -596,49 +614,71 @@ export default function SettingsScreen({ navigation }: any) {
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('account.change_password')}</Text>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => {
-                  setShowPasswordModal(false);
-                  setNewPassword('');
-                  setConfirmPassword('');
-                }}
-              >
-                <Ionicons name="close" size={24} color={darkTheme.colors.primary} />
-              </TouchableOpacity>
             </View>
 
             <View style={styles.passwordModalContent}>
               <TextInput
-                label={t('account.new_password') || 'Yeni Şifre'}
+                label={t('account.new_password')}
+                placeholder={t('account.new_password')}
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry
                 mode="outlined"
-                style={styles.passwordInput}
+                style={[styles.passwordInput, { color: darkTheme.colors.primary }]}
+                contentStyle={{ color: darkTheme.colors.primary }}
+                inputStyle={{ color: darkTheme.colors.primary }}
+                outlineColor={darkTheme.colors.primary}
+                activeOutlineColor={darkTheme.colors.primary}
+                labelTextColor={darkTheme.colors.primary}
+                textColor={darkTheme.colors.primary}
+                placeholderTextColor={darkTheme.colors.primary}
+                selectionColor={darkTheme.colors.primary}
+                underlineColor={darkTheme.colors.primary}
+                underlineColorAndroid={darkTheme.colors.primary}
                 theme={{
                   colors: {
                     primary: darkTheme.colors.primary,
                     background: darkTheme.colors.surface,
-                    text: darkTheme.colors.text,
-                    placeholder: darkTheme.colors.textSecondary,
+                    text: darkTheme.colors.primary,
+                    placeholder: darkTheme.colors.primary,
+                    outline: darkTheme.colors.primary,
+                    onSurface: darkTheme.colors.primary,
+                    onSurfaceVariant: darkTheme.colors.primary,
+                    surfaceVariant: darkTheme.colors.surface,
+                    onBackground: darkTheme.colors.primary,
                   },
                 }}
               />
 
               <TextInput
-                label={t('account.confirm_password') || 'Şifreyi Onayla'}
+                label={t('account.confirm_password')}
+                placeholder={t('account.confirm_password')}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
                 mode="outlined"
-                style={styles.passwordInput}
+                style={[styles.passwordInput, { color: darkTheme.colors.primary }]}
+                contentStyle={{ color: darkTheme.colors.primary }}
+                inputStyle={{ color: darkTheme.colors.primary }}
+                outlineColor={darkTheme.colors.primary}
+                activeOutlineColor={darkTheme.colors.primary}
+                labelTextColor={darkTheme.colors.primary}
+                textColor={darkTheme.colors.primary}
+                placeholderTextColor={darkTheme.colors.primary}
+                selectionColor={darkTheme.colors.primary}
+                underlineColor={darkTheme.colors.primary}
+                underlineColorAndroid={darkTheme.colors.primary}
                 theme={{
                   colors: {
                     primary: darkTheme.colors.primary,
                     background: darkTheme.colors.surface,
-                    text: darkTheme.colors.text,
-                    placeholder: darkTheme.colors.textSecondary,
+                    text: darkTheme.colors.primary,
+                    placeholder: darkTheme.colors.primary,
+                    outline: darkTheme.colors.primary,
+                    onSurface: darkTheme.colors.primary,
+                    onSurfaceVariant: darkTheme.colors.primary,
+                    surfaceVariant: darkTheme.colors.surface,
+                    onBackground: darkTheme.colors.primary,
                   },
                 }}
               />
@@ -652,7 +692,8 @@ export default function SettingsScreen({ navigation }: any) {
                     setConfirmPassword('');
                   }}
                   style={styles.passwordCancelButton}
-                  textColor={darkTheme.colors.textSecondary}
+                  textColor={darkTheme.colors.primary}
+                  borderColor={darkTheme.colors.primary}
                 >
                   {t('messages.cancel')}
                 </Button>
@@ -816,6 +857,34 @@ const styles = StyleSheet.create({
   modalCloseButton: {
     padding: 4,
   },
+  closeButton: {
+    padding: 4,
+  },
+  sectionCard: {
+    backgroundColor: darkTheme.colors.surface,
+    borderRadius: darkTheme.borderRadius.md,
+    marginBottom: 16,
+    marginHorizontal: 16,
+  },
+  sectionTitle: {
+    ...darkTheme.typography.subtitle,
+    color: darkTheme.colors.text,
+    fontSize: 18,
+    fontWeight: '600' as const,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  listTitle: {
+    ...darkTheme.typography.body,
+    color: darkTheme.colors.text,
+    fontSize: 16,
+  },
+  listDescription: {
+    ...darkTheme.typography.caption,
+    color: darkTheme.colors.textSecondary,
+    fontSize: 13,
+  },
   personalityOptions: {
     padding: 24,
   },
@@ -846,7 +915,7 @@ const styles = StyleSheet.create({
   personalityContent: {
     flex: 1,
   },
-  personalityTitle: {
+  personalityTitleModal: {
     ...darkTheme.typography.subtitle,
     color: darkTheme.colors.text,
     fontSize: 16,
@@ -965,6 +1034,7 @@ const styles = StyleSheet.create({
   passwordInput: {
     marginBottom: 16,
     backgroundColor: darkTheme.colors.surface,
+    color: darkTheme.colors.primary,
   },
   passwordButtonContainer: {
     flexDirection: 'row',
@@ -974,7 +1044,7 @@ const styles = StyleSheet.create({
   },
   passwordCancelButton: {
     flex: 1,
-    borderColor: darkTheme.colors.border,
+    borderColor: darkTheme.colors.primary,
   },
   passwordSubmitButton: {
     flex: 1,

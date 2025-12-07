@@ -34,16 +34,20 @@ import { logger } from '../utils/logger';
 import { isOnline } from '../utils/networkStatus';
 import { ChatExporter } from '../utils/chatExporter';
 import Markdown from 'react-native-markdown-display';
+import { checkRestrictedTopics } from '../config/restrictedTopics';
+import { AdBanner } from '../components/AdBanner';
 
-interface ChatScreenProps {
-  navigation: any;
-  route?: {
-    params?: {
-      sessionId?: string;
-      sessionTitle?: string;
-    };
-  };
-}
+import { StackScreenProps } from '@react-navigation/stack';
+import { CompositeScreenProps } from '@react-navigation/native';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { RootStackParamList, MainTabParamList } from '../types';
+
+type ChatScreenNavigationProps = CompositeScreenProps<
+  BottomTabScreenProps<MainTabParamList, 'Chat'>,
+  StackScreenProps<RootStackParamList>
+>;
+
+interface ChatScreenProps extends ChatScreenNavigationProps {}
 
 export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   const { t } = useLanguage();
@@ -55,9 +59,10 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showPremiumLimit, setShowPremiumLimit] = useState(false);
   const [messagesUsed, setMessagesUsed] = useState(0);
-  const [messagesLimit] = useState(isPremium ? 999999 : 10); // Premium'da sınırsız
+  const [messagesLimit, setMessagesLimit] = useState(isPremium ? 999999 : 10); // Premium'da sınırsız
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0); // Klavye yüksekliği için state
   const flatListRef = useRef<FlatList>(null);
 
   // Pagination state
@@ -80,9 +85,71 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   useEffect(() => {
     // Her uygulama açılışında temiz başla - geçmiş konuşmaları yükleme
     getCurrentUser();
+    // Günlük mesaj sayacını kontrol et ve gerekirse reset yap
+    checkAndResetDailyMessageCount();
   }, []);
 
-  // Session ID varsa mesajları yükle
+  // Premium durumu değiştiğinde mesaj limitini güncelle
+  useEffect(() => {
+    setMessagesLimit(isPremium ? 999999 : 10);
+  }, [isPremium]);
+
+  // Günlük mesaj sayacı reset mekanizması
+  const checkAndResetDailyMessageCount = useCallback(async () => {
+    try {
+      const today = new Date().toDateString(); // Sadece tarih (gün/ay/yıl)
+      const lastResetDate = await AsyncStorage.getItem('lastMessageCountResetDate');
+      
+      // Eğer bugün reset yapılmadıysa veya hiç reset yapılmamışsa
+      if (lastResetDate !== today) {
+        // Mesaj sayacını sıfırla
+        setMessagesUsed(0);
+        // Bugünün tarihini kaydet
+        await AsyncStorage.setItem('lastMessageCountResetDate', today);
+        logger.log('Günlük mesaj sayacı resetlendi:', today);
+      } else {
+        // Bugün reset yapılmış, kaydedilmiş mesaj sayısını yükle
+        const savedCount = await AsyncStorage.getItem('messagesUsedToday');
+        if (savedCount) {
+          const count = parseInt(savedCount, 10);
+          if (!isNaN(count)) {
+            setMessagesUsed(count);
+          }
+        }
+      }
+    } catch (error) {
+      logger.error('Günlük mesaj sayacı kontrol hatası:', error);
+      // Hata durumunda sıfırla
+      setMessagesUsed(0);
+    }
+  }, []);
+
+  // Mesaj sayacını AsyncStorage'a kaydet
+  const saveMessageCount = useCallback(async (count: number) => {
+    try {
+      await AsyncStorage.setItem('messagesUsedToday', count.toString());
+    } catch (error) {
+      logger.error('Mesaj sayacı kaydetme hatası:', error);
+    }
+  }, []);
+
+  // Tab bar'dan Sohbet'e basınca - sessionId yoksa welcome mesajı göster
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      const sessionId = route?.params?.sessionId;
+      // SessionId yoksa ve mesaj yoksa, welcome mesajını göster
+      if (!sessionId && currentUser && messages.length === 0) {
+        addWelcomeMessage(currentUser.id);
+      }
+      // Her focus'ta günlük mesaj sayacını kontrol et
+      checkAndResetDailyMessageCount();
+    });
+
+    return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation, route?.params?.sessionId, currentUser, messages.length, checkAndResetDailyMessageCount]);
+
+  // Session ID varsa mesajları yükle, yoksa yeni sohbet başlat
   useEffect(() => {
     const sessionId = route?.params?.sessionId;
     if (sessionId && currentUser) {
@@ -90,16 +157,23 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       setPage(0);
       setHasMore(true);
       loadSessionMessages(sessionId, 0);
+    } else if (!sessionId && currentUser) {
+      // SessionId yoksa (tab bar'dan basıldı veya temizlendi) - yeni sohbet başlat
+      setMessages([]);
+      addWelcomeMessage(currentUser.id);
     }
-  }, [route?.params?.sessionId, currentUser]);
+  }, [route?.params?.sessionId, currentUser, loadSessionMessages, addWelcomeMessage]);
 
   useEffect(() => {
-    // Klavye durumunu takip et
-    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+    // Klavye durumunu ve yüksekliğini takip et - Tüm iOS iPhone modelleri için
+    const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
       setIsKeyboardVisible(true);
+      // Klavye yüksekliğini kaydet (tüm iPhone modellerinde çalışır)
+      setKeyboardHeight(e.endCoordinates.height);
     });
     const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
       setIsKeyboardVisible(false);
+      setKeyboardHeight(0); // Klavye kapandığında yüksekliği sıfırla
     });
 
     return () => {
@@ -153,38 +227,9 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
     }
   };
 
-  // Hoş geldin mesajını ekle ve yeni session oluştur
-  const addWelcomeMessage = async (userId?: string) => {
-    try {
-      // Yeni chat session oluştur
-      if (userId) {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) {
-          const userLanguage = (await AsyncStorage.getItem('appLanguage')) || 'tr';
-          const sessionTitle = userLanguage === 'en' ? 'New Chat' : 'Yeni Sohbet';
-
-          const { data: newSession, error } = await supabase
-            .from('chat_sessions')
-            .insert({
-              user_id: userId,
-              title: sessionTitle,
-            })
-            .select('id')
-            .single();
-
-          if (error) {
-            logger.error('Yeni session oluşturma hatası:', error);
-          } else {
-            logger.log('Yeni chat session oluşturuldu:', newSession.id);
-          }
-        }
-      }
-    } catch (error) {
-      logger.error('Session oluşturma hatası:', error);
-    }
-
+  // Hoş geldin mesajını ekle (session oluşturma yok - sadece mesaj gönderildiğinde oluşturulacak)
+  const addWelcomeMessage = useCallback(async (userId?: string) => {
+    // Session oluşturma kaldırıldı - sadece gerçek mesaj gönderildiğinde session oluşturulacak
     const welcomeMessage: Message = {
       id: 'welcome',
       content: t('chat.welcome_message'),
@@ -193,10 +238,10 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       user_id: userId || currentUser?.id || 'system',
     };
     setMessages([welcomeMessage]);
-  };
+  }, [t, currentUser?.id]);
 
-  // Session mesajlarını yükle (pagination ile)
-  const loadSessionMessages = async (sessionId: string, pageNum: number = 0) => {
+  // Session mesajlarını yükle (pagination ile) - useCallback ile optimize edildi
+  const loadSessionMessages = useCallback(async (sessionId: string, pageNum: number = 0) => {
     if (!currentUser) return;
 
     try {
@@ -244,7 +289,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  };
+  }, [currentUser, addWelcomeMessage]);
 
   // Daha fazla mesaj yükle (infinite scroll)
   const loadMoreMessages = useCallback(() => {
@@ -252,10 +297,15 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
     if (sessionId && currentUser && hasMore && !isLoadingMore && !isLoading) {
       loadSessionMessages(sessionId, page + 1);
     }
-  }, [route?.params?.sessionId, currentUser, hasMore, isLoadingMore, isLoading, page]);
+  }, [route?.params?.sessionId, currentUser, hasMore, isLoadingMore, isLoading, page, loadSessionMessages]);
 
   const sendMessage = async () => {
     if (!inputText.trim()) return;
+
+    // Mesaj gönderme işlemini engelle (duplicate önlemek için)
+    if (isLoading) {
+      return; // Zaten bir mesaj gönderiliyor, yeni mesaj gönderme
+    }
 
     // Network kontrolü - offline ise uyarı ver
     const online = await isOnline();
@@ -276,6 +326,17 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
 
     const sanitizedContent = validation.sanitized || inputText.trim();
 
+    // Yasaklı konular kontrolü
+    const userLanguage = (await AsyncStorage.getItem('appLanguage')) || 'tr';
+    const restrictedCheck = checkRestrictedTopics(sanitizedContent, userLanguage);
+    if (restrictedCheck.isRestricted) {
+      Alert.alert(
+        t('messages.error'),
+        restrictedCheck.message || 'Bu konu hakkında konuşamıyorum. Lütfen başka bir konu seçin.'
+      );
+      return;
+    }
+
     // Rate limiting kontrolü
     const userId = currentUser?.id || 'anonymous';
     const rateLimitCheck = checkRateLimit(userId);
@@ -290,39 +351,81 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       return;
     }
 
+    // Unique ID oluştur
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       content: sanitizedContent,
       role: 'user',
       timestamp: new Date().toISOString(),
       user_id: userId,
     };
 
-    // Kullanıcı mesajını ekle
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    // Input'u temizle
     setInputText('');
-    setMessagesUsed(prev => prev + 1); // Mesaj sayacını artır
     setIsLoading(true);
+    // Mesaj sayacını artır ve kaydet
+    setMessagesUsed(prev => {
+      const newCount = prev + 1;
+      saveMessageCount(newCount);
+      return newCount;
+    });
+
+    // Kullanıcı mesajını ekle (duplicate kontrolü ile)
+    setMessages(prev => {
+      // Duplicate kontrolü - aynı içerik ve zaman damgası varsa ekleme
+      const isDuplicate = prev.some(
+        msg => msg.content === userMessage.content && 
+               msg.role === 'user' && 
+               Math.abs(new Date(msg.timestamp).getTime() - new Date(userMessage.timestamp).getTime()) < 1000
+      );
+      if (isDuplicate) {
+        return prev; // Duplicate ise ekleme
+      }
+      return [...prev, userMessage];
+    });
 
     try {
+      // Mevcut mesajları al (güncel state)
+      const currentMessages = messages;
+      const messagesWithUser = [...currentMessages, userMessage];
+      
       // AI'dan cevap al - mevcut mesajları context olarak gönder
-      const aiResponse = await ChatService.sendMessage(sanitizedContent, userId, updatedMessages);
+      const aiResponse = await ChatService.sendMessage(sanitizedContent, userId, messagesWithUser);
 
-      // AI cevabını ekle
-      setMessages(prev => [...prev, aiResponse]);
+      // AI cevabını ekle (duplicate kontrolü ile)
+      setMessages(prev => {
+        // Son mesaj zaten userMessage ise, sadece AI cevabını ekle
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage && lastMessage.id === userMessage.id) {
+          // Duplicate kontrolü - aynı AI cevabı varsa ekleme
+          const isDuplicate = prev.some(
+            msg => msg.content === aiResponse.content && 
+                   msg.role === 'assistant' && 
+                   Math.abs(new Date(msg.timestamp).getTime() - new Date(aiResponse.timestamp).getTime()) < 1000
+          );
+          if (isDuplicate) {
+            return prev;
+          }
+          return [...prev, aiResponse];
+        }
+        // Eğer userMessage eklenmemişse, her ikisini de ekle
+        return [...prev, aiResponse];
+      });
     } catch (error) {
       logger.error('Mesaj gönderme hatası:', error);
 
-      // Kullanıcı dostu hata mesajı göster ve retry seçeneği sun
+      // Kullanıcı mesajını geri al (hata durumunda)
+      setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
+
+      // Kullanıcı dostu hata mesajı göster
       showErrorAlert(error, t, () => {
-        // Retry fonksiyonu - mesajı tekrar gönder
-        sendMessage();
+        // Retry fonksiyonu - input'u geri yükle, kullanıcı tekrar basabilir
+        setInputText(sanitizedContent);
       });
 
       // Fallback mesaj
       const fallbackMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: `fallback-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         content: t('errors.chat_error'),
         role: 'assistant',
         timestamp: new Date().toISOString(),
@@ -439,8 +542,20 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
     return <MessageItem item={item} />;
   }, []);
 
-  // Memoized key extractor
-  const keyExtractor = useCallback((item: Message) => item.id, []);
+  // Memoized key extractor - unique key için index de ekle
+  const keyExtractor = useCallback((item: Message, index: number) => {
+    // Unique key - ID + index kombinasyonu
+    return item.id ? `${item.id}-${index}` : `msg-${index}-${Date.now()}`;
+  }, []);
+
+  // Memoized styles for better performance
+  const messagesContentStyle = useMemo(
+    () => [
+      styles.messagesContent,
+      { paddingBottom: isSmallScreen ? 4 : 8 },
+    ],
+    [isSmallScreen]
+  );
 
   // Memoized getItemLayout for FlatList performance
   const getItemLayout = useCallback(
@@ -512,10 +627,14 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
           },
         ]
       );
-    } catch (error: any) {
-      logger.error('Export chat hatası:', error);
-      Alert.alert(t('messages.error') || 'Hata', error.message || 'Export başarısız oldu');
-    }
+      } catch (error: any) {
+        logger.error('Export chat hatası:', error);
+        // Production'da teknik hata mesajı gösterme
+        const errorMessage = __DEV__ 
+          ? (error.message || 'Export başarısız oldu')
+          : t('messages.error') || 'Export işlemi başarısız oldu. Lütfen tekrar deneyin.';
+        Alert.alert(t('messages.error') || 'Hata', errorMessage);
+      }
   }, [messages, route?.params?.sessionTitle, t]);
 
   const renderLoadingMessage = () => {
@@ -540,40 +659,8 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
 
   return (
     <View style={styles.container}>
-      {/* Header - Responsive */}
-      <View
-        style={[
-          styles.header,
-          {
-            paddingBottom: isSmallScreen ? 16 : 20,
-            paddingTop: Math.max(insets.top, 10) + (isSmallScreen ? 8 : 12),
-          },
-        ]}
-      >
-        <Text style={[styles.headerTitle, { fontSize: isSmallScreen ? 18 : 20 }]}>Emora AI</Text>
-        <View style={styles.headerActions}>
-          {/* Export Button */}
-          {messages.length > 0 && messages.some(m => m.id !== 'welcome') && (
-            <TouchableOpacity style={styles.exportButton} onPress={handleExportChat}>
-              <Ionicons name="download-outline" size={20} color={darkTheme.colors.primary} />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={styles.premiumIndicator}
-            onPress={() => navigation.navigate('PremiumFeatures')}
-          >
-            <Ionicons name="sparkles" size={16} color={darkTheme.colors.premium} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Messages and Input - KeyboardAvoidingView tüm içeriği kapsıyor */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingContainer}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        enabled={true}
-      >
+      {/* Messages and Input - Animasyonsuz geçiş için KeyboardAvoidingView kaldırıldı */}
+      <View style={styles.keyboardAvoidingContainer}>
         {/* Messages */}
         <View style={styles.messagesContainer}>
           <FlatList
@@ -582,10 +669,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
             renderItem={renderMessage}
             keyExtractor={keyExtractor}
             style={styles.messagesList}
-            contentContainerStyle={[
-              styles.messagesContent,
-              { paddingBottom: isSmallScreen ? 4 : 8 },
-            ]}
+          contentContainerStyle={messagesContentStyle}
             // ✅ Performance optimizations
             getItemLayout={getItemLayout}
             removeClippedSubviews={true}
@@ -603,16 +687,22 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
                 </View>
               ) : null
             }
-            // ✅ Scroll optimizations
-            onContentSizeChange={() => {
-              // Sadece yeni mesaj eklendiğinde scroll (pagination değilse)
-              if (page === 0 && !isLoadingMore) {
-                flatListRef.current?.scrollToEnd({ animated: true });
+            // ✅ Scroll optimizations - sadece yeni mesaj eklendiğinde scroll
+            onContentSizeChange={(contentWidth, contentHeight) => {
+              // Sadece yeni mesaj eklendiğinde ve pagination yoksa scroll
+              if (page === 0 && !isLoadingMore && !isLoading) {
+                // Kısa bir delay ile scroll (render tamamlanması için)
+                setTimeout(() => {
+                  flatListRef.current?.scrollToEnd({ animated: true });
+                }, 100);
               }
             }}
             onLayout={() => {
-              if (page === 0) {
-                flatListRef.current?.scrollToEnd({ animated: false });
+              // İlk render'da scroll
+              if (page === 0 && messages.length > 0) {
+                setTimeout(() => {
+                  flatListRef.current?.scrollToEnd({ animated: false });
+                }, 100);
               }
             }}
             showsVerticalScrollIndicator={false}
@@ -621,14 +711,17 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
           {renderLoadingMessage()}
         </View>
 
-        {/* Input - Responsive */}
+        {/* Banner Reklam - Premium kullanıcılara gösterilmez */}
+        <AdBanner style={styles.adBanner} isPremium={isPremium} />
+
+        {/* Input - Responsive - Animasyonsuz geçiş - Tüm iOS iPhone modelleri için */}
         <View
           style={[
             styles.inputContainer,
             {
               paddingBottom: isKeyboardVisible
-                ? Math.max(insets.bottom, 2) // Klavye açıkken sadece safe area bottom
-                : Math.max(insets.bottom, 4) + NAV_BAR_HEIGHT, // Klavye kapalıyken navigation bar + safe area
+                ? Math.max(insets.bottom, 0) + keyboardHeight // Klavye açıkken: safe area + klavye yüksekliği
+                : Math.max(insets.bottom, 4) + NAV_BAR_HEIGHT, // Klavye kapalıyken: navigation bar + safe area
             },
           ]}
         >
@@ -671,7 +764,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
             </TouchableOpacity>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </View>
 
       {/* Premium Limit Modal */}
       <PremiumLimitScreen
@@ -790,11 +883,46 @@ const styles = StyleSheet.create({
     backgroundColor: darkTheme.colors.background,
     borderBottomWidth: 1,
     borderBottomColor: darkTheme.colors.border,
+    position: 'relative', // Absolute positioning için gerekli
+  },
+  headerLeft: {
+    width: 40, // Sabit genişlik
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  backButton: {
+    padding: 8,
+    backgroundColor: darkTheme.colors.surface,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: darkTheme.colors.border,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButtonPlaceholder: {
+    width: 40,
+    height: 40,
+  },
+  headerCenter: {
+    flex: 1, // Kalan alanı kapla
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     ...darkTheme.typography.title,
-    color: darkTheme.colors.text,
+    color: darkTheme.colors.text || '#FFFFFF', // Fallback beyaz renk
     fontWeight: '600' as const,
+    textAlign: 'center',
+    lineHeight: 24, // Sabit lineHeight ile hizalama
+    includeFontPadding: false, // Android için font padding'i kaldır
+  },
+  headerRight: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
   },
   headerActions: {
     flexDirection: 'row',
@@ -806,13 +934,20 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   premiumIndicator: {
-    opacity: 0.6,
+    opacity: 1, // Görünürlüğü artırdık
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 24, // headerTitle lineHeight ile aynı
+    width: 24,
+    padding: 2, // Tıklanabilir alanı artırdık
   },
   keyboardAvoidingContainer: {
     flex: 1,
+    width: '100%',
   },
   messagesContainer: {
     flex: 1,
+    flexShrink: 1,
   },
   messagesList: {
     flex: 1,
@@ -916,12 +1051,19 @@ const styles = StyleSheet.create({
   dot3: {
     opacity: 1,
   },
-  inputContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 4,
+  adBanner: {
+    paddingVertical: 4,
     backgroundColor: darkTheme.colors.background,
     borderTopWidth: 1,
     borderTopColor: darkTheme.colors.border,
+  },
+  inputContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    backgroundColor: darkTheme.colors.background,
+    borderTopWidth: 1,
+    borderTopColor: darkTheme.colors.border,
+    flexShrink: 0,
   },
   inputWrapper: {
     flexDirection: 'row',

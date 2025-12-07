@@ -83,8 +83,12 @@ export class ChatService {
         user_id: userId,
       };
 
-      // Mesajları veritabanına kaydet
-      await this.saveMessages([userMessage, aiMessage], userId);
+      // Mesajları veritabanına kaydet (non-blocking - hata olsa bile mesaj gönderilmiş sayılır)
+      this.saveMessages([userMessage, aiMessage], userId).catch((saveError) => {
+        // Mesaj kaydetme hatası - kullanıcıya gösterme, sadece log
+        logger.error('Mesaj kaydetme hatası (non-blocking):', saveError);
+        // Arka planda tekrar deneme mekanizması eklenebilir
+      });
 
       return aiMessage;
     } catch (error) {
@@ -183,8 +187,17 @@ export class ChatService {
       // Kullanıcı tercihlerini al
       const userPreferences = await this.getUserPreferences(userId || '');
 
+      // Kullanıcı adını işle ve tercih edilen ismi belirle
+      await this.processUserName(user, userId || '', userPreferences);
+
+      // Kullanıcı mesajında tercih edilen ismi kontrol et
+      await this.checkForPreferredName(userMessage, userId || '', userPreferences);
+
+      // Güncellenmiş tercihleri tekrar al (processUserName ve checkForPreferredName içinde değişmiş olabilir)
+      const updatedPreferences = await this.getUserPreferences(userId || '');
+
       // Gelişmiş system prompt oluştur
-      const systemPrompt = this.createSystemPrompt(finalLanguage, aiPersonality, userPreferences);
+      const systemPrompt = this.createSystemPrompt(finalLanguage, aiPersonality, updatedPreferences);
 
       // Messages array oluştur
       const messages = [
@@ -261,6 +274,85 @@ export class ChatService {
     } catch (error) {
       logger.error('Kullanıcı tercihleri alma hatası:', error);
       return {};
+    }
+  }
+
+  // Kullanıcı tercihlerini kaydet
+  private async saveUserPreferences(userId: string, preferences: UserPreferences): Promise<void> {
+    try {
+      await AsyncStorage.setItem(`userPreferences_${userId}`, JSON.stringify(preferences));
+    } catch (error) {
+      logger.error('Kullanıcı tercihleri kaydetme hatası:', error);
+    }
+  }
+
+  // Kullanıcı adını işle ve tercih edilen ismi belirle
+  private async processUserName(
+    user: any,
+    userId: string,
+    userPreferences: UserPreferences
+  ): Promise<void> {
+    try {
+      const fullName = user?.user_metadata?.name || user?.name || '';
+      if (!fullName) return;
+
+      // İsimleri boşlukla ayır
+      const nameParts = fullName.trim().split(/\s+/).filter(part => part.length > 0);
+      
+      if (nameParts.length === 0) return;
+
+      // Eğer tercih edilen isim zaten kaydedilmişse, işlem yapma
+      if (userPreferences.preferredName) {
+        return;
+      }
+
+      // Tek isim varsa direkt kullan
+      if (nameParts.length === 1) {
+        userPreferences.preferredName = nameParts[0];
+        await this.saveUserPreferences(userId, userPreferences);
+        return;
+      }
+
+      // İki veya daha fazla isim varsa, ilk ismi varsayılan olarak kullan
+      // AI'a hangi isimle hitap edeceğini sormasını söyleyeceğiz
+      userPreferences.preferredName = nameParts[0]; // Geçici olarak ilk ismi kullan
+      userPreferences.needsNameConfirmation = true; // AI'a soru sormasını söyle
+      userPreferences.allNames = nameParts; // Tüm isimleri kaydet
+      await this.saveUserPreferences(userId, userPreferences);
+    } catch (error) {
+      logger.error('Kullanıcı adı işleme hatası:', error);
+    }
+  }
+
+  // Mesaj gönderildikten sonra, kullanıcının tercih ettiği ismi kontrol et
+  private async checkForPreferredName(
+    userMessage: string,
+    userId: string,
+    userPreferences: UserPreferences
+  ): Promise<void> {
+    try {
+      if (!userPreferences.needsNameConfirmation) return;
+
+      const allNames = userPreferences.allNames as string[] | undefined;
+      if (!allNames || allNames.length < 2) return;
+
+      // Kullanıcı mesajında isimlerden birini bul
+      const lowerMessage = userMessage.toLowerCase();
+      for (const name of allNames) {
+        const lowerName = name.toLowerCase();
+        // İsmin mesajda geçip geçmediğini kontrol et (tam kelime olarak)
+        const nameRegex = new RegExp(`\\b${lowerName}\\b`, 'i');
+        if (nameRegex.test(lowerMessage)) {
+          // Kullanıcı bir isim söyledi, bunu tercih edilen isim olarak kaydet
+          userPreferences.preferredName = name;
+          userPreferences.needsNameConfirmation = false;
+          await this.saveUserPreferences(userId, userPreferences);
+          logger.log(`Kullanıcı tercih ettiği ismi belirtti: ${name}`);
+          break;
+        }
+      }
+    } catch (error) {
+      logger.error('Tercih edilen isim kontrolü hatası:', error);
     }
   }
 
@@ -341,5 +433,28 @@ export class ChatService {
 
   static async loadSessionMessages(sessionId: string, userId: string): Promise<Message[]> {
     return ChatService.getInstance().loadSessionMessages(sessionId, userId);
+  }
+
+  static async loadSessionMessagesPaginated(
+    sessionId: string,
+    userId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<Message[]> {
+    return ChatService.getInstance().loadSessionMessagesPaginated(sessionId, userId, limit, offset);
+  }
+
+  // Kullanıcının tüm mesajlarını al (statistics için)
+  async getChatHistory(userId: string): Promise<Message[]> {
+    try {
+      return await this.messageRepository.findRecentByUserId(userId, 1000); // Son 1000 mesaj
+    } catch (error) {
+      logger.error('Chat geçmişi alma hatası:', error);
+      return [];
+    }
+  }
+
+  static async getChatHistory(userId: string): Promise<Message[]> {
+    return ChatService.getInstance().getChatHistory(userId);
   }
 }

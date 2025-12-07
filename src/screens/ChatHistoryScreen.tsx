@@ -1,5 +1,5 @@
 // Sohbet Geçmişi Ekranı - Repository Pattern ile güncellendi
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,8 @@ import { IMessageRepository } from '../repositories/interfaces/IMessageRepositor
 import { IAuthRepository } from '../repositories/interfaces/IAuthRepository';
 import { logger } from '../utils/logger';
 import { ChatExporter } from '../utils/chatExporter';
+import { adService } from '../services/adService';
+import { usePremium } from '../hooks/usePremium';
 
 interface ChatSession {
   id: string;
@@ -28,18 +30,24 @@ interface ChatSession {
   messageCount: number;
 }
 
-export default function ChatHistoryScreen({ navigation }: any) {
+import { StackScreenProps } from '@react-navigation/stack';
+import { RootStackParamList } from '../types';
+
+type ChatHistoryScreenProps = StackScreenProps<RootStackParamList, 'ChatHistory'>;
+
+export default function ChatHistoryScreen({ navigation }: ChatHistoryScreenProps) {
   const { t } = useLanguage();
+  const { isPremium } = usePremium();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Loading ekranını kaldırmak için false yapıldı
 
   // Repository instances
   const sessionRepository: ISessionRepository = container.getSessionRepository();
   const messageRepository: IMessageRepository = container.getMessageRepository();
   const authRepository: IAuthRepository = container.getAuthRepository();
 
-  // Tarih formatlama fonksiyonu
-  const formatTimestamp = (timestamp: string): string => {
+  // Tarih formatlama fonksiyonu - useCallback ile optimize edildi
+  const formatTimestamp = useCallback((timestamp: string): string => {
     const now = new Date();
     const messageDate = new Date(timestamp);
     const diffInHours = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60 * 60));
@@ -54,14 +62,14 @@ export default function ChatHistoryScreen({ navigation }: any) {
       const diffInDays = Math.floor(diffInHours / 24);
       return `${diffInDays} ${t('ui.days_ago')}`;
     }
-  };
+  }, [t]);
 
-  useEffect(() => {
-    loadChatHistory();
-  }, []);
-
-  const loadChatHistory = async () => {
+  // loadChatHistory fonksiyonunu useCallback ile optimize et
+  const loadChatHistory = useCallback(async () => {
+    // Önce boş liste göster (optimistic UI)
+    setSessions([]);
     setIsLoading(true);
+    
     try {
       // Kullanıcı kontrolü
       const user = await authRepository.getCurrentUser();
@@ -75,18 +83,24 @@ export default function ChatHistoryScreen({ navigation }: any) {
       // Chat sessions'ları al
       const chatSessions = await sessionRepository.findByUserId(user.id);
 
-      // Her session için son mesajı al
-      const processedSessions: ChatSession[] = [];
+      if (chatSessions.length === 0) {
+        setSessions([]);
+        setIsLoading(false);
+        return;
+      }
 
-      for (const session of chatSessions) {
+      // Paralel olarak tüm session'ların son mesajlarını al (Promise.all ile)
+      // Bu sayede tüm session'lar aynı anda yüklenir, sıralı yüklemeden çok daha hızlı
+      const sessionPromises = chatSessions.map(async (session) => {
         try {
+          // Tüm mesajları al (paralel yükleme ile hızlandırıldı)
           const messages = await messageRepository.findBySessionId(session.id, user.id);
 
           if (messages && messages.length > 0) {
             // En son mesajı bul
             const lastMessage = messages[messages.length - 1];
 
-            processedSessions.push({
+            return {
               id: session.id,
               title: session.title,
               lastMessage:
@@ -94,38 +108,97 @@ export default function ChatHistoryScreen({ navigation }: any) {
                 (lastMessage.content.length > 50 ? '...' : ''),
               timestamp: lastMessage.timestamp || session.updated_at,
               messageCount: messages.length,
-            });
+            };
+          } else {
+            // Mesaj yoksa session'ı yine de göster
+            return {
+              id: session.id,
+              title: session.title,
+              lastMessage: '',
+              timestamp: session.updated_at,
+              messageCount: 0,
+            };
           }
         } catch (error) {
           logger.error(`Session ${session.id} mesajları yüklenirken hata:`, error);
           // Hata olsa bile session'ı ekle
-          processedSessions.push({
+          return {
             id: session.id,
             title: session.title,
             lastMessage: '',
             timestamp: session.updated_at,
             messageCount: 0,
-          });
+          };
         }
-      }
+      });
 
-      setSessions(processedSessions);
+      // Tüm session'ları paralel olarak yükle
+      const processedSessions = await Promise.all(sessionPromises);
+
+      // Duplicate kontrolü
+      const seenSessionIds = new Set<string>();
+      const uniqueSessions = processedSessions.filter((session) => {
+        if (seenSessionIds.has(session.id)) {
+          logger.warn(`Duplicate session ID detected: ${session.id}, skipping...`);
+          return false;
+        }
+        seenSessionIds.add(session.id);
+        return true;
+      });
+
+      // Tarihe göre sırala (en yeni önce)
+      uniqueSessions.sort((a, b) => {
+        const dateA = new Date(a.timestamp).getTime();
+        const dateB = new Date(b.timestamp).getTime();
+        return dateB - dateA;
+      });
+
+      setSessions(uniqueSessions);
     } catch (error) {
       logger.error('Sohbet geçmişi alma hatası:', error);
       setSessions([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [authRepository, sessionRepository, messageRepository, t]);
 
-  const handleSessionPress = (session: ChatSession) => {
-    navigation.navigate('Chat', {
-      sessionId: session.id,
-      sessionTitle: session.title,
+  // Navigation focus listener - ekran açıldığında verileri yükle
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadChatHistory();
     });
-  };
 
-  const handleDeleteSession = async (sessionId: string) => {
+    // İlk yükleme
+    loadChatHistory();
+
+    return unsubscribe;
+  }, [navigation, loadChatHistory]);
+
+  const handleSessionPress = useCallback(
+    async (session: ChatSession) => {
+      // Premium kullanıcılara reklam gösterme
+      if (!isPremium) {
+        try {
+          await adService.showInterstitial(); // ✅ await ile bekle - reklam gösterilene kadar
+        } catch (e) {
+          console.log('Interstitial gösterilemedi', e);
+          // Sessizce devam et
+        }
+      }
+
+      // Navigation'ı reklam kapandıktan sonra yap
+      navigation.navigate('Main', {
+        screen: 'Chat',
+        params: {
+          sessionId: session.id,
+          sessionTitle: session.title,
+        },
+      });
+    },
+    [navigation, isPremium],
+  );
+
+  const handleDeleteSession = useCallback(async (sessionId: string) => {
     try {
       const user = await authRepository.getCurrentUser();
       if (!user) return;
@@ -137,9 +210,9 @@ export default function ChatHistoryScreen({ navigation }: any) {
       logger.error('Session silme hatası:', error);
       Alert.alert(t('messages.error'), t('messages.delete_failed'));
     }
-  };
+  }, [t, loadChatHistory]);
 
-  const handleExportSession = async (session: ChatSession) => {
+  const handleExportSession = useCallback(async (session: ChatSession) => {
     try {
       const user = await authRepository.getCurrentUser();
       if (!user) {
@@ -206,11 +279,15 @@ export default function ChatHistoryScreen({ navigation }: any) {
       );
     } catch (error: any) {
       logger.error('Export session hatası:', error);
-      Alert.alert(t('messages.error') || 'Hata', error.message || 'Export başarısız oldu');
+      // Production'da teknik hata mesajı gösterme
+      const errorMessage = __DEV__ 
+        ? (error.message || 'Export başarısız oldu')
+        : t('messages.error') || 'Export işlemi başarısız oldu. Lütfen tekrar deneyin.';
+      Alert.alert(t('messages.error') || 'Hata', errorMessage);
     }
-  };
+  }, [t, authRepository, messageRepository]);
 
-  const renderSessionItem = ({ item }: { item: ChatSession }) => (
+  const renderSessionItem = useCallback(({ item }: { item: ChatSession }) => (
     <TouchableOpacity onPress={() => handleSessionPress(item)} style={styles.sessionItem}>
       <GlassCard style={styles.sessionCard}>
         <View style={styles.sessionHeader}>
@@ -251,19 +328,9 @@ export default function ChatHistoryScreen({ navigation }: any) {
         </View>
       </GlassCard>
     </TouchableOpacity>
-  );
+  ), [formatTimestamp, t, handleSessionPress, handleExportSession]);
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>{t('ui.loading')}</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (sessions.length === 0) {
+  if (sessions.length === 0 && !isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyContainer}>
@@ -277,15 +344,28 @@ export default function ChatHistoryScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('Main', { screen: 'Profile' })} 
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color={darkTheme.colors.text} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('ui.chat_history')}</Text>
       </View>
-      <FlatList
-        data={sessions}
-        renderItem={renderSessionItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {sessions.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="chatbubbles-outline" size={64} color={darkTheme.colors.textSecondary} />
+          <Text style={styles.emptyText}>{t('ui.no_chat_history')}</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={sessions}
+          renderItem={renderSessionItem}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -296,13 +376,24 @@ const styles = StyleSheet.create({
     backgroundColor: darkTheme.colors.background,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: darkTheme.colors.border,
   },
+  backButton: {
+    padding: 8,
+    marginRight: 12,
+    backgroundColor: darkTheme.colors.surface,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: darkTheme.colors.border,
+  },
   headerTitle: {
     ...darkTheme.typography.title,
     color: darkTheme.colors.text,
+    flex: 1,
   },
   listContent: {
     padding: 16,

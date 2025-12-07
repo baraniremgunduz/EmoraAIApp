@@ -1,5 +1,5 @@
 // Premium özellikler sayfası
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,17 @@ import {
   Image,
   Dimensions,
   Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { darkTheme } from '../utils/theme';
 import { useLanguage } from '../contexts/LanguageContext';
 import { PurchaseService } from '../services/purchaseService';
+import { logger } from '../utils/logger';
+import { adService } from '../services/adService';
+import { usePremium } from '../hooks/usePremium';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -25,8 +30,11 @@ interface PremiumFeaturesScreenProps {
 
 export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScreenProps) {
   const { t, currency } = useLanguage();
+  const { isPremium } = usePremium();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>('yearly'); // Varsayılan olarak yıllık plan
+  const [isRewardedLoading, setIsRewardedLoading] = useState(false);
+  const [isRewardedAvailable, setIsRewardedAvailable] = useState(true); // Varsayılan olarak true - reklam yüklenmeye çalışılacak
 
   const features = [
     {
@@ -136,17 +144,39 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
       try {
         await PurchaseService.initialize();
       } catch (error) {
-        console.error('Purchase service initialization error:', error);
+        logger.error('Purchase service initialization error:', error);
       }
     };
 
     initializePurchase();
 
+    // Rewarded reklam yüklenmiş mi kontrol et
+    const checkRewardedAd = async () => {
+      if (!isPremium) {
+        try {
+          const loaded = await adService.isRewardedLoaded();
+          setIsRewardedAvailable(loaded);
+          
+          // Eğer yüklenmemişse, 5 saniye sonra tekrar kontrol et
+          if (!loaded) {
+            setTimeout(checkRewardedAd, 5000);
+          }
+        } catch (error) {
+          // Sessizce devam et - butonu aktif et
+          setIsRewardedAvailable(true);
+        }
+      }
+    };
+    
+    // İlk kontrolü 3 saniye sonra yap (AdMob initialize olsun)
+    const timer = setTimeout(checkRewardedAd, 3000);
+
     // Cleanup
     return () => {
       PurchaseService.cleanup();
+      clearTimeout(timer);
     };
-  }, []);
+  }, [isPremium]);
 
   const handleUpgrade = async () => {
     if (isLoading) return;
@@ -157,12 +187,12 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
       // Gerçek satın alma işlemi
       const success = await PurchaseService.purchasePlan(selectedPlan);
 
-      if (success) {
+      if (success?.success) {
         // Satın alma başarılı, kullanıcıyı ana sayfaya yönlendir
-        navigation.navigate('Chat');
+        navigation.navigate('Main', { screen: 'Chat' });
       }
     } catch (error) {
-      console.error('Purchase error:', error);
+      logger.error('Purchase error:', error);
       Alert.alert(t('messages.error'), t('alert.purchase_error'));
     } finally {
       setIsLoading(false);
@@ -176,6 +206,40 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
   const handleClose = () => {
     navigation.goBack();
   };
+
+  // Rewarded reklam göster ve ödül ver
+  const handleWatchRewardedAd = useCallback(async () => {
+    if (isRewardedLoading || isPremium) return;
+
+    setIsRewardedLoading(true);
+    try {
+      await adService.showRewarded(async (reward) => {
+        // Ödül kazanıldı - 5 ekstra mesaj ver
+        try {
+          const currentCount = await AsyncStorage.getItem('messagesUsedToday');
+          const count = currentCount ? parseInt(currentCount, 10) : 0;
+          // 5 mesaj ekle (negatif yaparak limiti artır)
+          const newCount = Math.max(0, count - 5);
+          await AsyncStorage.setItem('messagesUsedToday', newCount.toString());
+          
+          Alert.alert(
+            t('premium.reward_earned') || 'Ödül Kazandınız!',
+            t('premium.reward_message') || '5 ekstra mesaj kazandınız!',
+            [{ text: t('ui.ok') || 'Tamam' }]
+          );
+        } catch (error) {
+          if (__DEV__) {
+            logger.error('Reward save error:', error);
+          }
+        }
+      });
+    } catch (e) {
+      console.log('Rewarded gösterilemedi', e);
+      // Sessizce devam et - hata mesajı gösterme
+    } finally {
+      setIsRewardedLoading(false);
+    }
+  }, [isPremium, isRewardedLoading, t]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -328,7 +392,7 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
               onPress={() => handlePlanSelect('monthly')}
             >
               <Text style={styles.pricingPlan}>{t('payment.monthly')}</Text>
-              <Text style={styles.pricingPrice}>{currency === 'TRY' ? '₺129.99' : '$4.99'}</Text>
+              <Text style={styles.pricingPrice}>{currency === 'TRY' ? '₺149.99' : '$4.99'}</Text>
               <Text style={styles.pricingPeriod}>{t('payment.monthly_period')}</Text>
               {selectedPlan === 'monthly' && (
                 <View style={styles.selectedIndicator}>
@@ -355,7 +419,7 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
               </Text>
               <Text style={styles.savingsText}>
                 {currency === 'TRY'
-                  ? '₺860 ' + t('payment.savings') + ' (55%)'
+                  ? '₺1100 ' + t('payment.savings') + ' (61%)'
                   : '$10 ' + t('payment.savings') + ' (17%)'}
               </Text>
               {selectedPlan === 'yearly' && (
@@ -367,8 +431,63 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
           </View>
         </View>
 
+        {/* Rewarded Ad Section - Premium olmayanlar için */}
+        {!isPremium && (
+          <View style={styles.rewardedAdSection}>
+            <View style={styles.rewardedAdCard}>
+              <Ionicons name="videocam" size={32} color={darkTheme.colors.primary} />
+              <Text style={styles.rewardedAdTitle}>
+                {t('premium.watch_video_title') || 'Video İzle, Mesaj Kazan!'}
+              </Text>
+              <Text style={styles.rewardedAdDescription}>
+                {t('premium.watch_video_desc') || 'Kısa bir video izleyerek 5 ekstra mesaj kazanın'}
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.rewardedAdButton,
+                  (!isRewardedAvailable || isRewardedLoading) && styles.rewardedAdButtonDisabled,
+                ]}
+                onPress={handleWatchRewardedAd}
+                disabled={!isRewardedAvailable || isRewardedLoading}
+              >
+                <Ionicons
+                  name={isRewardedLoading ? 'hourglass' : 'play-circle'}
+                  size={20}
+                  color="white"
+                />
+                <Text style={styles.rewardedAdButtonText}>
+                  {isRewardedLoading
+                    ? t('ui.loading') || 'Yükleniyor...'
+                    : t('premium.watch_video') || 'Video İzle'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* CTA Button */}
         <View style={styles.ctaSection}>
+          {/* Apple EULA Metni - Butonun Hemen Üstünde (ZORUNLU) */}
+          <View style={styles.appleEulaSection}>
+            <Text style={styles.appleEulaText}>
+              {t('premium.eula_agreement_start')}{' '}
+              <Text 
+                style={styles.appleEulaLink}
+                onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+              >
+                {t('premium.apple_standard_eula')}
+              </Text>
+              {' '}{t('premium.and')}{' '}
+              <Text 
+                style={styles.appleEulaLink}
+                onPress={() => Linking.openURL('https://raw.githubusercontent.com/baraniremgunduz/emora-ai-support/main/PRIVACY_POLICY.md')}
+              >
+                {t('premium.our_privacy_policy')}
+              </Text>
+              {' '}{t('premium.eula_agreement_end')}
+            </Text>
+          </View>
+          
           <TouchableOpacity
             style={[styles.upgradeButton, isLoading && styles.upgradeButtonDisabled]}
             onPress={handleUpgrade}
@@ -386,6 +505,23 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
             </LinearGradient>
           </TouchableOpacity>
           <Text style={styles.ctaSubtext}>{t('premium.cta_subtext')}</Text>
+          
+          {/* Legal Links - Apple EULA ve Privacy Policy */}
+          <View style={styles.legalLinksContainer}>
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+              style={styles.legalLink}
+            >
+              <Text style={styles.legalLinkText}>{t('premium.apple_terms_of_use')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.legalSeparator}> • </Text>
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://raw.githubusercontent.com/baraniremgunduz/emora-ai-support/main/PRIVACY_POLICY.md')}
+              style={styles.legalLink}
+            >
+              <Text style={styles.legalLinkText}>{t('premium.privacy_policy')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -684,6 +820,56 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
+  // Rewarded Ad Section
+  rewardedAdSection: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+  rewardedAdCard: {
+    backgroundColor: darkTheme.colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: darkTheme.colors.border,
+    ...darkTheme.shadows.soft,
+  },
+  rewardedAdTitle: {
+    ...darkTheme.typography.subtitle,
+    color: darkTheme.colors.text,
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 12,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  rewardedAdDescription: {
+    ...darkTheme.typography.body,
+    color: darkTheme.colors.textSecondary,
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  rewardedAdButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: darkTheme.colors.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    gap: 8,
+    minWidth: 200,
+  },
+  rewardedAdButtonDisabled: {
+    opacity: 0.5,
+  },
+  rewardedAdButtonText: {
+    ...darkTheme.typography.body,
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 
   // Pricing Preview
   pricingPreview: {
@@ -780,5 +966,53 @@ const styles = StyleSheet.create({
   // Loading states
   upgradeButtonDisabled: {
     opacity: 0.7,
+  },
+  
+  // Legal Links
+  legalLinksContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    flexWrap: 'wrap',
+  },
+  legalLink: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  legalLinkText: {
+    ...darkTheme.typography.caption,
+    color: darkTheme.colors.primary,
+    fontSize: 12,
+    textDecorationLine: 'underline',
+  },
+  legalSeparator: {
+    ...darkTheme.typography.caption,
+    color: darkTheme.colors.textSecondary,
+    fontSize: 12,
+    marginHorizontal: 4,
+  },
+  
+  // Apple EULA Section - Butonun Hemen Üstünde
+  appleEulaSection: {
+    width: '100%',
+    backgroundColor: darkTheme.colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: darkTheme.colors.border,
+  },
+  appleEulaText: {
+    ...darkTheme.typography.body,
+    color: darkTheme.colors.text,
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  appleEulaLink: {
+    color: darkTheme.colors.primary,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });

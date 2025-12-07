@@ -51,7 +51,9 @@ export class ExpoNotificationRepository implements INotificationRepository {
     trigger: Date | number
   ): Promise<string> {
     try {
-      const triggerConfig = typeof trigger === 'number' ? { seconds: trigger } : { date: trigger };
+      const triggerConfig: any = typeof trigger === 'number' 
+        ? { seconds: trigger } 
+        : { date: trigger };
 
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {

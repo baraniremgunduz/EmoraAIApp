@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     ...darkTheme.typography.title,
     color: darkTheme.colors.text,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '700' as const,
   },
   headerSubtitle: {
     ...darkTheme.typography.caption,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     ...darkTheme.typography.title,
     color: 'white',
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     letterSpacing: 1,
   },
   editAvatarButton: {
@@ -349,13 +349,13 @@ const styles = StyleSheet.create({
     ...darkTheme.typography.title,
     color: darkTheme.colors.text,
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     marginBottom: 8,
   },
   heroSubtitle: {
     ...darkTheme.typography.body,
     color: darkTheme.colors.textSecondary,
-    textAlign: 'center',
+    textAlign: 'center' as const,
     lineHeight: 22,
   },
 
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     ...darkTheme.typography.subtitle,
     color: darkTheme.colors.text,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     marginBottom: 4,
   },
   sectionSubtitle: {
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     ...darkTheme.typography.body,
     color: darkTheme.colors.text,
     marginBottom: 2,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   securitySubtitle: {
     ...darkTheme.typography.caption,

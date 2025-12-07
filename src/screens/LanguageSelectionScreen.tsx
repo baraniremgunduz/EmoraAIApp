@@ -14,6 +14,7 @@ import { darkTheme } from '../utils/theme';
 import { useLanguage } from '../contexts/LanguageContext';
 import GlassButton from '../components/GlassButton';
 import GlassCard from '../components/GlassCard';
+import { logger } from '../utils/logger';
 
 const { width, height } = Dimensions.get('window');
 
@@ -70,7 +71,7 @@ export default function LanguageSelectionScreen({
         navigation.navigate('Onboarding');
       }
     } catch (error) {
-      console.error('Dil seçimi hatası:', error);
+      logger.error('Dil seçimi hatası:', error);
     }
   };
 
@@ -98,7 +99,7 @@ export default function LanguageSelectionScreen({
                 style={[
                   styles.languageCard,
                   selectedLanguage === language.code && styles.selectedLanguageCard,
-                ]}
+                ] as any}
               >
                 <View style={styles.languageContent}>
                   <Text style={styles.flag}>{language.flag}</Text>
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
   selectedLanguageCard: {
     borderWidth: 2,
     borderColor: darkTheme.colors.primary,
-    backgroundColor: darkTheme.colors.card + '20', // Hafif şeffaf arka plan
+    backgroundColor: (darkTheme.colors.card || darkTheme.colors.surface) + '20', // Hafif şeffaf arka plan
   },
   languageCard: {
     padding: 0,

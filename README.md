@@ -52,12 +52,14 @@ Emora AI, kullanıcıların yapay zeka ile güvenli, samimi ve sürekli sohbet e
    Proje kök dizininde `.env` dosyası oluşturun ve aşağıdaki değerleri ekleyin:
    ```env
    # Supabase Configuration
-   EXPO_PUBLIC_SUPABASE_URL=https://wxmexmdpobjzgiqjxuix.supabase.co
-   EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4bWV4bWRwb2JqemdpcWp4dWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NTY5NzQsImV4cCI6MjA3NjMzMjk3NH0.FFTUufP4XE4Ofa5TPw5_YgYkQ2Pia0WjTe8-FQE4m0U
+   EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 
    # OpenAI API Key artık Supabase Edge Functions'da güvenli şekilde saklanıyor
    # Client-side'da artık OpenAI API key'e ihtiyaç yok
    ```
+   
+   **ÖNEMLİ:** Gerçek değerleri Supabase Dashboard'unuzdan alın ve `.env` dosyasına ekleyin. `.env` dosyası `.gitignore`'da olduğu için Git'e commit edilmeyecektir.
 
 4. **Supabase Edge Functions Kurulumu**
    ```bash

@@ -1,16 +1,13 @@
 {
   "expo": {
     "name": "Emora AI",
-    "slug": "emora",
+    "slug": "emora-ai",
     "scheme": "emoraai",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": false,
-    "cli": {
-      "appVersionSource": "local"
-    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -20,13 +17,17 @@
       "icon": "./assets/icon.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.emoraai.app.2025",
-      "buildNumber": "9",
-      "associatedDomains": ["applinks:emoraai.com"],
+      "buildNumber": "43",
       "infoPlist": {
         "NSCameraUsageDescription": "Bu uygulama fotoğraf çekmek için kamera erişimi gerektirir.",
         "NSPhotoLibraryUsageDescription": "Bu uygulama fotoğraf seçmek için galeri erişimi gerektir.",
+        "NSPhotoLibraryAddUsageDescription": "Bu uygulama profil fotoğrafınızı kaydetmek için fotoğraf galerisine erişim gerektirir.",
         "NSMicrophoneUsageDescription": "Bu uygulama ses kaydetmek için mikrofon erişimi gerektir.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "GADApplicationIdentifier": "ca-app-pub-9485934183491164~1978001460"
+      },
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-9485934183491164~1978001460"
       }
     },
     "android": {
@@ -35,7 +36,7 @@
         "backgroundColor": "#0F0F23"
       },
       "package": "com.emoraai.app",
-      "versionCode": 1,
+      "versionCode": 2,
       "intentFilters": [
         {
           "action": "VIEW",
@@ -51,7 +52,10 @@
               "pathPrefix": "/chat"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "permissions": [
@@ -80,17 +84,28 @@
         }
       ],
       "expo-localization",
-      "expo-updates"
+      "expo-updates",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-9485934183491164~1978001460",
+          "iosAppId": "ca-app-pub-9485934183491164~1978001460"
+        }
+      ]
     ],
     "updates": {
       "enabled": true,
+      "url": "https://u.expo.dev/ff5b7b60-ac46-4a47-a7b8-093213ecc747",
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
     },
-    "owner": "barangunduz2",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "owner": "iremddogruyol",
     "extra": {
       "eas": {
-        "projectId": "9fbb5ec4-de66-4d2b-a5c5-c7339cbaf766"
+        "projectId": "ff5b7b60-ac46-4a47-a7b8-093213ecc747"
       }
     }
   }

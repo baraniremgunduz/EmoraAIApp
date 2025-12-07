@@ -17,6 +17,7 @@ import { AuthService } from '../services/authService';
 import GlassInput from '../components/GlassInput';
 import GlassButton from '../components/GlassButton';
 import { useLanguage } from '../contexts/LanguageContext';
+import { logger } from '../utils/logger';
 import {
   validatePassword,
   getPasswordStrengthText,
@@ -30,6 +31,7 @@ export default function RegisterScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong' | null>(
     null
   );
@@ -109,11 +111,23 @@ export default function RegisterScreen({ navigation }: any) {
           >
             {/* Header - Minimal */}
             <View style={styles.header}>
+              {!logoError ? (
               <Image
-                source={require('../../assets/icon.png')}
+                source={require('../../assets/auth-logo.png')}
                 style={styles.logoImage}
                 resizeMode="contain"
-              />
+                  onError={(error: any) => {
+                    const errorMessage = error?.nativeEvent?.error || error?.message || 'Bilinmeyen hata';
+                    logger.error('Logo yükleme hatası - RegisterScreen:', errorMessage);
+                    setLogoError(true);
+                }}
+                  onLoadStart={() => setLogoError(false)}
+                />
+              ) : (
+                <View style={styles.logoPlaceholder}>
+                  <Text style={styles.logoPlaceholderText}>E</Text>
+                </View>
+              )}
               <Text style={styles.logoText}>{t('app.name')}</Text>
               <Text style={styles.tagline}>{t('auth.register_tagline')}</Text>
             </View>
@@ -271,6 +285,20 @@ const styles = StyleSheet.create({
     height: 80,
     marginBottom: 16,
   },
+  logoPlaceholder: {
+    width: 80,
+    height: 80,
+    marginBottom: 16,
+    borderRadius: 40,
+    backgroundColor: darkTheme.colors.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoPlaceholderText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: darkTheme.colors.primary,
+  },
   logoText: {
     ...darkTheme.typography.title,
     color: darkTheme.colors.text,
@@ -294,12 +322,12 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   inputContainer: {
-    marginBottom: 16,
+    marginBottom: 10,
   },
   inputLabel: {
     ...darkTheme.typography.caption,
     color: darkTheme.colors.text,
-    marginBottom: 6,
+    marginBottom: 4,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,

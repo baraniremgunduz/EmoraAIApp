@@ -7,16 +7,16 @@ Tüm production secrets başarıyla oluşturuldu:
 ### ✅ Oluşturulan Secrets
 
 1. **EXPO_PUBLIC_SUPABASE_URL**
-   - Değer: `https://wxmexmdpobjzgiqjxuix.supabase.co`
    - Durum: ✅ Oluşturuldu
+   - Not: Gerçek değer Supabase Dashboard'dan alınmalı
 
 2. **EXPO_PUBLIC_SUPABASE_ANON_KEY**
-   - Değer: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
    - Durum: ✅ Oluşturuldu
+   - Not: Gerçek değer Supabase Dashboard'dan alınmalı
 
 3. **APP_STORE_SHARED_SECRET**
-   - Değer: `07c9c5b0fbae48b9b768e296c477f907`
    - Durum: ✅ Oluşturuldu
+   - Not: Gerçek değer App Store Connect'ten alınmalı
 
 ## 📋 Secrets Kontrolü
 

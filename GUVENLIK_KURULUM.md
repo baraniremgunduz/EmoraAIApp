@@ -26,9 +26,14 @@ cp .env.example .env
 `.env` dosyasını açın ve gerçek değerlerinizi ekleyin:
 
 ```env
-EXPO_PUBLIC_SUPABASE_URL=https://wxmexmdpobjzgiqjxuix.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4bWV4bWRwb2JqemdpcWp4dWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NTY5NzQsImV4cCI6MjA3NjMzMjk3NH0.FFTUufP4XE4Ofa5TPw5_YgYkQ2Pia0WjTe8-FQE4m0U
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 ```
+
+**ÖNEMLİ:** Gerçek değerleri Supabase Dashboard'unuzdan alın:
+1. Supabase Dashboard > Settings > API
+2. `Project URL` değerini `EXPO_PUBLIC_SUPABASE_URL` olarak kullanın
+3. `anon public` key değerini `EXPO_PUBLIC_SUPABASE_ANON_KEY` olarak kullanın
 
 **ÖNEMLİ:** 
 - `.env` dosyası zaten `.gitignore`'da, Git'e commit edilmeyecek
@@ -68,15 +73,17 @@ eas login
 Aşağıdaki komutları sırayla çalıştırın:
 
 ```bash
-# Supabase URL
-eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "https://wxmexmdpobjzgiqjxuix.supabase.co" --type string
+# Supabase URL (gerçek değerinizi Supabase Dashboard'dan alın)
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "https://your-project.supabase.co" --type string
 
-# Supabase Anon Key
-eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4bWV4bWRwb2JqemdpcWp4dWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NTY5NzQsImV4cCI6MjA3NjMzMjk3NH0.FFTUufP4XE4Ofa5TPw5_YgYkQ2Pia0WjTe8-FQE4m0U" --type string
+# Supabase Anon Key (gerçek değerinizi Supabase Dashboard'dan alın)
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "your_anon_key_here" --type string
 
-# App Store Shared Secret (iOS için)
-eas secret:create --scope project --name APP_STORE_SHARED_SECRET --value "07c9c5b0fbae48b9b768e296c477f907" --type string
+# App Store Shared Secret (iOS için - App Store Connect'ten alın)
+eas secret:create --scope project --name APP_STORE_SHARED_SECRET --value "your_shared_secret_here" --type string
 ```
+
+**ÖNEMLİ:** Yukarıdaki komutlardaki placeholder değerleri (`your-project`, `your_anon_key_here`, `your_shared_secret_here`) gerçek değerlerinizle değiştirin.
 
 **Not:** Her komut çalıştığında size bir onay mesajı gösterecek.
 

@@ -20,6 +20,11 @@ export const darkTheme: Theme = {
     premium: '#FFD76F', // Premium labels/icons
     // AI haze effect
     aiHaze: 'rgba(108, 99, 255, 0.03)', // Subtle purple haze
+    // Additional colors
+    card: '#1A1A1F', // Card background
+    warning: '#F59E0B', // Warning color
+    gradientStart: '#6A5ACD', // Gradient start
+    gradientEnd: '#8A7FD1', // Gradient end
   },
   spacing: {
     xs: 4,
@@ -32,36 +37,44 @@ export const darkTheme: Theme = {
     sm: 8,
     md: 16, // Minimal UI standard
     lg: 24, // Large radius for cards
+    xl: 32, // Extra large radius
   },
   // Typography - Manrope/Satoshi inspired
   typography: {
     title: {
       fontFamily: 'System', // Manrope SemiBold when available
-      fontWeight: '600',
+      fontWeight: '600' as const,
       fontSize: 24,
       letterSpacing: -0.5,
     },
     subtitle: {
       fontFamily: 'System', // Manrope Medium
-      fontWeight: '500',
+      fontWeight: '500' as const,
       fontSize: 18,
       letterSpacing: -0.2,
     },
     body: {
       fontFamily: 'System', // Manrope Regular
-      fontWeight: '400',
+      fontWeight: '400' as const,
       fontSize: 15,
       letterSpacing: 0,
     },
     caption: {
       fontFamily: 'System', // Manrope Regular
-      fontWeight: '400',
+      fontWeight: '400' as const,
       fontSize: 14,
       letterSpacing: 0.1,
     },
   },
   // Shadows - Minimal UI approach
   shadows: {
+    small: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.03,
+      shadowRadius: 2,
+      elevation: 1,
+    },
     soft: {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },

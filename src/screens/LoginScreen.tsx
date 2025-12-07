@@ -1,5 +1,5 @@
 // Giriş ekranı
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,18 +15,43 @@ import {
 import { TextInput, Button, Card } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { darkTheme } from '../utils/theme';
 import { AuthService } from '../services/authService';
 import GlassButton from '../components/GlassButton';
 import GlassInput from '../components/GlassInput';
 import GlassCard from '../components/GlassCard';
 import { useLanguage } from '../contexts/LanguageContext';
+import { logger } from '../utils/logger';
 
-export default function LoginScreen({ navigation }: any) {
+import { StackScreenProps } from '@react-navigation/stack';
+import { AuthStackParamList } from '../types';
+
+type LoginScreenProps = StackScreenProps<AuthStackParamList, 'Login'>;
+
+export default function LoginScreen({ navigation }: LoginScreenProps) {
   const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Kaydedilmiş email'i yükle
+  useEffect(() => {
+    loadRememberedEmail();
+  }, []);
+
+  const loadRememberedEmail = async () => {
+    try {
+      const savedEmail = await AsyncStorage.getItem('rememberedEmail');
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
+    } catch (error) {
+      logger.error('Kaydedilmiş email yükleme hatası:', error);
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -37,9 +62,23 @@ export default function LoginScreen({ navigation }: any) {
     setIsLoading(true);
     try {
       await AuthService.signIn(email, password);
+      
+      // Şifremi hatırla seçiliyse email'i kaydet
+      if (rememberMe) {
+        await AsyncStorage.setItem('rememberedEmail', email);
+      } else {
+        // Seçili değilse kaydedilmiş email'i sil
+        await AsyncStorage.removeItem('rememberedEmail');
+      }
+      
       // Başarılı giriş - navigator otomatik olarak ana ekrana yönlendirecek
     } catch (error: any) {
-      Alert.alert(t('alert.login_error'), error.message || t('alert.login_error_message'));
+      logger.error('Giriş hatası:', error);
+      // Production'da teknik hata mesajı gösterme
+      const errorMessage = __DEV__ 
+        ? (error.message || t('alert.login_error_message'))
+        : t('alert.login_error_message');
+      Alert.alert(t('alert.login_error'), errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +94,23 @@ export default function LoginScreen({ navigation }: any) {
       await AuthService.resetPassword(email);
       Alert.alert(t('auth.password_reset_title'), t('auth.password_reset_sent'));
     } catch (error: any) {
-      Alert.alert(t('alert.error'), error.message || t('alert.password_reset_failed'));
+      logger.error('Şifre sıfırlama hatası:', error);
+      
+      // Rate limit hatası kontrolü (Supabase güvenlik hatası)
+      let errorMessage = t('alert.password_reset_failed');
+      
+      if (error?.message?.includes('For security purposes') || 
+          error?.message?.includes('rate limit') ||
+          error?.message?.includes('59 seconds') ||
+          error?.message?.includes('security')) {
+        // Rate limit hatası - kullanıcı dostu mesaj
+        errorMessage = t('auth.password_reset_rate_limit');
+      } else if (__DEV__ && error?.message) {
+        // Development modunda teknik hata mesajı göster
+        errorMessage = error.message;
+      }
+      
+      Alert.alert(t('alert.error'), errorMessage);
     }
   };
 
@@ -73,9 +128,13 @@ export default function LoginScreen({ navigation }: any) {
             {/* Header - Minimal */}
             <View style={styles.header}>
               <Image
-                source={require('../../assets/icon.png')}
+                source={require('../../assets/auth-logo.png')}
                 style={styles.logoImage}
                 resizeMode="contain"
+                onError={(error: any) => {
+                  const errorMessage = error?.nativeEvent?.error || error?.message || 'Bilinmeyen hata';
+                  logger.error('Logo yükleme hatası - LoginScreen:', errorMessage);
+                }}
               />
               <Text style={styles.logoText}>{t('app.name')}</Text>
               <Text style={styles.tagline}>{t('app.tagline')}</Text>
@@ -106,6 +165,24 @@ export default function LoginScreen({ navigation }: any) {
                     onChangeText={setPassword}
                     showPasswordToggle={true}
                   />
+                </View>
+
+                {/* Remember Me and Forgot Password - Same Row */}
+                <View style={styles.optionsRow}>
+                  {/* Remember Me Checkbox */}
+                  <TouchableOpacity
+                    style={styles.rememberMeContainer}
+                    onPress={() => setRememberMe(!rememberMe)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                      {rememberMe && (
+                        <Ionicons name="checkmark" size={16} color={darkTheme.colors.primary} />
+                      )}
+                    </View>
+                    <Text style={styles.rememberMeText}>{t('auth.remember_me')}</Text>
+                  </TouchableOpacity>
+
                   {/* Forgot Password */}
                   <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotButton}>
                     <Text style={styles.forgotButtonText}>{t('auth.forgot_password')}</Text>
@@ -189,25 +266,54 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   inputContainer: {
-    marginBottom: 16,
+    marginBottom: 10,
   },
   inputLabel: {
     ...darkTheme.typography.caption,
     color: darkTheme.colors.text,
-    marginBottom: 6,
+    marginBottom: 4,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  optionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingVertical: 8,
+  },
   forgotButton: {
-    alignSelf: 'flex-start',
-    marginTop: 8,
     padding: 4,
   },
   forgotButtonText: {
     ...darkTheme.typography.caption,
     color: darkTheme.colors.textSecondary,
     fontSize: 13,
+  },
+  rememberMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: darkTheme.colors.textSecondary,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  checkboxChecked: {
+    backgroundColor: darkTheme.colors.primary + '20',
+    borderColor: darkTheme.colors.primary,
+  },
+  rememberMeText: {
+    ...darkTheme.typography.body,
+    color: darkTheme.colors.text,
+    fontSize: 14,
   },
   loginButton: {
     marginBottom: 16,

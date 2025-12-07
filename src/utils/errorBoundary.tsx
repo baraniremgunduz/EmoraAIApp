@@ -72,7 +72,10 @@ export class ErrorBoundary extends Component<Props, State> {
             <View style={styles.errorContainer}>
               <Text style={styles.errorTitle}>Bir Hata Oluştu</Text>
               <Text style={styles.errorMessage}>
-                {this.state.error?.message || 'Bilinmeyen bir hata oluştu'}
+                {__DEV__ 
+                  ? (this.state.error?.message || 'Bilinmeyen bir hata oluştu')
+                  : 'Üzgünüz, bir hata oluştu. Lütfen uygulamayı yeniden başlatın.'
+                }
               </Text>
 
               {__DEV__ && this.state.errorInfo && (

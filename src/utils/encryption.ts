@@ -30,10 +30,17 @@ export class MessageEncryption {
         accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
       });
 
-      logger.log('New encryption key generated and stored');
+      // Sadece debug modunda log et
+      if (__DEV__) {
+        logger.log('New encryption key generated and stored');
+      }
       return newKey;
-    } catch (error) {
-      logger.error('Get encryption key error:', error);
+    } catch (error: any) {
+      // Keychain hatası - sessizce handle et, fallback key kullan
+      // Sadece debug modunda log et
+      if (__DEV__) {
+        logger.error('Get encryption key error (silent):', error?.message || error);
+      }
       // Fallback: userId'den türetilmiş key (güvenli değil ama çalışır)
       return this.generateEncryptionKey(userId);
     }
@@ -66,10 +73,17 @@ export class MessageEncryption {
       const key = await this.getEncryptionKey(userId);
       const encrypted = CryptoJS.AES.encrypt(message, key).toString();
 
-      logger.log('Message encrypted successfully');
+      // Sadece debug modunda log et
+      if (__DEV__) {
+        logger.log('Message encrypted successfully');
+      }
       return encrypted;
-    } catch (error) {
-      logger.error('Encryption error:', error);
+    } catch (error: any) {
+      // Encryption hatası - sessizce handle et, console error'a neden olma
+      // Sadece debug modunda log et
+      if (__DEV__) {
+        logger.error('Encryption error (silent):', error?.message || error);
+      }
       throw new Error('Failed to encrypt message');
     }
   }
@@ -91,10 +105,17 @@ export class MessageEncryption {
         throw new Error('Failed to decrypt message - invalid key or corrupted data');
       }
 
-      logger.log('Message decrypted successfully');
+      // Sadece debug modunda log et
+      if (__DEV__) {
+        logger.log('Message decrypted successfully');
+      }
       return decrypted;
-    } catch (error) {
-      logger.error('Decryption error:', error);
+    } catch (error: any) {
+      // Decryption hatası - sessizce handle et, console error'a neden olma
+      // Sadece debug modunda log et
+      if (__DEV__) {
+        logger.error('Decryption error (silent):', error?.message || error);
+      }
       throw new Error('Failed to decrypt message');
     }
   }

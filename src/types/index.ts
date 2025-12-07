@@ -61,7 +61,8 @@ export interface DatabaseMessage {
   timestamp?: string;
   created_at?: string;
   user_id: string;
-  session_id?: string;
+  chat_session_id?: string;
+  session_id?: string; // Backward compatibility
 }
 
 // Error tipi
@@ -96,7 +97,9 @@ export type MainTabParamList = {
     sessionId?: string;
     sessionTitle?: string;
   };
-  Profile: undefined;
+  Profile: {
+    refresh?: boolean;
+  };
   Settings: undefined;
 };
 
@@ -116,46 +119,58 @@ export interface Theme {
     glassHover: string;
     premium: string;
     aiHaze: string;
+    card?: string;
+    warning?: string;
+    gradientStart?: string;
+    gradientEnd?: string;
   };
   spacing: {
     xs: number;
     sm: number;
     md: number;
     lg: number;
-    xl: number;
+    xl?: number;
   };
   borderRadius: {
     sm: number;
     md: number;
     lg: number;
+    xl?: number;
   };
   typography: {
     title: {
       fontFamily: string;
-      fontWeight: string;
+      fontWeight: '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900' | 'normal' | 'bold';
       fontSize: number;
       letterSpacing: number;
     };
     subtitle: {
       fontFamily: string;
-      fontWeight: string;
+      fontWeight: '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900' | 'normal' | 'bold';
       fontSize: number;
       letterSpacing: number;
     };
     body: {
       fontFamily: string;
-      fontWeight: string;
+      fontWeight: '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900' | 'normal' | 'bold';
       fontSize: number;
       letterSpacing: number;
     };
     caption: {
       fontFamily: string;
-      fontWeight: string;
+      fontWeight: '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900' | 'normal' | 'bold';
       fontSize: number;
       letterSpacing: number;
     };
   };
   shadows: {
+    small: {
+      shadowColor: string;
+      shadowOffset: { width: number; height: number };
+      shadowOpacity: number;
+      shadowRadius: number;
+      elevation: number;
+    };
     soft: {
       shadowColor: string;
       shadowOffset: { width: number; height: number };

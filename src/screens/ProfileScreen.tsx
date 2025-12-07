@@ -1,5 +1,5 @@
 // Profil ekranı
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
   TouchableOpacity,
   Image,
+  Platform,
+  Linking,
 } from 'react-native';
 import { Card, Avatar, Button, Divider, List, Badge } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,12 +23,24 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { usePremium } from '../hooks/usePremium';
 import { ChatService } from '../services/chatService';
 import { supabase } from '../config/supabase';
+import { logger } from '../utils/logger';
+import { uploadProfileImage } from '../utils/imageUploader';
+import { User } from '../types';
 
-export default function ProfileScreen({ navigation, route }: any) {
+import { StackScreenProps } from '@react-navigation/stack';
+import { CompositeScreenProps } from '@react-navigation/native';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { RootStackParamList, MainTabParamList } from '../types';
+
+type ProfileScreenNavigationProps = CompositeScreenProps<
+  BottomTabScreenProps<MainTabParamList, 'Profile'>,
+  StackScreenProps<RootStackParamList>
+>;
+
+export default function ProfileScreen({ navigation, route }: ProfileScreenNavigationProps) {
   const { t } = useLanguage();
   const { isPremium, canUseFeature } = usePremium();
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState({
     totalMessages: 0,
     totalSessions: 0,
@@ -45,41 +59,8 @@ export default function ProfileScreen({ navigation, route }: any) {
   ]);
   const [dailyQuote, setDailyQuote] = useState(t('ui.quiet_today'));
 
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  // Kullanıcı yüklendikten sonra günlük sayacı hesapla
-  useEffect(() => {
-    if (user) {
-      calculateRelationshipDays();
-    }
-  }, [user]);
-
-  // Route parametrelerini dinle ve yeniden yükle
-  useEffect(() => {
-    if (route?.params?.refresh) {
-      loadUserData();
-    }
-  }, [route?.params?.refresh]);
-
-  // Navigation focus listener - ekran odaklandığında yenile
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      loadUserData();
-    });
-
-    return unsubscribe;
-  }, [navigation]);
-
-  // User state değiştiğinde profil fotoğrafını yükle
-  useEffect(() => {
-    if (user) {
-      loadProfileImage(user);
-    }
-  }, [user]);
-
-  const loadUserData = async () => {
+  // loadUserData fonksiyonu - useCallback ile optimize edildi (önce tanımlanmalı)
+  const loadUserData = useCallback(async () => {
     try {
       const currentUser = await AuthService.getCurrentUser();
       setUser(currentUser);
@@ -91,110 +72,12 @@ export default function ProfileScreen({ navigation, route }: any) {
         await loadProfileImage(currentUser);
       }
     } catch (error) {
-      console.error('Kullanıcı verisi yükleme hatası:', error);
-    } finally {
-      setIsLoading(false);
+      logger.error('Kullanıcı verisi yükleme hatası:', error);
     }
-  };
+  }, []);
 
-  const loadUserStats = async (userId: string) => {
-    try {
-      // Mesaj sayısını al
-      const messages = await ChatService.getChatHistory(userId);
-
-      // Gerçek chat session sayısını al
-      const { data: sessions, error: sessionsError } = await supabase
-        .from('chat_sessions')
-        .select('id')
-        .eq('user_id', userId);
-
-      const totalSessions = sessions?.length || 0;
-
-      setStats({
-        totalMessages: messages.length,
-        totalSessions: totalSessions, // Gerçek session sayısı
-        joinDate: user?.created_at ? new Date(user.created_at).toLocaleDateString('tr-TR') : '',
-      });
-    } catch (error) {
-      console.error('İstatistik yükleme hatası:', error);
-    }
-  };
-
-  // Fotoğraf seçme fonksiyonu
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(t('ui.permission_required'), t('ui.media_library_permission_denied'));
-      return;
-    }
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const selectedImageUri = result.assets[0].uri;
-      setProfileImage(selectedImageUri);
-
-      // AsyncStorage'a kaydet (hızlı erişim için)
-      await AsyncStorage.setItem('profileImage', selectedImageUri);
-
-      // Supabase'e kaydet (kalıcılık için)
-      try {
-        await AuthService.updateUser({
-          data: {
-            avatar_url: selectedImageUri,
-          },
-        });
-        // Kullanıcı verisini yenile
-        await loadUserData();
-      } catch (error) {
-        logger.error('Profil fotoğrafı kaydetme hatası:', error);
-        // Hata olsa bile AsyncStorage'da var, kullanıcıya göstermeye devam et
-      }
-    }
-  };
-
-  // Profil fotoğrafını yükle
-  const loadProfileImage = async (currentUser?: User | null) => {
-    try {
-      const userToCheck = currentUser || user;
-
-      // Önce Supabase'den (user_metadata) kontrol et
-      if (userToCheck?.user_metadata?.avatar_url) {
-        setProfileImage(userToCheck.user_metadata.avatar_url);
-        // AsyncStorage'a da kaydet (cache için)
-        await AsyncStorage.setItem('profileImage', userToCheck.user_metadata.avatar_url);
-        return;
-      }
-
-      // Fallback: AsyncStorage'dan yükle
-      const storedImage = await AsyncStorage.getItem('profileImage');
-      if (storedImage) {
-        setProfileImage(storedImage);
-        // Eğer kullanıcı varsa Supabase'e de kaydet (senkronizasyon için)
-        if (userToCheck) {
-          try {
-            await AuthService.updateUser({
-              data: {
-                avatar_url: storedImage,
-              },
-            });
-          } catch (error) {
-            logger.error('Profil fotoğrafı senkronizasyon hatası:', error);
-          }
-        }
-      }
-    } catch (error) {
-      logger.error('Profil fotoğrafı yükleme hatası:', error);
-    }
-  };
-
-  // Günlük sayaç hesaplama
-  const calculateRelationshipDays = async () => {
+  // Günlük sayaç hesaplama - useCallback ile optimize edildi
+  const calculateRelationshipDays = useCallback(async () => {
     try {
       // Önce kullanıcının kayıt tarihini kontrol et
       if (user?.created_at) {
@@ -229,9 +112,221 @@ export default function ProfileScreen({ navigation, route }: any) {
       logger.error('Günlük sayaç hesaplama hatası:', error);
       setRelationshipDays(0);
     }
+  }, [user]);
+
+  useEffect(() => {
+    loadUserData();
+  }, [loadUserData]);
+
+  // Kullanıcı yüklendikten sonra günlük sayacı hesapla
+  useEffect(() => {
+    if (user) {
+      calculateRelationshipDays();
+    }
+  }, [user, calculateRelationshipDays]);
+
+  // Route parametrelerini dinle ve yeniden yükle
+  useEffect(() => {
+    if (route?.params?.refresh) {
+      loadUserData();
+    }
+  }, [route?.params?.refresh, loadUserData]);
+
+  // Navigation focus listener - ekran odaklandığında yenile
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadUserData();
+    });
+
+    return unsubscribe;
+  }, [navigation, loadUserData]);
+
+  // User state değiştiğinde profil fotoğrafını yükle
+  useEffect(() => {
+    if (user) {
+      loadProfileImage(user);
+    }
+  }, [user]);
+
+  const loadUserStats = async (userId: string) => {
+    try {
+      // Mesaj sayısını al
+      const messages = await ChatService.getChatHistory(userId);
+
+      // Gerçek chat session sayısını al
+      const { data: sessions, error: sessionsError } = await supabase
+        .from('chat_sessions')
+        .select('id')
+        .eq('user_id', userId);
+
+      const totalSessions = sessions?.length || 0;
+
+      setStats({
+        totalMessages: messages.length,
+        totalSessions: totalSessions, // Gerçek session sayısı
+        joinDate: user?.created_at ? new Date(user.created_at).toLocaleDateString('tr-TR') : '',
+      });
+    } catch (error) {
+      logger.error('İstatistik yükleme hatası:', error);
+    }
   };
 
-  const handleLogout = () => {
+  // Fotoğraf seçme fonksiyonu
+  const pickImage = async () => {
+    if (!user?.id) {
+      Alert.alert(t('messages.error'), 'Kullanıcı bilgisi bulunamadı');
+      return;
+    }
+
+    // İzin durumunu kontrol et ve iste
+    let finalStatus;
+    try {
+      // Önce mevcut izin durumunu kontrol et (eğer metod varsa)
+      if (ImagePicker.getMediaLibraryPermissionsAsync) {
+        const { status: existingStatus } = await ImagePicker.getMediaLibraryPermissionsAsync();
+        finalStatus = existingStatus;
+
+        // İzin verilmemişse iste
+        if (existingStatus !== 'granted') {
+          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          finalStatus = status;
+        }
+      } else {
+        // Metod yoksa direkt iste
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        finalStatus = status;
+      }
+    } catch (error) {
+      // Hata durumunda direkt iste
+      try {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        finalStatus = status;
+      } catch (requestError) {
+        logger.error('İzin isteme hatası:', requestError);
+        Alert.alert(t('messages.error'), 'Fotoğraf galerisi izni alınamadı. Lütfen ayarlardan izin verin.');
+        return;
+      }
+    }
+
+    // İzin hala verilmemişse
+    if (finalStatus !== 'granted') {
+      Alert.alert(
+        t('ui.permission_required'),
+        t('ui.media_library_permission_denied') + '\n\nLütfen Ayarlar > Emora AI > Fotoğraflar bölümünden izin verin.',
+        [
+          { text: t('messages.cancel'), style: 'cancel' },
+          {
+            text: 'Ayarlara Git',
+            onPress: async () => {
+              // iOS için ayarlara yönlendirme
+              if (Platform.OS === 'ios') {
+                try {
+                  await Linking.openURL('app-settings:');
+                } catch (error) {
+                  logger.error('Ayarlara yönlendirme hatası:', error);
+                  Alert.alert(t('messages.error'), 'Ayarlara yönlendirilemedi. Lütfen manuel olarak Ayarlar > Emora AI > Fotoğraflar bölümünden izin verin.');
+                }
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.9, // Kaliteyi artırdık (daha yüksek kalite)
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const selectedImage = result.assets[0];
+      const selectedImageUri = selectedImage.uri;
+      
+      // Dosya boyutu kontrolü (ImagePicker'dan gelen bilgiyi kullan)
+      const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+      if (selectedImage.fileSize && selectedImage.fileSize > MAX_FILE_SIZE) {
+        const fileSizeMB = (selectedImage.fileSize / (1024 * 1024)).toFixed(2);
+        Alert.alert(
+          t('messages.error'),
+          `Fotoğraf çok büyük (${fileSizeMB}MB). Lütfen daha küçük bir fotoğraf seçin (maksimum 20MB).`
+        );
+        return;
+      }
+      
+      // Önce local olarak göster (hızlı feedback için)
+      setProfileImage(selectedImageUri);
+
+      try {
+        // Supabase Storage'a yükle ve public URL'i al
+        // ImagePicker'dan gelen type bilgisini kullan
+        const publicUrl = await uploadProfileImage(
+          selectedImageUri, 
+          user.id,
+          selectedImage.type || undefined // ImagePicker'dan gelen type
+        );
+        
+        // Public URL'i Supabase user_metadata'ya kaydet
+        await AuthService.updateUser({
+          data: {
+            avatar_url: publicUrl, // Artık public URL (kalıcı)
+          },
+        });
+        
+        // AsyncStorage'a da kaydet (cache için)
+        await AsyncStorage.setItem('profileImage', publicUrl);
+        
+        // Public URL'i göster
+        setProfileImage(publicUrl);
+        
+        // Kullanıcı verisini yenile
+        await loadUserData();
+        
+        Alert.alert(t('messages.success'), 'Profil fotoğrafı başarıyla güncellendi');
+      } catch (error: any) {
+        logger.error('Profil fotoğrafı kaydetme hatası:', error);
+        Alert.alert(
+          t('messages.error'),
+          error.message || 'Profil fotoğrafı yüklenirken bir hata oluştu'
+        );
+        // Hata durumunda local image'i geri al
+        setProfileImage(null);
+      }
+    }
+  };
+
+  // Profil fotoğrafını yükle
+  const loadProfileImage = async (currentUser?: User | null) => {
+    try {
+      const userToCheck = currentUser || user;
+
+      // Önce Supabase'den (user_metadata) kontrol et - public URL olmalı
+      if (userToCheck?.user_metadata?.avatar_url) {
+        const avatarUrl = userToCheck.user_metadata.avatar_url;
+        // Eğer public URL ise (http/https ile başlıyorsa) kullan
+        if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
+          setProfileImage(avatarUrl);
+          // AsyncStorage'a da kaydet (cache için)
+          await AsyncStorage.setItem('profileImage', avatarUrl);
+          return;
+        }
+        // Eğer local URI ise (eski format), görmezden gel
+        logger.log('Eski local URI formatı tespit edildi, görmezden geliniyor');
+      }
+
+      // Fallback: AsyncStorage'dan yükle (sadece public URL ise)
+      const storedImage = await AsyncStorage.getItem('profileImage');
+      if (storedImage && (storedImage.startsWith('http://') || storedImage.startsWith('https://'))) {
+        setProfileImage(storedImage);
+      }
+    } catch (error) {
+      logger.error('Profil fotoğrafı yükleme hatası:', error);
+    }
+  };
+
+  const handleLogout = useCallback(() => {
     Alert.alert(t('messages.logout_confirm_title'), t('messages.logout_confirm_message'), [
       {
         text: t('messages.cancel'),
@@ -243,11 +338,12 @@ export default function ProfileScreen({ navigation, route }: any) {
         onPress: async () => {
           try {
             await AuthService.signOut();
-            // Giriş sayfasına yönlendir
-            navigation.reset({
+            // Giriş sayfasına yönlendir - Root navigator'a git
+            // CompositeScreenProps kullanıldığı için navigation zaten RootStackParamList'e erişebilir
+            (navigation as any).getParent()?.reset({
               index: 0,
-              routes: [{ name: 'Login' }],
-            });
+              routes: [{ name: 'Auth' as keyof RootStackParamList }],
+            }) || navigation.navigate('Auth');
           } catch (error) {
             logger.error('Çıkış hatası:', error);
             Alert.alert(t('common.error'), t('profile.logout_error'));
@@ -255,21 +351,11 @@ export default function ProfileScreen({ navigation, route }: any) {
         },
       },
     ]);
-  };
+  }, [navigation, t]);
 
   const handleEditProfile = () => {
     navigation.navigate('EditProfile');
   };
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>{t('auth.profile_loading')}</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>

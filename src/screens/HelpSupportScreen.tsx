@@ -226,7 +226,7 @@ export default function HelpSupportScreen({ navigation }: any) {
               <Ionicons name="sparkles" size={24} color={darkTheme.colors.primary} />
             </View>
             <View style={styles.appInfoContent}>
-              <Text style={styles.appInfoTitle}>Emora AI v1.0.0</Text>
+              <Text style={styles.appInfoTitle}>Emora AI v1.0.2</Text>
               <Text style={styles.appInfoSubtitle}>AI Arkadaşınla Sohbet Et</Text>
             </View>
           </View>
@@ -309,13 +309,13 @@ const styles = StyleSheet.create({
     ...darkTheme.typography.title,
     color: darkTheme.colors.text,
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     marginBottom: 8,
   },
   heroSubtitle: {
     ...darkTheme.typography.body,
     color: darkTheme.colors.textSecondary,
-    textAlign: 'center',
+    textAlign: 'center' as const,
     lineHeight: 22,
   },
 
@@ -350,9 +350,9 @@ const styles = StyleSheet.create({
   quickActionTitle: {
     ...darkTheme.typography.body,
     color: darkTheme.colors.text,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     marginBottom: 4,
-    textAlign: 'center',
+    textAlign: 'center' as const,
   },
   quickActionSubtitle: {
     ...darkTheme.typography.caption,

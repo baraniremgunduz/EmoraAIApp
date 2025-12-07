@@ -21,9 +21,14 @@
 Development için `.env` dosyası oluşturun (proje kök dizininde):
 
 ```env
-EXPO_PUBLIC_SUPABASE_URL=https://wxmexmdpobjzgiqjxuix.supabase.co
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 ```
+
+**ÖNEMLİ:** Gerçek değerleri Supabase Dashboard'unuzdan alın:
+1. Supabase Dashboard > Settings > API
+2. `Project URL` değerini `EXPO_PUBLIC_SUPABASE_URL` olarak kullanın
+3. `anon public` key değerini `EXPO_PUBLIC_SUPABASE_ANON_KEY` olarak kullanın
 
 **ÖNEMLİ:** `.env` dosyasını `.gitignore`'a ekleyin ve asla commit etmeyin!
 
@@ -32,15 +37,17 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 Production build'ler için EAS Secrets kullanılmalı. Aşağıdaki komutları çalıştırın:
 
 ```bash
-# Supabase URL
-eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "https://wxmexmdpobjzgiqjxuix.supabase.co" --type string
+# Supabase URL (gerçek değerinizi Supabase Dashboard'dan alın)
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "https://your-project.supabase.co" --type string
 
-# Supabase Anon Key
+# Supabase Anon Key (gerçek değerinizi Supabase Dashboard'dan alın)
 eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "your_anon_key_here" --type string
 
-# App Store Shared Secret (iOS için)
+# App Store Shared Secret (iOS için - App Store Connect'ten alın)
 eas secret:create --scope project --name APP_STORE_SHARED_SECRET --value "your_shared_secret_here" --type string
 ```
+
+**ÖNEMLİ:** Yukarıdaki komutlardaki placeholder değerleri (`your-project`, `your_anon_key_here`, `your_shared_secret_here`) gerçek değerlerinizle değiştirin.
 
 **Secrets'ları kontrol etmek için:**
 ```bash

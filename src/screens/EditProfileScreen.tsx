@@ -16,8 +16,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { darkTheme } from '../utils/theme';
 import { useLanguage } from '../contexts/LanguageContext';
 import { AuthService } from '../services/authService';
+import { logger } from '../utils/logger';
+import { uploadProfileImage } from '../utils/imageUploader';
 
-import { RootStackParamList } from '../types';
+import { RootStackParamList, User } from '../types';
 import { StackScreenProps } from '@react-navigation/stack';
 
 type EditProfileScreenProps = StackScreenProps<RootStackParamList, 'EditProfile'>;
@@ -54,10 +56,16 @@ export default function EditProfileScreen({ navigation, route }: EditProfileScre
           name: currentUser.user_metadata?.name || '',
           email: currentUser.email || '',
         });
-        setProfileImage(currentUser.user_metadata?.avatar_url || null);
+        // Sadece public URL ise göster (http/https ile başlıyorsa)
+        const avatarUrl = currentUser.user_metadata?.avatar_url;
+        if (avatarUrl && (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://'))) {
+          setProfileImage(avatarUrl);
+        } else {
+          setProfileImage(null);
+        }
       }
     } catch (error) {
-      console.error('Kullanıcı verisi yükleme hatası:', error);
+      logger.error('Kullanıcı verisi yükleme hatası:', error);
     }
   };
 
@@ -72,6 +80,11 @@ export default function EditProfileScreen({ navigation, route }: EditProfileScre
       return;
     }
 
+    if (!user?.id) {
+      Alert.alert(t('messages.error'), 'Kullanıcı bilgisi bulunamadı');
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Kullanıcı bilgilerini güncelle
@@ -79,9 +92,26 @@ export default function EditProfileScreen({ navigation, route }: EditProfileScre
         name: formData.name.trim(),
       };
 
-      // Eğer yeni fotoğraf seçildiyse ekle
+      // Eğer yeni fotoğraf seçildiyse (local URI ise) Supabase Storage'a yükle
       if (profileImage && profileImage !== user?.user_metadata?.avatar_url) {
-        updateData.avatar_url = profileImage;
+        // Eğer local URI ise (file:// veya content:// ile başlıyorsa) yükle
+        if (profileImage.startsWith('file://') || profileImage.startsWith('content://')) {
+          try {
+            const publicUrl = await uploadProfileImage(profileImage, user.id);
+            updateData.avatar_url = publicUrl;
+          } catch (uploadError: any) {
+            logger.error('Profil fotoğrafı yükleme hatası:', uploadError);
+            Alert.alert(
+              t('messages.error'),
+              uploadError.message || 'Profil fotoğrafı yüklenirken bir hata oluştu'
+            );
+            setIsLoading(false);
+            return;
+          }
+        } else {
+          // Zaten public URL ise direkt kullan
+          updateData.avatar_url = profileImage;
+        }
       }
 
       const { error } = await AuthService.updateUser({
@@ -120,11 +150,25 @@ export default function EditProfileScreen({ navigation, route }: EditProfileScre
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.8,
+        quality: 0.9, // Kaliteyi artırdık (daha yüksek kalite)
       });
 
       if (!result.canceled && result.assets[0]) {
-        setProfileImage(result.assets[0].uri);
+        const selectedImage = result.assets[0];
+        
+        // Dosya boyutu kontrolü
+        const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+        if (selectedImage.fileSize && selectedImage.fileSize > MAX_FILE_SIZE) {
+          const fileSizeMB = (selectedImage.fileSize / (1024 * 1024)).toFixed(2);
+          Alert.alert(
+            t('messages.error'),
+            `Fotoğraf çok büyük (${fileSizeMB}MB). Lütfen daha küçük bir fotoğraf seçin (maksimum 20MB).`
+          );
+          return;
+        }
+        
+        // Local URI'yi göster (henüz yüklenmedi)
+        setProfileImage(selectedImage.uri);
       }
     } catch (error) {
       logger.error('Fotoğraf seçme hatası:', error);
@@ -143,11 +187,25 @@ export default function EditProfileScreen({ navigation, route }: EditProfileScre
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.8,
+        quality: 0.9, // Kaliteyi artırdık (daha yüksek kalite)
       });
 
       if (!result.canceled && result.assets[0]) {
-        setProfileImage(result.assets[0].uri);
+        const selectedImage = result.assets[0];
+        
+        // Dosya boyutu kontrolü
+        const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+        if (selectedImage.fileSize && selectedImage.fileSize > MAX_FILE_SIZE) {
+          const fileSizeMB = (selectedImage.fileSize / (1024 * 1024)).toFixed(2);
+          Alert.alert(
+            t('messages.error'),
+            `Fotoğraf çok büyük (${fileSizeMB}MB). Lütfen daha küçük bir fotoğraf çekin (maksimum 20MB).`
+          );
+          return;
+        }
+        
+        // Local URI'yi göster (henüz yüklenmedi)
+        setProfileImage(selectedImage.uri);
       }
     } catch (error) {
       logger.error('Fotoğraf çekme hatası:', error);

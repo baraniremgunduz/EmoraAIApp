@@ -1,8 +1,10 @@
 // Premium Context - IAP ve Supabase entegrasyonu
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { AppState } from 'react-native';
 import { supabase } from '../services/supabase';
 import { PurchaseService } from '../services/purchaseService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '../utils/logger';
 
 interface PremiumSubscription {
   id: string;
@@ -60,7 +62,25 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
         .limit(1);
 
       if (error) {
-        console.error('Premium durumu kontrol hatası:', error);
+        // Tablo yoksa veya schema hatası varsa sessizce devam et (production'da hata gösterme)
+        if (
+          error.code === 'PGRST205' ||
+          error.message?.includes('Could not find the table') ||
+          error.message?.includes('schema cache')
+        ) {
+          // Tablo henüz oluşturulmamış - normal durum, sessizce devam et
+          if (__DEV__) {
+            logger.log('Premium subscriptions tablosu henüz oluşturulmamış. Tabloyu oluşturmak için supabase_premium_schema.sql dosyasını Supabase SQL Editor\'de çalıştırın.');
+          }
+          setIsPremium(false);
+          setSubscription(null);
+          return;
+        }
+        
+        // Diğer hatalar için sadece development'ta log et
+        if (__DEV__) {
+          logger.error('Premium durumu kontrol hatası:', error);
+        }
         setIsPremium(false);
         setSubscription(null);
         return;
@@ -98,7 +118,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
         }
       }
     } catch (error) {
-      console.error('Premium durumu kontrol hatası:', error);
+      logger.error('Premium durumu kontrol hatası:', error);
       setIsPremium(false);
       setSubscription(null);
     } finally {
@@ -116,7 +136,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
 
       // IAP'dan aktif satın almaları al
       const purchases = await PurchaseService.getAvailablePurchases();
-      const premiumPurchases = purchases.filter(purchase =>
+      const premiumPurchases = purchases.filter((purchase: any) =>
         Object.values(PurchaseService.PRODUCT_IDS).includes(purchase.productId)
       );
 
@@ -137,12 +157,42 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
             : null, // Ömür boyu
         });
 
-        if (!error) {
+        if (error) {
+          // Tablo yoksa sessizce devam et
+          if (
+            error.code === 'PGRST205' ||
+            error.message?.includes('Could not find the table') ||
+            error.message?.includes('schema cache')
+          ) {
+            if (__DEV__) {
+              logger.log('Premium subscriptions tablosu henüz oluşturulmamış.');
+            }
+            // Tablo yoksa da local state'i güncelle
+            setIsPremium(true);
+            return;
+          }
+          if (__DEV__) {
+            logger.error('IAP-Supabase senkronizasyon hatası:', error);
+          }
+        } else {
           await checkPremiumStatus();
         }
       }
     } catch (error) {
-      console.error('IAP-Supabase senkronizasyon hatası:', error);
+      // Tablo yoksa sessizce devam et
+      if (
+        (error as any)?.code === 'PGRST205' ||
+        (error as any)?.message?.includes('Could not find the table') ||
+        (error as any)?.message?.includes('schema cache')
+      ) {
+        if (__DEV__) {
+          logger.log('Premium subscriptions tablosu henüz oluşturulmamış.');
+        }
+        return;
+      }
+      if (__DEV__) {
+        logger.error('IAP-Supabase senkronizasyon hatası:', error);
+      }
     }
   };
 
@@ -163,13 +213,46 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
         expires_at: purchaseData.expiresAt || null,
       });
 
-      if (!error) {
+      if (error) {
+        // Tablo yoksa sessizce devam et
+        if (
+          error.code === 'PGRST205' ||
+          error.message?.includes('Could not find the table') ||
+          error.message?.includes('schema cache')
+        ) {
+          if (__DEV__) {
+            logger.log('Premium subscriptions tablosu henüz oluşturulmamış.');
+          }
+          // Tablo yoksa da local state'i güncelle
+          await AsyncStorage.setItem('isPremium', 'true');
+          setIsPremium(true);
+          return;
+        }
+        if (__DEV__) {
+          logger.error('Premium aktivasyon hatası:', error);
+        }
+      } else {
         // Local storage'a kaydet
         await AsyncStorage.setItem('isPremium', 'true');
         await checkPremiumStatus();
       }
     } catch (error) {
-      console.error('Premium aktivasyon hatası:', error);
+      // Tablo yoksa sessizce devam et
+      if (
+        (error as any)?.code === 'PGRST205' ||
+        (error as any)?.message?.includes('Could not find the table') ||
+        (error as any)?.message?.includes('schema cache')
+      ) {
+        if (__DEV__) {
+          logger.log('Premium subscriptions tablosu henüz oluşturulmamış.');
+        }
+        await AsyncStorage.setItem('isPremium', 'true');
+        setIsPremium(true);
+        return;
+      }
+      if (__DEV__) {
+        logger.error('Premium aktivasyon hatası:', error);
+      }
     }
   };
 
@@ -187,14 +270,49 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
         .update({ is_active: false })
         .eq('user_id', user.id);
 
-      if (!error) {
+      if (error) {
+        // Tablo yoksa sessizce devam et
+        if (
+          error.code === 'PGRST205' ||
+          error.message?.includes('Could not find the table') ||
+          error.message?.includes('schema cache')
+        ) {
+          if (__DEV__) {
+            logger.log('Premium subscriptions tablosu henüz oluşturulmamış.');
+          }
+          // Tablo yoksa da local state'i güncelle
+          await AsyncStorage.removeItem('isPremium');
+          setIsPremium(false);
+          setSubscription(null);
+          return;
+        }
+        if (__DEV__) {
+          logger.error('Premium pasifleştirme hatası:', error);
+        }
+      } else {
         // Local storage'dan sil
         await AsyncStorage.removeItem('isPremium');
         setIsPremium(false);
         setSubscription(null);
       }
     } catch (error) {
-      console.error('Premium pasifleştirme hatası:', error);
+      // Tablo yoksa sessizce devam et
+      if (
+        (error as any)?.code === 'PGRST205' ||
+        (error as any)?.message?.includes('Could not find the table') ||
+        (error as any)?.message?.includes('schema cache')
+      ) {
+        if (__DEV__) {
+          logger.log('Premium subscriptions tablosu henüz oluşturulmamış.');
+        }
+        await AsyncStorage.removeItem('isPremium');
+        setIsPremium(false);
+        setSubscription(null);
+        return;
+      }
+      if (__DEV__) {
+        logger.error('Premium pasifleştirme hatası:', error);
+      }
     }
   };
 
@@ -207,6 +325,20 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
   useEffect(() => {
     checkPremiumStatus();
   }, []);
+
+  // Uygulama foreground'a geldiğinde premium durumunu yenile
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async nextAppState => {
+      if (nextAppState === 'active') {
+        // Uygulama aktif olduğunda premium durumunu kontrol et
+        await checkPremiumStatus();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [checkPremiumStatus]);
 
   const value: PremiumContextType = {
     isPremium,
@@ -221,10 +353,13 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({ children }) =>
   return <PremiumContext.Provider value={value}>{children}</PremiumContext.Provider>;
 };
 
-export const usePremium = (): PremiumContextType => {
+export const usePremiumContext = (): PremiumContextType => {
   const context = useContext(PremiumContext);
   if (context === undefined) {
-    throw new Error('usePremium must be used within a PremiumProvider');
+    throw new Error('usePremiumContext must be used within a PremiumProvider');
   }
   return context;
 };
+
+// Backward compatibility - use hooks/usePremium instead
+export const usePremium = usePremiumContext;

@@ -15,12 +15,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { darkTheme } from '../utils/theme';
 import { useLanguage } from '../contexts/LanguageContext';
 import { PurchaseService } from '../services/purchaseService';
+import { logger } from '../utils/logger';
 
 const { width } = Dimensions.get('window');
 
-interface PaymentScreenProps {
-  navigation: any;
-}
+import { StackScreenProps } from '@react-navigation/stack';
+import { RootStackParamList } from '../types';
+
+type PaymentScreenProps = StackScreenProps<RootStackParamList, 'PaymentScreen'>;
 
 interface Plan {
   id: string;
@@ -73,21 +75,6 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
       ],
       trialDays: 7,
     },
-    {
-      id: 'lifetime',
-      name: t('payment.lifetime'),
-      price: t('payment.lifetime_price'),
-      period: t('payment.lifetime_period'),
-      features: [
-        t('payment.feature_unlimited'),
-        t('payment.feature_fast'),
-        t('payment.feature_ai'),
-        t('payment.feature_export'),
-        t('payment.feature_mood'),
-        t('payment.feature_support'),
-        t('payment.feature_updates'),
-      ],
-    },
   ];
 
   const handlePlanSelect = (planId: string) => {
@@ -100,7 +87,7 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
       try {
         await PurchaseService.initialize();
       } catch (error) {
-        console.error('Purchase service initialization error:', error);
+        logger.error('Purchase service initialization error:', error);
       }
     };
 
@@ -119,10 +106,7 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
 
     Alert.alert(
       t('payment.confirm_title'),
-      t('payment.confirm_message', {
-        plan: selectedPlanData?.name,
-        price: selectedPlanData?.price,
-      }),
+      t('payment.confirm_message').replace('{plan}', selectedPlanData?.name || '').replace('{price}', selectedPlanData?.price || ''),
       [
         {
           text: t('messages.cancel'),
@@ -135,14 +119,14 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
 
             try {
               // Gerçek satın alma işlemi
-              const success = await PurchaseService.purchasePlan(selectedPlan);
+              const result = await PurchaseService.purchasePlan(selectedPlan);
 
-              if (success) {
+              if (result?.success) {
                 // Satın alma başarılı, kullanıcıyı ana sayfaya yönlendir
-                navigation.navigate('Chat');
+                navigation.navigate('Main', { screen: 'Chat' });
               }
             } catch (error) {
-              console.error('Purchase error:', error);
+              logger.error('Purchase error:', error);
               Alert.alert(t('messages.error'), t('alert.purchase_error'));
             } finally {
               setIsLoading(false);
@@ -202,7 +186,7 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
           <View style={styles.trialContainer}>
             <Ionicons name="gift" size={16} color={darkTheme.colors.premium} />
             <Text style={styles.trialText}>
-              {t('payment.trial_offer', { days: plan.trialDays })}
+              {t('payment.trial_offer').replace('{days}', plan.trialDays?.toString() || '')}
             </Text>
           </View>
         )}

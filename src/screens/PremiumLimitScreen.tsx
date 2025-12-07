@@ -28,7 +28,7 @@ export default function PremiumLimitScreen({
       <View style={styles.overlay}>
         <View style={styles.container}>
           <LinearGradient
-            colors={[darkTheme.colors.gradientStart, darkTheme.colors.gradientEnd]}
+            colors={[darkTheme.colors.gradientStart || darkTheme.colors.primary, darkTheme.colors.gradientEnd || darkTheme.colors.secondary]}
             style={styles.gradient}
           >
             <Card style={styles.card}>

@@ -55,7 +55,7 @@ export class ChatExporter {
         ? {
             totalMessages: messages.length,
             platform: Platform.OS,
-            appVersion: '1.0.0',
+            appVersion: '1.0.2',
           }
         : undefined,
       messages: messages.map(msg => ({

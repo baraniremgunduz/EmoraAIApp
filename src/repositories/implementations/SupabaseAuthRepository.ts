@@ -3,6 +3,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { User } from '../../types';
 import { IAuthRepository } from '../interfaces/IAuthRepository';
 import { logger } from '../../utils/logger';
+import { MessageEncryption } from '../../utils/encryption';
 
 export class SupabaseAuthRepository implements IAuthRepository {
   constructor(private supabase: SupabaseClient) {}
@@ -79,10 +80,24 @@ export class SupabaseAuthRepository implements IAuthRepository {
 
   async getCurrentUser(): Promise<User | null> {
     try {
+      // Önce session'ı kontrol et - session yoksa veya geçersizse null döndür
+      const {
+        data: { session },
+        error: sessionError,
+      } = await this.supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        // Session yoksa veya geçersizse null döndür
+        logger.log('Session yok veya geçersiz, kullanıcı giriş yapmamış');
+        return null;
+      }
+      
+      // Session geçerliyse user'ı al
       const {
         data: { user },
         error,
       } = await this.supabase.auth.getUser();
+      
       if (error) {
         // Auth session yoksa null döndür, hata fırlatma
         if (error.message?.includes('Auth session missing')) {
@@ -164,11 +179,37 @@ export class SupabaseAuthRepository implements IAuthRepository {
 
   async deleteAccount(): Promise<void> {
     try {
-      const { error } = await this.supabase.rpc('delete_user');
-      if (error) {
-        throw error;
+      // Önce mevcut kullanıcıyı al
+      const user = await this.getCurrentUser();
+      if (!user) {
+        throw new Error('Kullanıcı bulunamadı');
       }
-    } catch (error) {
+
+      // Encryption key'i sil
+      try {
+        await MessageEncryption.deleteEncryptionKey(user.id);
+      } catch (encryptionError: any) {
+        // Encryption key silme hatası kritik değil, devam et
+        if (__DEV__) {
+          logger.error('Encryption key silme hatası (non-critical):', encryptionError?.message || encryptionError);
+        }
+      }
+
+      // Supabase'de delete_user RPC fonksiyonunu çağır
+      // Not: Bu fonksiyon Supabase SQL Editor'de oluşturulmalı:
+      // CREATE OR REPLACE FUNCTION delete_user()
+      // RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+      // BEGIN DELETE FROM auth.users WHERE id = auth.uid(); END; $$;
+      const { error: rpcError } = await this.supabase.rpc('delete_user');
+      
+      if (rpcError) {
+        // RPC fonksiyonu yoksa veya hata varsa
+        throw new Error(
+          rpcError.message || 
+          'Hesap silme işlemi başarısız oldu. Lütfen Supabase SQL Editor\'de delete_user fonksiyonunu oluşturun.'
+        );
+      }
+    } catch (error: any) {
       logger.error('Hesap silme hatası:', error);
       throw error;
     }

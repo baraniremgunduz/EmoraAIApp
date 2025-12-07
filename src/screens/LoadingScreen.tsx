@@ -1,6 +1,6 @@
 // Loading ekranı - Uygulama başlangıcında güzel animasyon
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions, Easing, Image } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { darkTheme } from '../utils/theme';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -109,14 +109,11 @@ export default function LoadingScreen({ onFinish }: LoadingScreenProps) {
             styles.iconContainer,
             {
               transform: [{ scale: pulseAnim }],
+              backgroundColor: darkTheme.colors.primary + '20',
             },
           ]}
         >
-          <Image
-            source={require('../../assets/icon.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
+          <Ionicons name="chatbubbles-outline" size={64} color={darkTheme.colors.primary} />
         </Animated.View>
       </Animated.View>
 
@@ -199,7 +196,6 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: darkTheme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: darkTheme.colors.primary,
@@ -210,11 +206,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 16,
-    overflow: 'hidden',
-  },
-  logoImage: {
-    width: 100,
-    height: 100,
   },
   titleContainer: {
     alignItems: 'center',

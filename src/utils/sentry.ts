@@ -1,6 +1,5 @@
 // Sentry crash reporting entegrasyonu
 import * as Sentry from '@sentry/react-native';
-import { logger } from './logger';
 
 // Sentry'yi başlat (sadece production'da)
 export const initSentry = () => {
@@ -15,15 +14,15 @@ export const initSentry = () => {
 
   if (!dsn) {
     // Sentry DSN yoksa uyarı ver (sadece development'ta)
+    // logger yerine console kullanarak require cycle'ı önle
     if (__DEV__) {
-      logger.warn('Sentry DSN bulunamadı. Crash reporting devre dışı.');
+      console.warn('Sentry DSN bulunamadı. Crash reporting devre dışı.');
     }
     return;
   }
 
   Sentry.init({
     dsn,
-    enableInExpoDevelopment: false,
     debug: false,
     environment: process.env.NODE_ENV || 'production',
     tracesSampleRate: 0.1, // %10 sample rate (performans için)
@@ -49,7 +48,8 @@ export const initSentry = () => {
 // Hata yakalama helper'ı
 export const captureException = (error: Error, context?: Record<string, unknown>) => {
   if (__DEV__) {
-    logger.error('Error (dev mode):', error, context);
+    // logger yerine console kullanarak require cycle'ı önle
+    console.error('Error (dev mode):', error, context);
     return;
   }
 
@@ -61,7 +61,8 @@ export const captureException = (error: Error, context?: Record<string, unknown>
 // Mesaj yakalama helper'ı
 export const captureMessage = (message: string, level: Sentry.SeverityLevel = 'info') => {
   if (__DEV__) {
-    logger.log(`Message (dev mode): ${message}`);
+    // logger yerine console kullanarak require cycle'ı önle
+    console.log(`Message (dev mode): ${message}`);
     return;
   }
 

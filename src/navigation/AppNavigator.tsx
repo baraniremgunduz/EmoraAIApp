@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, TouchableOpacity } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,6 +22,8 @@ import { paperTheme, darkTheme } from '../utils/theme';
 
 // Servisler
 import { AuthService } from '../services/authService';
+import { NotificationService } from '../services/notificationService';
+import { logger } from '../utils/logger';
 
 // Ekranlar
 import LoadingScreen from '../screens/LoadingScreen';
@@ -343,7 +345,86 @@ function MainTabNavigator() {
           <MainTab.Screen
             name="Chat"
             component={ChatScreen}
-            options={{ tabBarLabel: t('navigation.chat') }}
+            options={{
+              tabBarLabel: t('navigation.chat'),
+              headerShown: true,
+              headerTitle: 'Emora AI',
+              headerTitleAlign: 'center',
+              headerTitleStyle: {
+                color: '#FFFFFF',
+                fontSize: 24,
+                fontWeight: '600',
+              },
+              headerStyle: {
+                backgroundColor: darkTheme.colors.background,
+                shadowColor: 'transparent',
+                borderBottomWidth: 1,
+                borderBottomColor: darkTheme.colors.border,
+              },
+              headerRight: ({ navigation }: any) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    // Güvenli navigation - önce navigationRef kontrolü
+                    if (navigationRef.current?.isReady()) {
+                      try {
+                        // RootStack'e direkt navigate et
+                        navigationRef.current.navigate('PremiumFeatures');
+                      } catch (error) {
+                        logger.error('Navigation error (navigationRef):', error);
+                        // Fallback 1: getParent ile dene
+                        try {
+                          const parent = navigation.getParent();
+                          if (parent) {
+                            parent.navigate('PremiumFeatures');
+                          } else {
+                            // Fallback 2: Direkt navigate dene
+                            navigation.navigate('PremiumFeatures');
+                          }
+                        } catch (fallbackError) {
+                          logger.error('Navigation error (fallback):', fallbackError);
+                        }
+                      }
+                    } else {
+                      // NavigationRef hazır değilse, getParent ile dene
+                      try {
+                        const parent = navigation.getParent();
+                        if (parent) {
+                          parent.navigate('PremiumFeatures');
+                        } else {
+                          navigation.navigate('PremiumFeatures');
+                        }
+                      } catch (error) {
+                        logger.error('Navigation error (getParent):', error);
+                        // Son çare: setTimeout ile tekrar dene
+                        setTimeout(() => {
+                          if (navigationRef.current?.isReady()) {
+                            navigationRef.current.navigate('PremiumFeatures');
+                          }
+                        }, 100);
+                      }
+                    }
+                  }}
+                  style={{ marginRight: 16, padding: 4 }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name="sparkles"
+                    size={22}
+                    color={darkTheme.colors.premium}
+                  />
+                </TouchableOpacity>
+              ),
+            }}
+            listeners={({ navigation, route }) => ({
+              tabPress: (e) => {
+                // Tab bar'dan Sohbet'e basınca, sessionId varsa temizle (yeni sohbet başlat)
+                const currentParams = route.params as { sessionId?: string; sessionTitle?: string } | undefined;
+                if (currentParams?.sessionId) {
+                  // SessionId'yi temizle
+                  navigation.setParams({ sessionId: undefined, sessionTitle: undefined });
+                }
+              },
+            })}
           />
           <MainTab.Screen
             name="Profile"
@@ -367,7 +448,7 @@ export const navigationRef = React.createRef<NavigationContainerRef<any>>();
 // Ana App Navigator
 export default function AppNavigator() {
   const [isLoading, setIsLoading] = useState(true);
-  const [showLoading, setShowLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(true); // Animasyonlu loading ekranı aktif
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
@@ -379,8 +460,13 @@ export default function AppNavigator() {
       const savedLanguage = await AsyncStorage.getItem('appLanguage');
       logger.log('Kaydedilmiş dil kontrolü:', savedLanguage);
 
-      if (!savedLanguage) {
-        // Dil seçimi yapılmamış, dil seçimi ekranını göster
+      // DEBUG: Dil seçim ekranını her zaman göster (test için)
+      // TODO: Production'da bu satırı kaldırın
+      // const forceLanguageSelection = true; // Test için açık - dil seçim ekranını görmek için
+      const forceLanguageSelection = false; // Normal kullanım - sadece dil seçilmemişse göster
+
+      if (!savedLanguage || forceLanguageSelection) {
+        // Dil seçimi yapılmamış veya zorla gösteriliyor, dil seçimi ekranını göster
         logger.log('Dil seçimi ekranı gösteriliyor');
         setShowLanguageSelection(true);
         setIsLoading(false);
@@ -422,31 +508,47 @@ export default function AppNavigator() {
   };
 
   useEffect(() => {
-    // Minimum loading süresi (splash screen için)
-    const minLoadingTime = 1500; // 1.5 saniye minimum
+    // Minimum loading süresi (animasyonlu splash screen için)
+    const minLoadingTime = 2000; // 2 saniye minimum (animasyon için)
     const startTime = Date.now();
 
     // Auth durumunu kontrol et
-    checkLanguageAndAuthState().finally(() => {
+    checkLanguageAndAuthState().then(() => {
       const elapsedTime = Date.now() - startTime;
       const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
 
-      // Kalan süreyi bekle veya hemen kapat
+      // Kalan süreyi bekle (animasyonun tamamlanması için)
       setTimeout(() => {
         setShowLoading(false);
       }, remainingTime);
+    }).catch((error) => {
+      logger.error('checkLanguageAndAuthState hatası:', error);
+      setShowLoading(false);
     });
   }, []);
 
   // Auth state değişikliklerini dinle
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = AuthService.onAuthStateChange(user => {
+    const unsubscribe = AuthService.onAuthStateChange(async (user) => {
       setIsAuthenticated(!!user);
+      
+      // Kullanıcı giriş yaptığında bildirim token'ını güncelle
+      if (user) {
+        try {
+          // Token'ı user_id ile güncelle
+          const expoToken = NotificationService.getExpoToken();
+          if (expoToken) {
+            // Token'ı yeniden kaydet (user_id ile)
+            await NotificationService.initialize();
+            logger.log('Bildirim token güncellendi, kullanıcı giriş yaptı');
+          }
+        } catch (error) {
+          logger.error('Bildirim token güncelleme hatası:', error);
+        }
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return unsubscribe;
   }, []);
 
   // Loading ekranını göster

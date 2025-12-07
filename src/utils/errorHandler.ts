@@ -57,6 +57,17 @@ export const getErrorMessage = (error: unknown, t: (key: string) => string): str
     return t('errors.server_error');
   }
 
+  // Repository hataları (mesaj kaydetme vb.)
+  if (
+    appError?.name === 'RepositoryError' ||
+    appError?.message?.includes('RepositoryError') ||
+    appError?.message?.includes('Save messages') ||
+    appError?.message?.includes('Save m')
+  ) {
+    // Repository hataları genellikle arka planda çözülür, kullanıcıya gösterme
+    return t('errors.chat_error');
+  }
+
   // Chat/AI hataları
   if (
     appError?.message?.toLowerCase().includes('chat') ||
@@ -64,6 +75,33 @@ export const getErrorMessage = (error: unknown, t: (key: string) => string): str
     appError?.message?.includes('OpenAI')
   ) {
     return t('errors.chat_error');
+  }
+
+  // Rate limiting hataları
+  if (
+    appError?.message?.includes('rate limit') ||
+    appError?.message?.includes('too many requests') ||
+    appError?.message?.includes('429')
+  ) {
+    return t('errors.rate_limit') || 'Çok fazla istek gönderildi. Lütfen birkaç saniye sonra tekrar deneyin.';
+  }
+
+  // Quota/limit hataları
+  if (
+    appError?.message?.includes('quota') ||
+    appError?.message?.includes('limit exceeded') ||
+    appError?.message?.includes('usage limit')
+  ) {
+    return t('errors.quota_exceeded') || 'Kullanım limitiniz doldu. Lütfen premium pakete yükseltin.';
+  }
+
+  // Validation hataları
+  if (
+    appError?.message?.includes('validation') ||
+    appError?.message?.includes('invalid') ||
+    appError?.message?.includes('required')
+  ) {
+    return t('errors.validation_error') || 'Geçersiz veri. Lütfen bilgilerinizi kontrol edin.';
   }
 
   // Bilinmeyen hatalar

@@ -11,9 +11,29 @@
     "preview": {
       "distribution": "internal"
     },
-    "production": {}
+    "production": {
+      "channel": "production",
+      "ios": {
+        "image": "latest",
+        "node": "20.18.0",
+        "resourceClass": "m-medium",
+        "env": {
+          "RCT_NEW_ARCH_ENABLED": "0",
+          "NPM_CONFIG_IGNORE_SCRIPTS": "false",
+          "EXPO_NO_DOTENV": "1"
+        },
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "node": "20.18.0"
+      }
+    }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascAppId": "6754393366"
+      }
+    }
   }
 }

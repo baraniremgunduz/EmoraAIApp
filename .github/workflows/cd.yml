@@ -2,9 +2,10 @@ name: CD Pipeline
 
 on:
   push:
-    branches: [main]
-  tags:
-    - 'v*'
+    branches:
+      - main
+    tags:
+      - 'v*'
 
 # GitHub Secrets: EXPO_TOKEN gerekli
 # Bu secret GitHub repository settings'den eklenmelidir
@@ -17,6 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     timeout-minutes: 60
+    env:
+      # EXPO_TOKEN secret'ı GitHub repository settings'den eklenmelidir
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
     # Otomatik deployment: Preview build'ler otomatik olarak TestFlight ve Internal Testing'e gönderilir
     steps:
       - name: Checkout code
@@ -32,7 +36,7 @@ jobs:
         uses: expo/expo-github-action@v8
         with:
           expo-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+          token: ${{ env.EXPO_TOKEN }}
         continue-on-error: true
 
       - name: Install dependencies
@@ -45,8 +49,6 @@ jobs:
       - name: Build Preview (iOS)
         run: |
           eas build --platform ios --profile preview --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         continue-on-error: true
         timeout-minutes: 30
         # EXPO_TOKEN zorunlu - EAS build için gerekli
@@ -55,8 +57,6 @@ jobs:
       - name: Build Preview (Android)
         run: |
           eas build --platform android --profile preview --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         continue-on-error: true
         timeout-minutes: 30
         # EXPO_TOKEN zorunlu - EAS build için gerekli
@@ -76,6 +76,9 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     timeout-minutes: 60
+    env:
+      # EXPO_TOKEN secret'ı GitHub repository settings'den eklenmelidir
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -90,7 +93,7 @@ jobs:
         uses: expo/expo-github-action@v8
         with:
           expo-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+          token: ${{ env.EXPO_TOKEN }}
         continue-on-error: true
 
       - name: Install dependencies
@@ -103,8 +106,6 @@ jobs:
       - name: Build Production (iOS)
         run: |
           eas build --platform ios --profile production --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         continue-on-error: true
         timeout-minutes: 30
         # continue-on-error: iOS build şimdilik skip ediliyor (Provisioning Profile'da Associated Domains eksik)
@@ -112,8 +113,6 @@ jobs:
       - name: Build Production (Android)
         run: |
           eas build --platform android --profile production --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         continue-on-error: true
         timeout-minutes: 30
         # EXPO_TOKEN zorunlu - EAS build için gerekli
@@ -123,8 +122,6 @@ jobs:
           # Production build başarılıysa otomatik olarak App Store ve Play Store'a submit et
           echo "🚀 Production build başarılı, App Store'lara submit ediliyor..."
           eas submit --platform all --profile production --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         continue-on-error: true
         timeout-minutes: 15
         # EXPO_TOKEN zorunlu - EAS submit için gerekli

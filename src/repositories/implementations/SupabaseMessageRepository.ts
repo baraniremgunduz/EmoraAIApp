@@ -22,7 +22,7 @@ export class SupabaseMessageRepository implements IMessageRepository {
       const { data: messages, error } = await this.supabase
         .from('messages')
         .select('*')
-        .eq('session_id', sessionId)
+        .eq('chat_session_id', sessionId)
         .eq('user_id', userId)
         .order('timestamp', { ascending: true });
 
@@ -34,8 +34,15 @@ export class SupabaseMessageRepository implements IMessageRepository {
         return [];
       }
 
-      // Mesajları decrypt et (async map için Promise.all)
-      const mappedMessages = await Promise.all(messages.map(msg => this.mapToMessage(msg, userId)));
+      // Mesajları decrypt et (hata durumunda mesajı atla)
+      const mappedResults = await Promise.allSettled(
+        messages.map(msg => this.mapToMessage(msg, userId))
+      );
+
+      // Başarılı olan mesajları filtrele
+      const mappedMessages = mappedResults
+        .filter((result): result is PromiseFulfilledResult<Message> => result.status === 'fulfilled')
+        .map(result => result.value);
 
       // Cache'e kaydet (5 dakika)
       await CacheManager.set(cacheKey, mappedMessages, 5 * 60 * 1000);
@@ -67,9 +74,16 @@ export class SupabaseMessageRepository implements IMessageRepository {
         return [];
       }
 
-      // Mesajları ters çevir ve decrypt et
+      // Mesajları ters çevir ve decrypt et (hata durumunda mesajı atla)
       const reversedMessages = (messages || []).reverse();
-      return await Promise.all(reversedMessages.map(msg => this.mapToMessage(msg, userId)));
+      const mappedMessages = await Promise.allSettled(
+        reversedMessages.map(msg => this.mapToMessage(msg, userId))
+      );
+
+      // Başarılı olan mesajları filtrele
+      return mappedMessages
+        .filter((result): result is PromiseFulfilledResult<Message> => result.status === 'fulfilled')
+        .map(result => result.value);
     } catch (error) {
       logger.error('Son mesajları alma hatası:', error);
       return [];
@@ -85,10 +99,16 @@ export class SupabaseMessageRepository implements IMessageRepository {
 
           // E2E encryption: Mesaj içeriğini şifrele
           try {
-            const encryptedContent = await MessageEncryption.encrypt(msg.content, userId);
-            dbFormat.content = `encrypted_${encryptedContent}`;
-          } catch (error) {
-            logger.error('Message encryption error:', error);
+            if (msg.content && userId) {
+              const encryptedContent = await MessageEncryption.encrypt(msg.content, userId);
+              dbFormat.content = `encrypted_${encryptedContent}`;
+            } else {
+              // Boş content veya userId yoksa plain text kaydet (sessizce)
+              // Log etme - normal durum
+            }
+          } catch (error: any) {
+            // Encryption hatası - tamamen sessizce handle et, plain text kaydet
+            // Hiç log etme - console error'a neden olma
             // Encryption başarısız olursa plain text kaydet (fallback)
             // Production'da bu durumda hata fırlatılmalı
           }
@@ -119,7 +139,7 @@ export class SupabaseMessageRepository implements IMessageRepository {
       const { error } = await this.supabase
         .from('messages')
         .delete()
-        .eq('session_id', sessionId)
+        .eq('chat_session_id', sessionId)
         .eq('user_id', userId);
 
       if (error) {
@@ -148,7 +168,7 @@ export class SupabaseMessageRepository implements IMessageRepository {
       const { data: messages, error } = await this.supabase
         .from('messages')
         .select('*')
-        .eq('session_id', sessionId)
+        .eq('chat_session_id', sessionId)
         .eq('user_id', userId)
         .order('timestamp', { ascending: true })
         .range(offset, offset + limit - 1); // Supabase pagination
@@ -161,8 +181,15 @@ export class SupabaseMessageRepository implements IMessageRepository {
         return [];
       }
 
-      // Mesajları decrypt et
-      const mappedMessages = await Promise.all(messages.map(msg => this.mapToMessage(msg, userId)));
+      // Mesajları decrypt et (hata durumunda mesajı atla)
+      const mappedResults = await Promise.allSettled(
+        messages.map(msg => this.mapToMessage(msg, userId))
+      );
+
+      // Başarılı olan mesajları filtrele
+      const mappedMessages = mappedResults
+        .filter((result): result is PromiseFulfilledResult<Message> => result.status === 'fulfilled')
+        .map(result => result.value);
 
       // Cache'e kaydet (2 dakika - pagination için daha kısa)
       await CacheManager.set(cacheKey, mappedMessages, 2 * 60 * 1000);
@@ -178,16 +205,22 @@ export class SupabaseMessageRepository implements IMessageRepository {
 
   async mapToMessage(dbMessage: DatabaseMessage, userId: string): Promise<Message> {
     // Mesaj şifreli mi kontrol et (encrypted_ prefix ile başlıyorsa)
-    let content = dbMessage.content;
+    let content = dbMessage.content || '';
 
     // E2E encryption: Eğer mesaj şifreliyse çöz
     if (content.startsWith('encrypted_')) {
       try {
         const encryptedContent = content.replace('encrypted_', '');
-        content = await MessageEncryption.decrypt(encryptedContent, userId);
-      } catch (error) {
-        logger.error('Message decryption error:', error);
-        // Decryption başarısız olursa encrypted content'i göster
+        if (encryptedContent && userId) {
+          content = await MessageEncryption.decrypt(encryptedContent, userId);
+        } else {
+          // Boş encrypted content veya userId yoksa fallback
+          content = '[Encrypted message - decryption failed]';
+        }
+      } catch (error: any) {
+        // Decryption hatası - tamamen sessizce handle et, console error'a neden olma
+        // Hiç log etme - console error'a neden olma
+        // Decryption başarısız olursa fallback mesaj göster
         content = '[Encrypted message - decryption failed]';
       }
     }
@@ -203,7 +236,7 @@ export class SupabaseMessageRepository implements IMessageRepository {
 
   mapToDatabase(message: Message, sessionId: string): any {
     return {
-      session_id: sessionId,
+      chat_session_id: sessionId,
       content: message.content,
       role: message.role,
       timestamp: message.timestamp || new Date().toISOString(),

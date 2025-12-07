@@ -77,12 +77,14 @@ yapay zeka, AI, sohbet, chat, asistan, akıllı, yapay zeka sohbet, AI chat, Emo
 ```
 
 ### URL'ler
-- **Destek URL'si**: https://github.com/emora-ai/support
-- **Pazarlama URL'si**: https://github.com/emora-ai
+- **Destek URL'si**: https://github.com/baraniremgunduz/emora-ai-support
+- **Pazarlama URL'si**: https://github.com/baraniremgunduz/emora-ai
+- **DSA (Digital Services Act) URL'si**: https://github.com/baraniremgunduz/emora-ai-support/blob/main/DSA.md
+- **Privacy Policy URL'si**: https://github.com/baraniremgunduz/emora-ai-support/blob/main/PRIVACY_POLICY.md
 
 ### Telif Hakkı
 ```
-© 2024 Emora AI. Tüm hakları saklıdır.
+© 2025 Emora AI. Tüm hakları saklıdır.
 ```
 
 ## Kategori ve Derecelendirme
