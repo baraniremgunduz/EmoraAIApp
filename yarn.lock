@@ -7981,7 +7981,7 @@ react-native-gesture-handler@~2.20.2:
 
 react-native-google-mobile-ads@^16.0.0:
   version "16.0.0"
-  resolved "https://registry.npmjs.org/react-native-google-mobile-ads/-/react-native-google-mobile-ads-16.0.0.tgz"
+  resolved "https://registry.yarnpkg.com/react-native-google-mobile-ads/-/react-native-google-mobile-ads-16.0.0.tgz#4a1136964a250be0f57a20b69835c1e99c77aa22"
   integrity sha512-jjSolMj0Q5CBXQjUrow4D0IQ8CpNXocEYYt6xi1xVSUSWg0QQRuTzjXrHLczIMXLm2qWPr1ZllN/VGCOIz0n/g==
   dependencies:
     "@iabtcf/core" "^1.5.6"
