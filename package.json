@@ -95,13 +95,5 @@
     "react-test-renderer": "18.3.1",
     "typescript": "~5.3.3"
   },
-  "private": true,
-  "overrides": {
-    "metro": "0.80.10",
-    "metro-config": "0.80.10",
-    "metro-resolver": "0.80.10",
-    "metro-cache": "0.80.10",
-    "metro-transform-worker": "0.80.10",
-    "expo-constants": "~17.0.8"
-  }
+  "private": true
 }
