@@ -23,6 +23,7 @@
         "NSPhotoLibraryUsageDescription": "Bu uygulama fotoğraf seçmek için galeri erişimi gerektir.",
         "NSPhotoLibraryAddUsageDescription": "Bu uygulama profil fotoğrafınızı kaydetmek için fotoğraf galerisine erişim gerektirir.",
         "NSMicrophoneUsageDescription": "Bu uygulama ses kaydetmek için mikrofon erişimi gerektir.",
+        "NSUserTrackingUsageDescription": "Uygulamada size daha alakalı ve kişiselleştirilmiş reklamlar gösterebilmek için takip iznine ihtiyacımız var.",
         "ITSAppUsesNonExemptEncryption": false,
         "GADApplicationIdentifier": "ca-app-pub-9485934183491164~1978001460"
       },
