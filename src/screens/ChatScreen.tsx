@@ -59,7 +59,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showPremiumLimit, setShowPremiumLimit] = useState(false);
   const [messagesUsed, setMessagesUsed] = useState(0);
-  const [messagesLimit, setMessagesLimit] = useState(isPremium ? 999999 : 10); // Premium'da sınırsız
+  const [messagesLimit, setMessagesLimit] = useState(isPremium ? 999999 : 5); // Premium'da sınırsız
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0); // Klavye yüksekliği için state
@@ -91,7 +91,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
 
   // Premium durumu değiştiğinde mesaj limitini güncelle
   useEffect(() => {
-    setMessagesLimit(isPremium ? 999999 : 10);
+    setMessagesLimit(isPremium ? 999999 : 5);
   }, [isPremium]);
 
   // Günlük mesaj sayacı reset mekanizması
