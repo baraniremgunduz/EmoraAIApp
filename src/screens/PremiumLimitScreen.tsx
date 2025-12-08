@@ -39,7 +39,7 @@ export default function PremiumLimitScreen({
                     <Ionicons name="star" size={40} color={darkTheme.colors.premium} />
                   </View>
                   <Text style={styles.title}>{t('premium.upgrade')}</Text>
-                  <Text style={styles.subtitle}>Bugünlük konuşma hakkını doldurdun</Text>
+                  <Text style={styles.subtitle}>{t('premium.daily_limit_filled')}</Text>
                 </View>
 
                 {/* Progress */}
@@ -53,13 +53,13 @@ export default function PremiumLimitScreen({
                     />
                   </View>
                   <Text style={styles.progressText}>
-                    {messagesUsed}/{messagesLimit} mesaj kullandın
+                    {t('premium.messages_used').replace('{used}', messagesUsed.toString()).replace('{limit}', messagesLimit.toString())}
                   </Text>
                 </View>
 
                 {/* Benefits */}
                 <View style={styles.benefitsContainer}>
-                  <Text style={styles.benefitsTitle}>Premium ile neler kazanırsın:</Text>
+                  <Text style={styles.benefitsTitle}>{t('premium.benefits_title')}</Text>
 
                   <View style={styles.benefitItem}>
                     <Ionicons name="infinite" size={20} color={darkTheme.colors.primary} />
@@ -68,24 +68,18 @@ export default function PremiumLimitScreen({
 
                   <View style={styles.benefitItem}>
                     <Ionicons name="flash" size={20} color={darkTheme.colors.primary} />
-                    <Text style={styles.benefitText}>Hızlı yanıt süresi</Text>
+                    <Text style={styles.benefitText}>{t('premium.fast_response_time')}</Text>
                   </View>
 
                   <View style={styles.benefitItem}>
                     <Ionicons name="heart" size={20} color={darkTheme.colors.primary} />
-                    <Text style={styles.benefitText}>Özel AI kişilikleri</Text>
+                    <Text style={styles.benefitText}>{t('premium.exclusive_ai')}</Text>
                   </View>
 
                   <View style={styles.benefitItem}>
                     <Ionicons name="download" size={20} color={darkTheme.colors.primary} />
-                    <Text style={styles.benefitText}>Sohbet geçmişi dışa aktarma</Text>
+                    <Text style={styles.benefitText}>{t('premium.export_history')}</Text>
                   </View>
-                </View>
-
-                {/* Price */}
-                <View style={styles.priceContainer}>
-                  <Text style={styles.price}>₺89/ay</Text>
-                  <Text style={styles.priceSubtext}>İlk ay ücretsiz</Text>
                 </View>
 
                 {/* Buttons */}
@@ -108,7 +102,7 @@ export default function PremiumLimitScreen({
                   </TouchableOpacity>
 
                   <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                    <Text style={styles.closeButtonText}>Daha sonra</Text>
+                    <Text style={styles.closeButtonText}>{t('ui.later')}</Text>
                   </TouchableOpacity>
                 </View>
               </Card.Content>

@@ -772,8 +772,8 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
         onClose={() => setShowPremiumLimit(false)}
         onUpgrade={() => {
           setShowPremiumLimit(false);
-          // Premium upgrade logic burada olacak
-          Alert.alert(t('alert.premium_coming_soon'), t('alert.premium_coming_soon'));
+          // PremiumFeaturesScreen'e yönlendir
+          navigation.navigate('PremiumFeatures');
         }}
         messagesUsed={messagesUsed}
         messagesLimit={messagesLimit}
