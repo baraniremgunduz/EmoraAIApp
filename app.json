@@ -95,17 +95,17 @@
     ],
     "updates": {
       "enabled": true,
-      "url": "https://u.expo.dev/ff5b7b60-ac46-4a47-a7b8-093213ecc747",
+      "url": "https://u.expo.dev/00d4dc5f-1c7b-443a-afa2-03ea7278bfa2",
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
-    "owner": "iremddogruyol",
+    "owner": "barangunduz",
     "extra": {
       "eas": {
-        "projectId": "ff5b7b60-ac46-4a47-a7b8-093213ecc747"
+        "projectId": "00d4dc5f-1c7b-443a-afa2-03ea7278bfa2"
       }
     }
   }
