@@ -218,7 +218,7 @@ export default function SettingsScreen({ navigation }: any) {
         user: user,
         settings: settings,
         exportDate: new Date().toISOString(),
-        appVersion: '1.0.2',
+        appVersion: '1.0.4',
       };
 
       // JSON formatında veri hazırla
@@ -465,7 +465,7 @@ export default function SettingsScreen({ navigation }: any) {
 
         {/* App Info */}
         <View style={styles.appInfoContainer}>
-          <Text style={styles.appInfoText}>{t('app.name')} v1.0.2</Text>
+          <Text style={styles.appInfoText}>{t('app.name')} v1.0.4</Text>
           <Text style={styles.appInfoSubtext}>{t('app.tagline')}</Text>
         </View>
       </ScrollView>
