@@ -75,6 +75,8 @@ export const adService = {
         rewarded.load();
       }
 
+      let rewardGiven = false; // Ödül verilip verilmediğini takip et
+
       const unsubscribeRewarded = rewarded!.addAdEventsListener((event) => {
         const { type, payload } = event;
         
@@ -88,7 +90,8 @@ export const adService = {
           rewarded!.show();
         }
 
-        if (type === RewardedAdEventType.EARNED_REWARD && payload && onReward) {
+        if (type === RewardedAdEventType.EARNED_REWARD && payload && onReward && !rewardGiven) {
+          rewardGiven = true; // Ödül verildi, tekrar verme
           const reward = payload as { amount: number; type: string };
           onReward(reward);
         }

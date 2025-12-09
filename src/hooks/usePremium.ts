@@ -48,7 +48,7 @@ export const PREMIUM_FEATURES: PremiumFeature[] = [
   {
     id: 'basic_chat',
     name: 'Temel Sohbet',
-    description: 'Günlük 5 mesaj ile temel sohbet',
+    description: 'Günlük 3 mesaj ile temel sohbet',
     requiresPremium: false,
   },
   {

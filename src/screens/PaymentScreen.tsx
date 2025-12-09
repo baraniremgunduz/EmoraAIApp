@@ -45,7 +45,7 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
     {
       id: 'monthly',
       name: t('payment.monthly'),
-      price: currency === 'TRY' ? '₺129.99' : '$4.99',
+      price: currency === 'TRY' ? '₺199.99' : '$4.99',
       period: t('payment.monthly_period'),
       features: [
         t('payment.feature_unlimited'),
@@ -57,12 +57,12 @@ export default function PaymentScreen({ navigation }: PaymentScreenProps) {
     {
       id: 'yearly',
       name: t('payment.yearly'),
-      price: currency === 'TRY' ? '₺699.99' : '$49.99',
-      originalPrice: currency === 'TRY' ? '₺1,559.88' : '$59.88',
+      price: currency === 'TRY' ? '₺1499.99' : '$49.99',
+      originalPrice: currency === 'TRY' ? '₺2,399.88' : '$59.88',
       period: t('payment.yearly_period'),
       savings:
         currency === 'TRY'
-          ? '₺860 ' + t('payment.savings') + ' (55%)'
+          ? '₺900 ' + t('payment.savings') + ' (38%)'
           : '$10 ' + t('payment.savings') + ' (17%)',
       popular: true,
       features: [

@@ -532,7 +532,7 @@ export default function AppNavigator() {
     const unsubscribe = AuthService.onAuthStateChange(async (user) => {
       setIsAuthenticated(!!user);
       
-      // Kullanıcı giriş yaptığında bildirim token'ını güncelle
+      // Kullanıcı giriş yaptığında bildirim token'ını güncelle ve günlük bildirimleri zamanla
       if (user) {
         try {
           // Token'ı user_id ile güncelle
@@ -541,6 +541,9 @@ export default function AppNavigator() {
             // Token'ı yeniden kaydet (user_id ile)
             await NotificationService.initialize();
             logger.log('Bildirim token güncellendi, kullanıcı giriş yaptı');
+          } else {
+            // Token yoksa initialize et (token alacak ve bildirimleri zamanlayacak)
+            await NotificationService.initialize();
           }
         } catch (error) {
           logger.error('Bildirim token güncelleme hatası:', error);

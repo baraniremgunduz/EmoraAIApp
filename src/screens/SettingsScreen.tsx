@@ -60,7 +60,23 @@ export default function SettingsScreen({ navigation }: any) {
       const savedSettings = await AsyncStorage.getItem('userSettings');
       if (savedSettings) {
         const parsedSettings = JSON.parse(savedSettings);
+        // Premium kişiliği artık desteklenmiyor, friendly'ye dön
+        if (parsedSettings.aiPersonality === 'premium') {
+          parsedSettings.aiPersonality = 'friendly';
+        }
         setSettings(prev => ({ ...prev, ...parsedSettings }));
+      }
+      
+      // aiPersonality'yi direkt key'den de kontrol et (ChatService ile uyumluluk için)
+      const directPersonality = await AsyncStorage.getItem('aiPersonality');
+      if (directPersonality) {
+        // Premium kişiliği artık desteklenmiyor, friendly'ye dön
+        const validPersonality = directPersonality === 'premium' ? 'friendly' : directPersonality;
+        if (validPersonality !== settings.aiPersonality && ['friendly', 'professional', 'casual'].includes(validPersonality)) {
+          setSettings(prev => ({ ...prev, aiPersonality: validPersonality }));
+          // AsyncStorage'ı da güncelle
+          await AsyncStorage.setItem('aiPersonality', validPersonality);
+        }
       }
     } catch (error) {
       logger.error('Ayar yükleme hatası:', error);
@@ -71,6 +87,13 @@ export default function SettingsScreen({ navigation }: any) {
     try {
       const currentSettings = { ...settings, [key]: value };
       await AsyncStorage.setItem('userSettings', JSON.stringify(currentSettings));
+      
+      // aiPersonality için ayrıca direkt key olarak da kaydet (ChatService için)
+      if (key === 'aiPersonality') {
+        await AsyncStorage.setItem('aiPersonality', value);
+        logger.log(`AI kişiliği kaydedildi: ${value}`);
+      }
+      
       logger.log(`Ayar kaydedildi: ${key} = ${value}`);
     } catch (error) {
       logger.error('Ayar kaydetme hatası:', error);
@@ -256,7 +279,7 @@ export default function SettingsScreen({ navigation }: any) {
       return;
     }
 
-    // Professional ve Casual premium gerektirir
+    // Professional, Casual ve Premium premium gerektirir
     if (!isPremium) {
       setShowPersonalityModal(false);
       navigation.navigate('PremiumFeatures');
@@ -326,7 +349,9 @@ export default function SettingsScreen({ navigation }: any) {
                   ? t('personality.friendly')
                   : settings.aiPersonality === 'professional'
                     ? t('personality.professional')
-                    : t('personality.casual')}
+                    : settings.aiPersonality === 'casual'
+                      ? t('personality.casual')
+                      : t('personality.premium')}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={darkTheme.colors.primary} />
@@ -540,6 +565,7 @@ export default function SettingsScreen({ navigation }: any) {
                   <Ionicons name="checkmark-circle" size={24} color={darkTheme.colors.primary} />
                 )}
               </TouchableOpacity>
+
             </View>
           </View>
         </View>

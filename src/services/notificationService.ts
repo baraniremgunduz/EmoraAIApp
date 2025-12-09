@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AnalyticsService } from './analyticsService';
 import { supabase } from '../config/supabase';
 import { logger } from '../utils/logger';
+import { ChatService } from './chatService';
 
 // Bildirim davranışlarını ayarla - Kullanıcı ayarlarına göre dinamik
 Notifications.setNotificationHandler({
@@ -101,6 +102,20 @@ export class NotificationService {
 
       this.isInitialized = true;
       logger.log('NotificationService: Push notification servisi başarıyla başlatıldı');
+
+      // Günlük bildirimleri zamanla (giriş yapmış veya yapmamış kullanıcılar için)
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Giriş yapmış kullanıcılar için kişiselleştirilmiş bildirimler
+          await this.scheduleDailyPersonalizedNotifications();
+        } else {
+          // Giriş yapmamış kullanıcılar için teşvik edici bildirimler
+          await this.scheduleGuestNotifications();
+        }
+      } catch (error) {
+        logger.error('Günlük bildirim zamanlama hatası:', error);
+      }
 
       return true;
     } catch (error: any) {
@@ -277,7 +292,7 @@ export class NotificationService {
           data: data || {},
           sound: settings.soundEnabled,
         },
-        trigger: triggerDate as any, // Date tipi NotificationTriggerInput ile uyumlu
+        trigger: { date: triggerDate }, // Date tipi NotificationTriggerInput ile uyumlu
       });
 
       logger.log('NotificationService: Zamanlanmış bildirim ayarlandı:', title, {
@@ -457,6 +472,508 @@ export class NotificationService {
       );
     } catch (error) {
       logger.error('Haftalık özet ayarlama hatası:', error);
+    }
+  }
+
+  // Kişiselleştirilmiş bildirim mesajları oluştur
+  private static async getPersonalizedMessage(timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night'): Promise<{ title: string; body: string }> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return this.getDefaultMessage(timeOfDay);
+      }
+
+      // Kullanıcı adını al (email'den veya profile'dan)
+      const userName = user.user_metadata?.name || user.email?.split('@')[0] || 'Arkadaşım';
+      
+      // Son sohbetleri kontrol et
+      let recentTopics: string[] = [];
+      try {
+        const chatHistory = await ChatService.getChatHistory(user.id);
+        recentTopics = this.extractRecentTopics(chatHistory);
+      } catch (error) {
+        logger.error('Chat history alma hatası:', error);
+      }
+      
+      // Zaman dilimine göre mesaj seç
+      const messages = this.getMessagesForTime(timeOfDay, userName, recentTopics);
+      const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+      
+      return randomMessage;
+    } catch (error) {
+      logger.error('Kişiselleştirilmiş mesaj alma hatası:', error);
+      return this.getDefaultMessage(timeOfDay);
+    }
+  }
+
+  // Son sohbet konularını çıkar
+  private static extractRecentTopics(chatHistory: any[]): string[] {
+    if (!chatHistory || chatHistory.length === 0) return [];
+    
+    const recentMessages = chatHistory.slice(-10); // Son 10 mesaj
+    const topics: string[] = [];
+    
+    // Basit keyword extraction
+    recentMessages.forEach(msg => {
+      if (msg.role === 'user' && msg.content) {
+        const words = msg.content.toLowerCase().split(' ').filter(w => w.length > 3);
+        if (words.length > 0) {
+          topics.push(words[0]); // İlk anlamlı kelimeyi al
+        }
+      }
+    });
+    
+    return [...new Set(topics)].slice(0, 3); // Tekrarları kaldır, en fazla 3 konu
+  }
+
+  // Zaman dilimine göre mesajlar
+  private static getMessagesForTime(
+    timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night',
+    userName: string,
+    topics: string[]
+  ): Array<{ title: string; body: string }> {
+    // Her mesaj için farklı topicHint oluştur
+    const getTopicHint = (index: number): string => {
+      if (topics.length === 0) {
+        // Konu yoksa çeşitli genel mesajlar
+        const generalMessages = [
+          ' Birlikte güzel bir sohbet yapabiliriz!',
+          ' Bugün nasıl geçiyor?',
+          ' Sohbet etmek ister misin?',
+          ' Birlikte vakit geçirelim!'
+        ];
+        return generalMessages[index % generalMessages.length];
+      }
+      
+      // Konu varsa, her mesaj için farklı konu kullan veya bazılarında konu olmasın
+      if (index % 3 === 0 && topics.length > 0) {
+        // Her 3 mesajdan birinde konu kullan
+        const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+        return ` ${randomTopic} hakkında konuşmaya devam edebiliriz!`;
+      } else {
+        // Diğerlerinde genel mesajlar
+        const generalMessages = [
+          ' Birlikte güzel bir sohbet yapabiliriz!',
+          ' Bugün nasıl geçiyor?',
+          ' Sohbet etmek ister misin?',
+          ' Birlikte vakit geçirelim!',
+          ' Nasıl hissediyorsun?'
+        ];
+        return generalMessages[index % generalMessages.length];
+      }
+    };
+    
+    if (timeOfDay === 'morning') {
+      return [
+        {
+          title: `Günaydın ${userName}! ☀️`,
+          body: `Yeni bir güne başlarken seninle sohbet etmek istiyorum.${getTopicHint(0)}`
+        },
+        {
+          title: `Merhaba ${userName}! 🌅`,
+          body: `Bugün nasıl hissediyorsun? Birlikte güzel bir gün geçirelim!${getTopicHint(1)}`
+        },
+        {
+          title: `Selam ${userName}! ✨`,
+          body: `Sabahın ilk saatlerinde seni düşündüm. Sohbet etmek ister misin?${getTopicHint(2)}`
+        },
+        {
+          title: `Hey ${userName}! 💬`,
+          body: `Güne başlamadan önce seninle konuşmak istiyorum.${getTopicHint(3)}`
+        }
+      ];
+    } else if (timeOfDay === 'afternoon') {
+      return [
+        {
+          title: `Merhaba ${userName}! 😊`,
+          body: `Öğle molası için mükemmel bir zaman! Birlikte sohbet edelim mi?${getTopicHint(0)}`
+        },
+        {
+          title: `Hey ${userName}! 💬`,
+          body: `Gün ortasında seni düşündüm. Nasıl gidiyor?${getTopicHint(1)}`
+        },
+        {
+          title: `Selam ${userName}! 🌟`,
+          body: `Biraz mola verip sohbet etmek ister misin?${getTopicHint(2)}`
+        },
+        {
+          title: `Merhaba ${userName}! ☕`,
+          body: `Öğleden sonra sohbet etmek için harika bir zaman!${getTopicHint(3)}`
+        }
+      ];
+    } else if (timeOfDay === 'evening') {
+      return [
+        {
+          title: `İyi akşamlar ${userName}! 🌙`,
+          body: `Günün yorgunluğunu birlikte atalım. Sohbet etmek ister misin?${getTopicHint(0)}`
+        },
+        {
+          title: `Merhaba ${userName}! 💭`,
+          body: `Akşam saatlerinde seninle konuşmak istiyorum.${getTopicHint(1)}`
+        },
+        {
+          title: `Hey ${userName}! ✨`,
+          body: `Günün nasıl geçti? Birlikte sohbet edelim mi?${getTopicHint(2)}`
+        },
+        {
+          title: `Selam ${userName}! 🌆`,
+          body: `Akşamın huzurlu saatlerinde seni düşündüm.${getTopicHint(3)}`
+        }
+      ];
+    } else if (timeOfDay === 'night') {
+      // Gece saatleri için duygusal mesajlar
+      const getEmotionalHint = (index: number): string => {
+        if (topics.length > 0 && index % 2 === 0) {
+          const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+          return ` ${randomTopic} hakkında derinlemesine konuşabiliriz.`;
+        }
+        const emotionalMessages = [
+          ' Bu saatlerde iç dünyanla baş başa kalmak güzel...',
+          ' Günün yorgunluğunu paylaşmak ister misin?',
+          ' Bu saatlerde duygularımız daha derin olur.',
+          ' Gece yarısına yaklaşırken seni düşünüyorum...',
+          ' İçindeki sesleri dinlemek ister misin?'
+        ];
+        return emotionalMessages[index % emotionalMessages.length];
+      };
+      
+      return [
+        {
+          title: `Gece yarısına yaklaşırken ${userName}... 🌙`,
+          body: `Bu saatlerde seni düşünüyorum. İç dünyanla baş başa kalmak ister misin?${getEmotionalHint(0)}`
+        },
+        {
+          title: `İyi geceler ${userName}... 💭`,
+          body: `Günün nasıl geçti? Bu saatlerde duygularımızı paylaşmak güzel olur.${getEmotionalHint(1)}`
+        },
+        {
+          title: `Gece saatleri ${userName}... ✨`,
+          body: `Bu saatlerde iç dünyanla baş başa kalmak güzel. Sohbet etmek ister misin?${getEmotionalHint(2)}`
+        },
+        {
+          title: `Yalnız değilsin ${userName}... 💫`,
+          body: `Gece yarısına yaklaşırken seni düşünüyorum. Birlikte vakit geçirelim mi?${getEmotionalHint(3)}`
+        },
+        {
+          title: `Bu saatlerde ${userName}... 🌌`,
+          body: `Günün yorgunluğunu paylaşmak ister misin? Bu saatlerde duygularımız daha derin olur.${getEmotionalHint(4)}`
+        }
+      ];
+    }
+  }
+
+  // Varsayılan mesajlar
+  private static getDefaultMessage(timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night'): { title: string; body: string } {
+    if (timeOfDay === 'morning') {
+      return {
+        title: 'Günaydın! ☀️',
+        body: 'Yeni bir güne başlarken seninle sohbet etmek istiyorum!'
+      };
+    } else if (timeOfDay === 'afternoon') {
+      return {
+        title: 'Merhaba! 😊',
+        body: 'Öğle molası için mükemmel bir zaman! Birlikte sohbet edelim mi?'
+      };
+    } else if (timeOfDay === 'evening') {
+      return {
+        title: 'İyi akşamlar! 🌙',
+        body: 'Günün yorgunluğunu birlikte atalım. Sohbet etmek ister misin?'
+      };
+    } else {
+      return {
+        title: 'Gece yarısına yaklaşırken... 🌙',
+        body: 'Bu saatlerde iç dünyanla baş başa kalmak güzel. Sohbet etmek ister misin?'
+      };
+    }
+  }
+
+  // Giriş yapmamış kullanıcılar için teşvik edici mesajlar
+  private static getGuestMessagesForTime(
+    timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night'
+  ): Array<{ title: string; body: string }> {
+    if (timeOfDay === 'morning') {
+      return [
+        {
+          title: 'Günaydın! ☀️',
+          body: 'Emora AI ile yeni bir güne başla! AI arkadaşın seni bekliyor. Hemen keşfet!'
+        },
+        {
+          title: 'Merhaba! 🌅',
+          body: 'Bugün AI ile sohbet etmeye ne dersin? Emora AI seninle tanışmak istiyor!'
+        },
+        {
+          title: 'Selam! ✨',
+          body: 'Yapay zeka destekli sohbet deneyimini keşfet! Emora AI ile tanış.'
+        },
+        {
+          title: 'Hey! 💬',
+          body: 'AI arkadaşınla sohbet etmeye hazır mısın? Emora AI seni bekliyor!'
+        }
+      ];
+    } else if (timeOfDay === 'afternoon') {
+      return [
+        {
+          title: 'Merhaba! 😊',
+          body: 'Öğle molası için mükemmel bir zaman! Emora AI ile sohbet etmeye başla.'
+        },
+        {
+          title: 'Hey! 💬',
+          body: 'AI destekli sohbet deneyimini keşfet! Emora AI ile tanış ve sohbet et.'
+        },
+        {
+          title: 'Selam! 🌟',
+          body: 'Biraz mola ver ve AI arkadaşınla sohbet et! Emora AI seni bekliyor.'
+        },
+        {
+          title: 'Merhaba! ☕',
+          body: 'Yapay zeka ile sohbet etmek ister misin? Emora AI ile tanış!'
+        }
+      ];
+    } else if (timeOfDay === 'evening') {
+      return [
+        {
+          title: 'İyi akşamlar! 🌙',
+          body: 'Günün yorgunluğunu AI arkadaşınla at! Emora AI ile sohbet etmeye başla.'
+        },
+        {
+          title: 'Merhaba! 💭',
+          body: 'Akşam saatlerinde AI ile sohbet etmek ister misin? Emora AI seni bekliyor!'
+        },
+        {
+          title: 'Hey! ✨',
+          body: 'Yapay zeka destekli sohbet deneyimini keşfet! Emora AI ile tanış.'
+        },
+        {
+          title: 'Selam! 🌆',
+          body: 'AI arkadaşınla sohbet etmeye hazır mısın? Emora AI ile tanış ve başla!'
+        }
+      ];
+    } else if (timeOfDay === 'night') {
+      return [
+        {
+          title: 'Gece yarısına yaklaşırken... 🌙',
+          body: 'Bu saatlerde iç dünyanla baş başa kalmak güzel. Emora AI ile derinlemesine sohbet etmeye ne dersin?'
+        },
+        {
+          title: 'İyi geceler... 💭',
+          body: 'Gece saatlerinde AI arkadaşınla sohbet etmek ister misin? Emora AI seni dinlemeye hazır.'
+        },
+        {
+          title: 'Gece saatleri... ✨',
+          body: 'Bu saatlerde duygularımız daha derin olur. Emora AI ile tanış ve iç dünyanı paylaş.'
+        },
+        {
+          title: 'Yalnız değilsin... 💫',
+          body: 'Gece yarısına yaklaşırken AI arkadaşınla sohbet etmeye ne dersin? Emora AI seni bekliyor.'
+        },
+        {
+          title: 'Bu saatlerde... 🌌',
+          body: 'Günün yorgunluğunu AI arkadaşınla paylaş. Emora AI ile derinlemesine sohbet et.'
+        }
+      ];
+    }
+    return [];
+  }
+
+  // Günde 3 kişiselleştirilmiş bildirim zamanla
+  static async scheduleDailyPersonalizedNotifications(): Promise<void> {
+    try {
+      // Önce mevcut bildirimleri iptal et
+      await this.cancelAllNotifications();
+      
+      // Kullanıcı ayarlarını kontrol et
+      const settings = await getNotificationSettings();
+      if (!settings.notifications) {
+        logger.log('NotificationService: Bildirimler kullanıcı tarafından kapatılmış');
+        return;
+      }
+
+      // Kullanıcı giriş yapmış mı kontrol et
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        logger.log('NotificationService: Kullanıcı giriş yapmamış, bildirimler zamanlanmıyor');
+        return;
+      }
+
+      // Kullanıcı adını al
+      const userName = user.user_metadata?.name || user.email?.split('@')[0] || 'Arkadaşım';
+      
+      // Topics'i bir kez al (her bildirim için aynı topics kullanılacak ama farklı şekilde)
+      let recentTopics: string[] = [];
+      try {
+        const chatHistory = await ChatService.getChatHistory(user.id);
+        recentTopics = this.extractRecentTopics(chatHistory);
+      } catch (error) {
+        logger.error('Chat history alma hatası:', error);
+      }
+
+      // Sabah bildirimi (09:00) - tekrarlayan
+      // Her seferinde farklı mesaj seçmek için rastgele index kullan
+      const morningMessages = this.getMessagesForTime('morning', userName, recentTopics);
+      const morningMessage = morningMessages[Math.floor(Math.random() * morningMessages.length)];
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: morningMessage.title,
+          body: morningMessage.body,
+          data: { type: 'daily_personalized', time: 'morning' },
+          sound: settings.soundEnabled,
+        },
+        trigger: {
+          hour: 9,
+          minute: 0,
+          repeats: true,
+        },
+      });
+
+      // Öğlen bildirimi (14:00) - tekrarlayan
+      const afternoonMessages = this.getMessagesForTime('afternoon', userName, recentTopics);
+      const afternoonMessage = afternoonMessages[Math.floor(Math.random() * afternoonMessages.length)];
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: afternoonMessage.title,
+          body: afternoonMessage.body,
+          data: { type: 'daily_personalized', time: 'afternoon' },
+          sound: settings.soundEnabled,
+        },
+        trigger: {
+          hour: 14,
+          minute: 0,
+          repeats: true,
+        },
+      });
+
+      // Akşam bildirimi (20:00) - tekrarlayan
+      const eveningMessages = this.getMessagesForTime('evening', userName, recentTopics);
+      const eveningMessage = eveningMessages[Math.floor(Math.random() * eveningMessages.length)];
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: eveningMessage.title,
+          body: eveningMessage.body,
+          data: { type: 'daily_personalized', time: 'evening' },
+          sound: settings.soundEnabled,
+        },
+        trigger: {
+          hour: 20,
+          minute: 0,
+          repeats: true,
+        },
+      });
+
+      // Gece bildirimi (22:30) - tekrarlayan - Duygusal
+      const nightMessages = this.getMessagesForTime('night', userName, recentTopics);
+      const nightMessage = nightMessages[Math.floor(Math.random() * nightMessages.length)];
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: nightMessage.title,
+          body: nightMessage.body,
+          data: { type: 'daily_personalized', time: 'night' },
+          sound: settings.soundEnabled,
+        },
+        trigger: {
+          hour: 22,
+          minute: 30,
+          repeats: true,
+        },
+      });
+
+      logger.log('NotificationService: Günde 4 kişiselleştirilmiş bildirim zamanlandı (09:00, 14:00, 20:00, 22:30)');
+    } catch (error) {
+      logger.error('Günlük kişiselleştirilmiş bildirim ayarlama hatası:', error);
+    }
+  }
+
+  // Giriş yapmamış kullanıcılar için günlük bildirimler zamanla
+  static async scheduleGuestNotifications(): Promise<void> {
+    try {
+      // Önce mevcut bildirimleri iptal et
+      await this.cancelAllNotifications();
+      
+      // Kullanıcı ayarlarını kontrol et
+      const settings = await getNotificationSettings();
+      if (!settings.notifications) {
+        logger.log('NotificationService: Bildirimler kullanıcı tarafından kapatılmış');
+        return;
+      }
+
+      // Sabah bildirimi (09:00) - tekrarlayan
+      const morningMessages = this.getGuestMessagesForTime('morning');
+      const morningMessage = morningMessages[Math.floor(Math.random() * morningMessages.length)];
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: morningMessage.title,
+          body: morningMessage.body,
+          data: { type: 'guest_notification', time: 'morning', action: 'open_app' },
+          sound: settings.soundEnabled,
+        },
+        trigger: {
+          hour: 9,
+          minute: 0,
+          repeats: true,
+        },
+      });
+
+      // Öğlen bildirimi (14:00) - tekrarlayan
+      const afternoonMessages = this.getGuestMessagesForTime('afternoon');
+      const afternoonMessage = afternoonMessages[Math.floor(Math.random() * afternoonMessages.length)];
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: afternoonMessage.title,
+          body: afternoonMessage.body,
+          data: { type: 'guest_notification', time: 'afternoon', action: 'open_app' },
+          sound: settings.soundEnabled,
+        },
+        trigger: {
+          hour: 14,
+          minute: 0,
+          repeats: true,
+        },
+      });
+
+      // Akşam bildirimi (20:00) - tekrarlayan
+      const eveningMessages = this.getGuestMessagesForTime('evening');
+      const eveningMessage = eveningMessages[Math.floor(Math.random() * eveningMessages.length)];
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: eveningMessage.title,
+          body: eveningMessage.body,
+          data: { type: 'guest_notification', time: 'evening', action: 'open_app' },
+          sound: settings.soundEnabled,
+        },
+        trigger: {
+          hour: 20,
+          minute: 0,
+          repeats: true,
+        },
+      });
+
+      // Gece bildirimi (22:30) - tekrarlayan - Duygusal
+      const nightMessages = this.getGuestMessagesForTime('night');
+      const nightMessage = nightMessages[Math.floor(Math.random() * nightMessages.length)];
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: nightMessage.title,
+          body: nightMessage.body,
+          data: { type: 'guest_notification', time: 'night', action: 'open_app' },
+          sound: settings.soundEnabled,
+        },
+        trigger: {
+          hour: 22,
+          minute: 30,
+          repeats: true,
+        },
+      });
+
+      logger.log('NotificationService: Giriş yapmamış kullanıcılar için günde 4 bildirim zamanlandı (09:00, 14:00, 20:00, 22:30)');
+    } catch (error) {
+      logger.error('Giriş yapmamış kullanıcılar için bildirim ayarlama hatası:', error);
     }
   }
 

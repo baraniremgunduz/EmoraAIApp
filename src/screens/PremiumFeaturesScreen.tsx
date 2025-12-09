@@ -1,5 +1,5 @@
 // Premium özellikler sayfası
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -35,6 +35,7 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
   const [selectedPlan, setSelectedPlan] = useState<string>('yearly'); // Varsayılan olarak yıllık plan
   const [isRewardedLoading, setIsRewardedLoading] = useState(false);
   const [isRewardedAvailable, setIsRewardedAvailable] = useState(true); // Varsayılan olarak true - reklam yüklenmeye çalışılacak
+  const rewardAlertShownRef = useRef(false); // Alert'in gösterilip gösterilmediğini takip et
 
   const features = [
     {
@@ -211,21 +212,29 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
   const handleWatchRewardedAd = useCallback(async () => {
     if (isRewardedLoading || isPremium) return;
 
+    // Alert flag'ini sıfırla
+    rewardAlertShownRef.current = false;
     setIsRewardedLoading(true);
     try {
       await adService.showRewarded(async (reward) => {
-        // Ödül kazanıldı - 5 ekstra mesaj ver
+        // Ödül kazanıldı - sadece bir kez işle
+        if (rewardAlertShownRef.current) {
+          return; // Zaten işlendi, tekrar işleme
+        }
+        rewardAlertShownRef.current = true;
+
         try {
           const currentCount = await AsyncStorage.getItem('messagesUsedToday');
           const count = currentCount ? parseInt(currentCount, 10) : 0;
-          // 5 mesaj ekle (negatif yaparak limiti artır)
-          const newCount = Math.max(0, count - 5);
+          // 3 mesaj ekle (negatif yaparak limiti artır)
+          const newCount = Math.max(0, count - 3);
           await AsyncStorage.setItem('messagesUsedToday', newCount.toString());
           
+          // Alert'i sadece bir kez göster - mevcut dilde
           Alert.alert(
-            t('premium.reward_earned') || 'Ödül Kazandınız!',
-            t('premium.reward_message') || '5 ekstra mesaj kazandınız!',
-            [{ text: t('ui.ok') || 'Tamam' }]
+            t('premium.reward_earned'),
+            t('premium.reward_message'),
+            [{ text: t('ui.ok') }]
           );
         } catch (error) {
           if (__DEV__) {
@@ -392,7 +401,7 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
               onPress={() => handlePlanSelect('monthly')}
             >
               <Text style={styles.pricingPlan}>{t('payment.monthly')}</Text>
-              <Text style={styles.pricingPrice}>{currency === 'TRY' ? '₺149.99' : '$4.99'}</Text>
+              <Text style={styles.pricingPrice}>{currency === 'TRY' ? '₺199.99' : '$4.99'}</Text>
               <Text style={styles.pricingPeriod}>{t('payment.monthly_period')}</Text>
               {selectedPlan === 'monthly' && (
                 <View style={styles.selectedIndicator}>
@@ -412,14 +421,14 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
                 <Text style={styles.recommendedText}>{t('premium.recommended')}</Text>
               </View>
               <Text style={styles.pricingPlan}>{t('payment.yearly')}</Text>
-              <Text style={styles.pricingPrice}>{currency === 'TRY' ? '₺699.99' : '$49.99'}</Text>
+              <Text style={styles.pricingPrice}>{currency === 'TRY' ? '₺1499.99' : '$49.99'}</Text>
               <Text style={styles.pricingPeriod}>{t('payment.yearly_period')}</Text>
               <Text style={styles.monthlyEquivalent}>
-                {currency === 'TRY' ? '₺58.33/ay' : '$4.17/month'}
+                {currency === 'TRY' ? '₺125.00/ay' : '$4.17/month'}
               </Text>
               <Text style={styles.savingsText}>
                 {currency === 'TRY'
-                  ? '₺1100 ' + t('payment.savings') + ' (61%)'
+                  ? '₺900 ' + t('payment.savings') + ' (38%)'
                   : '$10 ' + t('payment.savings') + ' (17%)'}
               </Text>
               {selectedPlan === 'yearly' && (
@@ -437,10 +446,10 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
             <View style={styles.rewardedAdCard}>
               <Ionicons name="videocam" size={32} color={darkTheme.colors.primary} />
               <Text style={styles.rewardedAdTitle}>
-                {t('premium.watch_video_title') || 'Video İzle, Mesaj Kazan!'}
+                {t('premium.watch_video_title')}
               </Text>
               <Text style={styles.rewardedAdDescription}>
-                {t('premium.watch_video_desc') || 'Kısa bir video izleyerek 5 ekstra mesaj kazanın'}
+                {t('premium.watch_video_desc')}
               </Text>
               <TouchableOpacity
                 style={[
@@ -457,8 +466,8 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
                 />
                 <Text style={styles.rewardedAdButtonText}>
                   {isRewardedLoading
-                    ? t('ui.loading') || 'Yükleniyor...'
-                    : t('premium.watch_video') || 'Video İzle'}
+                    ? t('ui.loading')
+                    : t('premium.watch_video')}
                 </Text>
               </TouchableOpacity>
             </View>
