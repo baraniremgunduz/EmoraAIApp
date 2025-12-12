@@ -9,7 +9,25 @@ import { ChatService } from './chatService';
 
 // Bildirim davranışlarını ayarla - Kullanıcı ayarlarına göre dinamik
 Notifications.setNotificationHandler({
-  handleNotification: async () => {
+  handleNotification: async (notification) => {
+    // Uygulama açıldığında tetiklenen geçmiş bildirimleri filtrele
+    // Eğer bildirim uygulama açıldığında tetiklenmişse ve geçmişte zamanlanmışsa gösterme
+    const now = Date.now();
+    const trigger = notification.request.trigger;
+    
+    // Eğer bildirim geçmişte zamanlanmışsa gösterme
+    if (trigger && 'date' in trigger) {
+      const notificationDate = new Date(trigger.date as number).getTime();
+      if (notificationDate < now) {
+        logger.log('NotificationService: Geçmiş bildirim filtrelendi:', notification.request.identifier);
+        return {
+          shouldShowAlert: false,
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+        };
+      }
+    }
+
     // Kullanıcı ayarlarını al
     const settings = await getNotificationSettings();
 
@@ -83,6 +101,15 @@ export class NotificationService {
       if (status !== 'granted') {
         logger.log('NotificationService: Bildirim izni verilmedi');
         return false;
+      }
+
+      // ÖNEMLİ: Uygulama açıldığında bekleyen tüm bildirimleri iptal et
+      // Bu, geçmişte zamanlanmış bildirimlerin tetiklenmesini önler
+      try {
+        await this.cancelAllNotifications();
+        logger.log('NotificationService: Bekleyen bildirimler temizlendi');
+      } catch (error) {
+        logger.error('NotificationService: Bekleyen bildirimleri temizleme hatası:', error);
       }
 
       // Expo push token al - hata durumunda sessizce devam et
@@ -181,8 +208,20 @@ export class NotificationService {
 
   // Bildirim dinleyicilerini kur
   private static setupNotificationListeners() {
-    // Foreground bildirimleri
+    // Foreground bildirimleri - geçmiş bildirimleri filtrele
     Notifications.addNotificationReceivedListener(notification => {
+      // Geçmiş bildirimleri filtrele
+      const now = Date.now();
+      const trigger = notification.request.trigger;
+      
+      if (trigger && 'date' in trigger) {
+        const notificationDate = new Date(trigger.date as number).getTime();
+        if (notificationDate < now) {
+          logger.log('NotificationService: Geçmiş bildirim filtrelendi (listener):', notification.request.identifier);
+          return; // Geçmiş bildirimi işleme
+        }
+      }
+
       logger.log('NotificationService: Foreground bildirim alındı:', notification);
 
       // Analytics'e bildirim alındı olayını gönder

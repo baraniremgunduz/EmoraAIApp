@@ -65,7 +65,8 @@
         "WRITE_EXTERNAL_STORAGE",
         "RECORD_AUDIO",
         "INTERNET",
-        "ACCESS_NETWORK_STATE"
+        "ACCESS_NETWORK_STATE",
+        "RECEIVE_BOOT_COMPLETED"
       ]
     },
     "web": {
@@ -86,6 +87,15 @@
       ],
       "expo-localization",
       "expo-updates",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#667eea",
+          "sounds": [],
+          "mode": "production"
+        }
+      ],
       [
         "react-native-google-mobile-ads",
         {
