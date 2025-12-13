@@ -231,7 +231,7 @@ export default function ChatHistoryScreen({ navigation }: ChatHistoryScreenProps
       // Format seçimi için ActionSheet
       Alert.alert(
         t('chat.export_chat') || 'Sohbeti Dışa Aktar',
-        'Hangi formatta export etmek istersiniz?',
+        'Sohbet geçmişi tarihe göre ayrı dosyalara bölünecek. Hangi formatta export etmek istersiniz?',
         [
           {
             text: t('common.cancel') || 'İptal',
@@ -241,12 +241,12 @@ export default function ChatHistoryScreen({ navigation }: ChatHistoryScreenProps
             text: 'Metin (.txt)',
             onPress: async () => {
               try {
-                await ChatExporter.shareChat(messages, session.title, {
+                await ChatExporter.shareSessionByDate(messages, session.title, {
                   format: 'txt',
                   includeTimestamps: true,
                   includeMetadata: true,
                 });
-                Alert.alert(t('messages.success') || 'Başarılı', 'Sohbet başarıyla paylaşıldı');
+                // Başarı mesajı shareSessionByDate içinde gösteriliyor
               } catch (error: any) {
                 logger.error('Export hatası:', error);
                 Alert.alert(
@@ -260,12 +260,12 @@ export default function ChatHistoryScreen({ navigation }: ChatHistoryScreenProps
             text: 'JSON (.json)',
             onPress: async () => {
               try {
-                await ChatExporter.shareChat(messages, session.title, {
+                await ChatExporter.shareSessionByDate(messages, session.title, {
                   format: 'json',
                   includeTimestamps: true,
                   includeMetadata: true,
                 });
-                Alert.alert(t('messages.success') || 'Başarılı', 'Sohbet başarıyla paylaşıldı');
+                // Başarı mesajı shareSessionByDate içinde gösteriliyor
               } catch (error: any) {
                 logger.error('Export hatası:', error);
                 Alert.alert(

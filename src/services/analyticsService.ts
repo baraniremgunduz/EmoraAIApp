@@ -29,31 +29,79 @@ export class AnalyticsService {
         updated_at: new Date().toISOString(),
       });
 
-      if (error) throw error;
+      if (error) {
+        // RLS policy hatası gibi kritik olmayan hataları sessizce atla (hiçbir şey loglama)
+        if (error.code === '42501') {
+          // RLS policy hatası - sessizce atla, hiçbir şey loglama
+          return;
+        } else {
+          // Diğer hatalar için de sessizce atla (analytics kritik değil)
+          return;
+        }
+      }
+      
       logger.log('AnalyticsService: Kullanıcı kimliği ayarlandı:', userId);
-    } catch (error) {
-      logger.error('Kullanıcı kimliği ayarlama hatası:', error);
+    } catch (error: any) {
+      // Analytics hataları uygulamayı crash etmemeli - sessizce atla
+      // RLS policy hataları için hiçbir şey loglama
+      if (error?.code === '42501') {
+        return; // RLS hatası - sessizce atla
+      }
+      // Diğer hatalar için de sessizce atla
     }
   }
 
   // Kullanıcı özelliklerini ayarla
   static async setUserProperties(properties: Record<string, string>): Promise<void> {
     try {
+      // Kullanıcı giriş yapmış mı kontrol et
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        logger.log('AnalyticsService: Kullanıcı giriş yapmamış, user properties atlanıyor');
+        return;
+      }
+
       const { error } = await supabase.from('analytics_user_properties').upsert({
+        user_id: user.id, // RLS policy için gerekli
         properties: properties,
         updated_at: new Date().toISOString(),
       });
 
-      if (error) throw error;
+      if (error) {
+        // RLS policy hatası gibi kritik olmayan hataları sessizce atla (hiçbir şey loglama)
+        if (error.code === '42501') {
+          // RLS policy hatası - sessizce atla, hiçbir şey loglama
+          return;
+        } else {
+          // Diğer hatalar için de sessizce atla (analytics kritik değil)
+          return;
+        }
+      }
+      
       logger.log('AnalyticsService: Kullanıcı özellikleri ayarlandı:', properties);
-    } catch (error) {
-      logger.error('Kullanıcı özellikleri ayarlama hatası:', error);
+    } catch (error: any) {
+      // Analytics hataları uygulamayı crash etmemeli - sessizce atla
+      // RLS policy hataları için hiçbir şey loglama
+      if (error?.code === '42501') {
+        return; // RLS hatası - sessizce atla
+      }
+      // Diğer hatalar için de sessizce atla
     }
   }
 
   // Ekran görüntüleme olayı
   static async logScreenView(screenName: string, screenClass?: string): Promise<void> {
     try {
+      // Kullanıcı giriş yapmış mı kontrol et
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Giriş yapmamış kullanıcılar için analytics'i skip et
+      if (!user) {
+        logger.log('AnalyticsService: Kullanıcı giriş yapmamış, screen view atlanıyor:', screenName);
+        return;
+      }
+
       const { error } = await supabase.from('analytics_events').insert({
         event_name: 'screen_view',
         event_data: {
@@ -61,28 +109,69 @@ export class AnalyticsService {
           screen_class: screenClass || screenName,
         },
         timestamp: new Date().toISOString(),
+        user_id: user.id, // RLS policy için gerekli
       });
 
-      if (error) throw error;
+      if (error) {
+        // RLS policy hatası gibi kritik olmayan hataları sessizce atla (hiçbir şey loglama)
+        if (error.code === '42501') {
+          // RLS policy hatası - sessizce atla, hiçbir şey loglama
+          return;
+        } else {
+          // Diğer hatalar için de sessizce atla (analytics kritik değil)
+          return;
+        }
+      }
+      
       logger.log('AnalyticsService: Ekran görüntüleme loglandı:', screenName);
-    } catch (error) {
-      logger.error('Ekran görüntüleme loglama hatası:', error);
+    } catch (error: any) {
+      // Analytics hataları uygulamayı crash etmemeli - sessizce atla
+      // RLS policy hataları için hiçbir şey loglama
+      if (error?.code === '42501') {
+        return; // RLS hatası - sessizce atla
+      }
+      // Diğer hatalar için de sessizce atla
     }
   }
 
   // Özel olay logla
   static async logEvent(eventName: string, parameters?: Record<string, any>): Promise<void> {
     try {
+      // Kullanıcı giriş yapmış mı kontrol et
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Giriş yapmamış kullanıcılar için analytics'i skip et (RLS policy gerektiriyor)
+      if (!user) {
+        logger.log('AnalyticsService: Kullanıcı giriş yapmamış, analytics event atlanıyor:', eventName);
+        return;
+      }
+
       const { error } = await supabase.from('analytics_events').insert({
         event_name: eventName,
         event_data: parameters || {},
         timestamp: new Date().toISOString(),
+        user_id: user.id, // RLS policy için gerekli
       });
 
-      if (error) throw error;
+      if (error) {
+        // RLS policy hatası gibi kritik olmayan hataları sessizce atla (hiçbir şey loglama)
+        if (error.code === '42501') {
+          // RLS policy hatası - sessizce atla, hiçbir şey loglama
+          return;
+        } else {
+          // Diğer hatalar için de sessizce atla (analytics kritik değil)
+          return;
+        }
+      }
+      
       logger.log('AnalyticsService: Özel olay loglandı:', eventName, parameters);
-    } catch (error) {
-      logger.error('Özel olay loglama hatası:', error);
+    } catch (error: any) {
+      // Analytics hataları uygulamayı crash etmemeli - sessizce atla
+      // RLS policy hataları için hiçbir şey loglama
+      if (error?.code === '42501') {
+        return; // RLS hatası - sessizce atla
+      }
+      // Diğer hatalar için de sessizce atla
     }
   }
 
@@ -169,19 +258,39 @@ export class AnalyticsService {
         service: 'AnalyticsService',
       });
 
-      // Supabase'e hata bilgisi kaydet
-      const { error: insertError } = await supabase.from('analytics_errors').insert({
-        error_message: error.message,
-        error_stack: error.stack,
-        context: context || 'unknown',
-        timestamp: new Date().toISOString(),
-      });
+      // Kullanıcı giriş yapmış mı kontrol et
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Supabase'e hata bilgisi kaydet (giriş yapmamış kullanıcılar için skip)
+      if (user) {
+        const { error: insertError } = await supabase.from('analytics_errors').insert({
+          error_message: error.message,
+          error_stack: error.stack,
+          context: context || 'unknown',
+          timestamp: new Date().toISOString(),
+          user_id: user.id, // RLS policy için gerekli
+        });
 
-      if (insertError) throw insertError;
-
-      logger.log('AnalyticsService: Hata loglandı:', error.message);
-    } catch (logError) {
-      logger.error('Hata loglama hatası:', logError);
+        if (insertError) {
+          // RLS policy hatası gibi kritik olmayan hataları sessizce atla (hiçbir şey loglama)
+          if (insertError.code === '42501') {
+            // RLS policy hatası - sessizce atla, hiçbir şey loglama
+            return;
+          } else {
+            // Diğer hatalar için de sessizce atla (analytics kritik değil)
+            return;
+          }
+        } else {
+          logger.log('AnalyticsService: Hata loglandı:', error.message);
+        }
+      }
+    } catch (logError: any) {
+      // Analytics hataları uygulamayı crash etmemeli - sessizce atla
+      // RLS policy hataları için hiçbir şey loglama
+      if (logError?.code === '42501') {
+        return; // RLS hatası - sessizce atla
+      }
+      // Diğer hatalar için de sessizce atla
     }
   }
 

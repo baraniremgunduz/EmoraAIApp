@@ -64,6 +64,12 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0); // Klavye yüksekliği için state
   const flatListRef = useRef<FlatList>(null);
+  
+  // Scroll pozisyonu takibi
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [shouldScrollToEnd, setShouldScrollToEnd] = useState(false);
+  const [lastContentHeight, setLastContentHeight] = useState(0);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Pagination state
   const [page, setPage] = useState(0);
@@ -87,6 +93,13 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
     getCurrentUser();
     // Günlük mesaj sayacını kontrol et ve gerekirse reset yap
     checkAndResetDailyMessageCount();
+    
+    // Cleanup: scroll timeout'u temizle
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Premium durumu değiştiğinde mesaj limitini güncelle
@@ -270,10 +283,16 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
           // İlk sayfa - mesajları set et
           setMessages(sessionMessages);
           setPage(0);
+          // İlk yüklemede scroll pozisyonunu sıfırla
+          setIsUserScrolling(false);
+          setShouldScrollToEnd(true);
         } else {
-          // Sonraki sayfalar - eski mesajları başa ekle (inverted list için)
+          // Sonraki sayfalar - eski mesajları başa ekle (pagination)
           setMessages(prev => [...sessionMessages, ...prev]);
           setPage(pageNum);
+          // Pagination sırasında scroll pozisyonunu koru (kullanıcı scroll yapıyor)
+          setIsUserScrolling(true);
+          setShouldScrollToEnd(false);
         }
       } else if (pageNum === 0) {
         // İlk sayfa ve mesaj yoksa welcome mesajı göster
@@ -370,45 +389,75 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       return newCount;
     });
 
-    // Kullanıcı mesajını ekle (duplicate kontrolü ile)
+    // Kullanıcı mesajını ekle (duplicate kontrolü ile - ID ve content bazlı)
     setMessages(prev => {
-      // Duplicate kontrolü - aynı içerik ve zaman damgası varsa ekleme
-      const isDuplicate = prev.some(
-        msg => msg.content === userMessage.content && 
-               msg.role === 'user' && 
-               Math.abs(new Date(msg.timestamp).getTime() - new Date(userMessage.timestamp).getTime()) < 1000
+      // Duplicate kontrolü - aynı ID varsa veya aynı content + role + yakın timestamp varsa ekleme
+      const isDuplicate = prev.some(msg => 
+        msg.id === userMessage.id || 
+        (msg.content === userMessage.content && 
+         msg.role === userMessage.role && 
+         Math.abs(new Date(msg.timestamp).getTime() - new Date(userMessage.timestamp).getTime()) < 2000)
       );
       if (isDuplicate) {
+        logger.log('Duplicate user message detected, skipping:', userMessage.id);
         return prev; // Duplicate ise ekleme
       }
+      // Yeni mesaj eklendiğinde scroll pozisyonunu korumak için flag set et
+      setShouldScrollToEnd(true);
+      setIsUserScrolling(false); // Yeni mesaj eklendiğinde otomatik scroll'a izin ver
       return [...prev, userMessage];
     });
 
     try {
-      // Mevcut mesajları al (güncel state)
-      const currentMessages = messages;
-      const messagesWithUser = [...currentMessages, userMessage];
+      // Functional update kullanarak güncel mesajları al ve AI'dan cevap al
+      // useRef ile mesajları sakla, böylece async işlem sırasında güncel kalır
+      let messagesForAI: Message[] = [];
       
-      // AI'dan cevap al - mevcut mesajları context olarak gönder
-      const aiResponse = await ChatService.sendMessage(sanitizedContent, userId, messagesWithUser);
-
-      // AI cevabını ekle (duplicate kontrolü ile)
+      // State'i güncellemeden sadece mevcut mesajları al
       setMessages(prev => {
-        // Son mesaj zaten userMessage ise, sadece AI cevabını ekle
-        const lastMessage = prev[prev.length - 1];
-        if (lastMessage && lastMessage.id === userMessage.id) {
-          // Duplicate kontrolü - aynı AI cevabı varsa ekleme
-          const isDuplicate = prev.some(
-            msg => msg.content === aiResponse.content && 
-                   msg.role === 'assistant' && 
-                   Math.abs(new Date(msg.timestamp).getTime() - new Date(aiResponse.timestamp).getTime()) < 1000
-          );
-          if (isDuplicate) {
-            return prev;
-          }
-          return [...prev, aiResponse];
+        // userMessage zaten eklenmiş mi kontrol et
+        const hasUserMessage = prev.some(msg => msg.id === userMessage.id);
+        if (hasUserMessage) {
+          messagesForAI = prev; // Zaten eklenmiş, mevcut state'i kullan
+        } else {
+          // Eklenmemişse, ekle (bu durum normalde olmamalı çünkü yukarıda ekledik)
+          messagesForAI = [...prev, userMessage];
         }
-        // Eğer userMessage eklenmemişse, her ikisini de ekle
+        return prev; // State'i değiştirme, sadece mesajları al
+      });
+      
+      // AI'dan cevap al - güncel mesajları context olarak gönder
+      // NOT: ChatService.sendMessage sadece AI cevabını döndürür, userMessage'ı eklemez
+      const aiResponse = await ChatService.sendMessage(sanitizedContent, userId, messagesForAI);
+
+      // AI cevabını ekle (duplicate kontrolü ile - ID ve content bazlı)
+      setMessages(prev => {
+        // Duplicate kontrolü - aynı ID varsa veya aynı content + role + yakın timestamp varsa ekleme
+        const isDuplicate = prev.some(msg => 
+          msg.id === aiResponse.id || 
+          (msg.content === aiResponse.content && 
+           msg.role === aiResponse.role && 
+           Math.abs(new Date(msg.timestamp).getTime() - new Date(aiResponse.timestamp).getTime()) < 2000)
+        );
+        if (isDuplicate) {
+          logger.log('Duplicate AI response detected, skipping:', aiResponse.id);
+          return prev; // Duplicate ise ekleme
+        }
+        
+        // userMessage'nin eklenip eklenmediğini kontrol et
+        const hasUserMessage = prev.some(msg => msg.id === userMessage.id);
+        if (!hasUserMessage) {
+          // userMessage eklenmemişse, önce onu ekle sonra AI cevabını ekle
+          // (Bu durum normalde olmamalı ama güvenlik için)
+          logger.log('User message not found, adding both:', userMessage.id, aiResponse.id);
+          setShouldScrollToEnd(true);
+          setIsUserScrolling(false);
+          return [...prev, userMessage, aiResponse];
+        }
+        
+        // userMessage zaten var, sadece AI cevabını ekle
+        setShouldScrollToEnd(true);
+        setIsUserScrolling(false);
         return [...prev, aiResponse];
       });
     } catch (error) {
@@ -557,15 +606,9 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
     [isSmallScreen]
   );
 
-  // Memoized getItemLayout for FlatList performance
-  const getItemLayout = useCallback(
-    (data: any, index: number) => ({
-      length: ESTIMATED_ITEM_HEIGHT,
-      offset: ESTIMATED_ITEM_HEIGHT * index,
-      index,
-    }),
-    []
-  );
+  // getItemLayout kaldırıldı - mesajlar farklı uzunluklarda olduğu için
+  // sabit yükseklik kullanmak scroll pozisyonunu bozuyordu
+  // FlatList otomatik olarak daha iyi hesaplama yapacak
 
   // Export chat handler
   const handleExportChat = useCallback(async () => {
@@ -669,17 +712,17 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
             renderItem={renderMessage}
             keyExtractor={keyExtractor}
             style={styles.messagesList}
-          contentContainerStyle={messagesContentStyle}
-            // ✅ Performance optimizations
-            getItemLayout={getItemLayout}
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={5}
-            windowSize={10}
-            initialNumToRender={10}
+            contentContainerStyle={messagesContentStyle}
+            // ✅ Performance optimizations - scroll sorunlarını önlemek için ayarlar
+            // getItemLayout kaldırıldı - mesajlar farklı uzunluklarda olduğu için yanlış hesaplama yapıyordu
+            removeClippedSubviews={false} // Scroll sorunlarını önlemek için false yapıldı
+            maxToRenderPerBatch={10} // Artırıldı - daha fazla mesaj render et
+            windowSize={21} // Artırıldı - daha fazla mesaj tut (10 -> 21)
+            initialNumToRender={20} // Artırıldı - ilk render'da daha fazla mesaj göster
             updateCellsBatchingPeriod={50}
             // ✅ Pagination (infinite scroll - yukarı scroll için)
             onEndReached={loadMoreMessages}
-            onEndReachedThreshold={0.5}
+            onEndReachedThreshold={0.3} // Daha erken tetikle
             ListFooterComponent={
               isLoadingMore ? (
                 <View style={styles.loadingMoreContainer}>
@@ -687,26 +730,61 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
                 </View>
               ) : null
             }
-            // ✅ Scroll optimizations - sadece yeni mesaj eklendiğinde scroll
+            // ✅ Scroll optimizations - sadece yeni mesaj eklendiğinde ve kullanıcı scroll yapmıyorsa scroll
             onContentSizeChange={(contentWidth, contentHeight) => {
-              // Sadece yeni mesaj eklendiğinde ve pagination yoksa scroll
-              if (page === 0 && !isLoadingMore && !isLoading) {
-                // Kısa bir delay ile scroll (render tamamlanması için)
-                setTimeout(() => {
-                  flatListRef.current?.scrollToEnd({ animated: true });
-                }, 100);
+              // Content yüksekliği arttıysa (yeni mesaj eklendi)
+              if (contentHeight > lastContentHeight && !isUserScrolling) {
+                setLastContentHeight(contentHeight);
+                // Sadece yeni mesaj eklendiğinde ve kullanıcı scroll yapmıyorsa scroll
+                if (page === 0 && !isLoadingMore && !isLoading && !isUserScrolling) {
+                  setShouldScrollToEnd(true);
+                  // Kısa bir delay ile scroll (render tamamlanması için)
+                  setTimeout(() => {
+                    if (!isUserScrolling && shouldScrollToEnd) {
+                      flatListRef.current?.scrollToEnd({ animated: true });
+                      setShouldScrollToEnd(false);
+                    }
+                  }, 100);
+                }
+              } else {
+                setLastContentHeight(contentHeight);
               }
             }}
             onLayout={() => {
-              // İlk render'da scroll
-              if (page === 0 && messages.length > 0) {
+              // İlk render'da scroll - sadece mesajlar yüklendiyse ve kullanıcı scroll yapmıyorsa
+              if (page === 0 && messages.length > 0 && !isUserScrolling) {
                 setTimeout(() => {
-                  flatListRef.current?.scrollToEnd({ animated: false });
-                }, 100);
+                  if (!isUserScrolling) {
+                    flatListRef.current?.scrollToEnd({ animated: false });
+                  }
+                }, 200);
               }
+            }}
+            // ✅ Kullanıcı scroll'unu takip et
+            onScrollBeginDrag={() => {
+              setIsUserScrolling(true);
+              setShouldScrollToEnd(false);
+              // Scroll timeout'u temizle
+              if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+              }
+            }}
+            onScrollEndDrag={() => {
+              // Scroll bittikten 1 saniye sonra tekrar otomatik scroll'a izin ver
+              scrollTimeoutRef.current = setTimeout(() => {
+                setIsUserScrolling(false);
+              }, 1000);
+            }}
+            onMomentumScrollEnd={() => {
+              // Momentum scroll bittikten 1 saniye sonra tekrar otomatik scroll'a izin ver
+              scrollTimeoutRef.current = setTimeout(() => {
+                setIsUserScrolling(false);
+              }, 1000);
             }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            // ✅ Scroll performansı için
+            scrollEventThrottle={16}
           />
           {renderLoadingMessage()}
         </View>
@@ -777,6 +855,10 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
         }}
         messagesUsed={messagesUsed}
         messagesLimit={messagesLimit}
+        onMessageCountUpdate={async () => {
+          // Mesaj sayacını yeniden yükle
+          await checkAndResetDailyMessageCount();
+        }}
       />
 
       {/* Premium Features Modal */}

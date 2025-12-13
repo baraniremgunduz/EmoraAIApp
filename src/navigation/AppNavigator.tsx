@@ -24,6 +24,8 @@ import { paperTheme, darkTheme } from '../utils/theme';
 import { AuthService } from '../services/authService';
 import { NotificationService } from '../services/notificationService';
 import { logger } from '../utils/logger';
+import { supabase } from '../config/supabase';
+import { Platform } from 'react-native';
 
 // Ekranlar
 import LoadingScreen from '../screens/LoadingScreen';
@@ -532,18 +534,34 @@ export default function AppNavigator() {
     const unsubscribe = AuthService.onAuthStateChange(async (user) => {
       setIsAuthenticated(!!user);
       
-      // Kullanıcı giriş yaptığında bildirim token'ını güncelle ve günlük bildirimleri zamanla
+      // Kullanıcı giriş yaptığında sadece token'ı güncelle, bildirimleri tekrar zamanlama
       if (user) {
         try {
-          // Token'ı user_id ile güncelle
+          // Token'ı user_id ile güncelle (bildirimleri tekrar zamanlama - zaten zamanlanmış)
           const expoToken = NotificationService.getExpoToken();
-          if (expoToken) {
-            // Token'ı yeniden kaydet (user_id ile)
+          if (!expoToken) {
+            // Token yoksa sadece token al, bildirimleri zamanlama (initialize içinde kontrol ediliyor)
             await NotificationService.initialize();
-            logger.log('Bildirim token güncellendi, kullanıcı giriş yaptı');
+            logger.log('Bildirim token alındı, kullanıcı giriş yaptı');
           } else {
-            // Token yoksa initialize et (token alacak ve bildirimleri zamanlayacak)
-            await NotificationService.initialize();
+            // Token varsa sadece token'ı güncelle, bildirimleri tekrar zamanlama
+            // Token'ı Supabase'e kaydet
+            const { error } = await supabase
+              .from('user_push_tokens')
+              .upsert({
+                user_id: user.id,
+                token: expoToken,
+                platform: Platform.OS,
+                updated_at: new Date().toISOString(),
+              }, {
+                onConflict: 'user_id,platform',
+              });
+            
+            if (error) {
+              logger.log('Bildirim token güncelleme hatası (kritik değil):', error);
+            } else {
+              logger.log('Bildirim token güncellendi, kullanıcı giriş yaptı');
+            }
           }
         } catch (error) {
           logger.error('Bildirim token güncelleme hatası:', error);

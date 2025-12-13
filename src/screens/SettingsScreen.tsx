@@ -10,6 +10,7 @@ import {
   Switch,
   TouchableOpacity,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { Card, List, Divider, Button, RadioButton, TextInput } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +23,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from '../contexts/LanguageContext';
 import { validatePassword } from '../utils/passwordValidator';
 import { usePremiumContext } from '../contexts/PremiumContext';
+import { ChatExporter } from '../utils/chatExporter';
+import { container } from '../di/container';
+import { ISessionRepository } from '../repositories/interfaces/ISessionRepository';
+import { IMessageRepository } from '../repositories/interfaces/IMessageRepository';
 
 export default function SettingsScreen({ navigation }: any) {
   const { language, setLanguage, t } = useLanguage();
@@ -32,6 +37,7 @@ export default function SettingsScreen({ navigation }: any) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
   const [settings, setSettings] = useState({
     notifications: true,
     soundEnabled: true,
@@ -213,31 +219,124 @@ export default function SettingsScreen({ navigation }: any) {
 
   const handleExportData = async () => {
     try {
-      // Kullanıcı verilerini topla
-      const userData = {
-        user: user,
-        settings: settings,
-        exportDate: new Date().toISOString(),
-        appVersion: '1.0.4',
-      };
+      if (!user) {
+        Alert.alert(t('common.error'), 'Kullanıcı bulunamadı');
+        return;
+      }
 
-      // JSON formatında veri hazırla
-      const jsonData = JSON.stringify(userData, null, 2);
-
-      // Dosya adı oluştur
-      const fileName = `emora_ai_data_${new Date().toISOString().split('T')[0]}.json`;
-
-      Alert.alert(t('account.export_data'), t('account.export_ready').replace('{fileName}', fileName), [
-        {
-          text: t('common.ok'),
-          onPress: () => {
-            // Burada dosya paylaşımı veya indirme işlemi yapılabilir
-            logger.log('Export data:', jsonData);
+      // Format seçimi için Alert
+      Alert.alert(
+        t('account.export_data') || 'Verileri Dışa Aktar',
+        'Sohbet geçmişi tarihe göre ayrı dosyalara bölünecek. Hangi formatta export etmek istersiniz?',
+        [
+          {
+            text: t('common.cancel') || 'İptal',
+            style: 'cancel',
           },
-        },
-      ]);
+          {
+            text: 'Metin (.txt)',
+            onPress: async () => {
+              try {
+                await exportChatHistory('txt');
+              } catch (error: any) {
+                logger.error('Export hatası:', error);
+                Alert.alert(
+                  t('common.error') || 'Hata',
+                  error.message || 'Export başarısız oldu'
+                );
+              }
+            },
+          },
+          {
+            text: 'JSON (.json)',
+            onPress: async () => {
+              try {
+                await exportChatHistory('json');
+              } catch (error: any) {
+                logger.error('Export hatası:', error);
+                Alert.alert(
+                  t('common.error') || 'Hata',
+                  error.message || 'Export başarısız oldu'
+                );
+              }
+            },
+          },
+        ]
+      );
     } catch (error) {
+      logger.error('Export data hatası:', error);
       Alert.alert(t('common.error'), t('account.export_error'));
+    }
+  };
+
+  const exportChatHistory = async (format: 'txt' | 'json') => {
+    try {
+      setIsExporting(true);
+
+      // Repository instances
+      const sessionRepository: ISessionRepository = container.getSessionRepository();
+      const messageRepository: IMessageRepository = container.getMessageRepository();
+
+      // Tüm session'ları al
+      const chatSessions = await sessionRepository.findByUserId(user.id);
+
+      if (!chatSessions || chatSessions.length === 0) {
+        Alert.alert(t('common.info') || 'Bilgi', 'Export edilecek sohbet geçmişi yok');
+        setIsExporting(false);
+        return;
+      }
+
+      // Tüm session'ların mesajlarını al
+      const sessionsWithMessages = await Promise.all(
+        chatSessions.map(async (session) => {
+          try {
+            const messages = await messageRepository.findBySessionId(session.id, user.id);
+            // Welcome mesajını hariç tut
+            const filteredMessages = messages.filter(msg => msg.id !== 'welcome');
+            return {
+              id: session.id,
+              title: session.title,
+              messages: filteredMessages,
+            };
+          } catch (error) {
+            logger.error(`Session ${session.id} mesajları yüklenirken hata:`, error);
+            return {
+              id: session.id,
+              title: session.title,
+              messages: [],
+            };
+          }
+        })
+      );
+
+      // Mesajı olan session'ları filtrele
+      const sessionsWithContent = sessionsWithMessages.filter(
+        session => session.messages.length > 0
+      );
+
+      if (sessionsWithContent.length === 0) {
+        Alert.alert(t('common.info') || 'Bilgi', 'Export edilecek mesaj yok');
+        setIsExporting(false);
+        return;
+      }
+
+      // Tarihe göre ayrı dosyalara export et ve paylaş
+      await ChatExporter.shareAllChatHistoryByDate(sessionsWithContent, {
+        format,
+        includeTimestamps: true,
+        includeMetadata: true,
+      });
+
+      // Başarı mesajı (share dialog açıldığı için gerekli değil ama bilgi için)
+      logger.log(`${sessionsWithContent.length} oturum tarihe göre ayrı dosyalara export edildi`);
+    } catch (error: any) {
+      logger.error('Chat history export hatası:', error);
+      Alert.alert(
+        t('common.error') || 'Hata',
+        error.message || 'Export başarısız oldu'
+      );
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -315,10 +414,22 @@ export default function SettingsScreen({ navigation }: any) {
 
           <View style={styles.settingDivider} />
 
-          <TouchableOpacity style={styles.settingItem} onPress={handleExportData}>
-            <Ionicons name="download-outline" size={20} color={darkTheme.colors.primary} />
-            <Text style={styles.settingTitle}>{t('account.export_data')}</Text>
-            <Ionicons name="chevron-forward" size={16} color={darkTheme.colors.primary} />
+          <TouchableOpacity 
+            style={styles.settingItem} 
+            onPress={handleExportData}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <ActivityIndicator size="small" color={darkTheme.colors.primary} />
+            ) : (
+              <Ionicons name="download-outline" size={20} color={darkTheme.colors.primary} />
+            )}
+            <Text style={styles.settingTitle}>
+              {isExporting ? 'Hazırlanıyor...' : t('account.export_data')}
+            </Text>
+            {!isExporting && (
+              <Ionicons name="chevron-forward" size={16} color={darkTheme.colors.primary} />
+            )}
           </TouchableOpacity>
 
           <View style={styles.settingDivider} />
@@ -465,7 +576,7 @@ export default function SettingsScreen({ navigation }: any) {
 
         {/* App Info */}
         <View style={styles.appInfoContainer}>
-          <Text style={styles.appInfoText}>{t('app.name')} v1.0.4</Text>
+          <Text style={styles.appInfoText}>{t('app.name')} v1.0.6</Text>
           <Text style={styles.appInfoSubtext}>{t('app.tagline')}</Text>
         </View>
       </ScrollView>
