@@ -55,7 +55,7 @@ export class ChatExporter {
         ? {
             totalMessages: messages.length,
             platform: Platform.OS,
-            appVersion: '1.0.6',
+            appVersion: '1.0.7',
           }
         : undefined,
       messages: messages.map(msg => ({
@@ -324,7 +324,7 @@ export class ChatExporter {
                   totalMessages: dateMessages.length,
                   totalSessions: messagesBySession.size,
                   platform: Platform.OS,
-                  appVersion: '1.0.6',
+                  appVersion: '1.0.7',
                 }
               : undefined,
             sessions: sessionsData,
@@ -434,7 +434,7 @@ export class ChatExporter {
               ? {
                   totalMessages: dateMessages.length,
                   platform: Platform.OS,
-                  appVersion: '1.0.6',
+                  appVersion: '1.0.7',
                 }
               : undefined,
             messages: dateMessages.map(msg => ({

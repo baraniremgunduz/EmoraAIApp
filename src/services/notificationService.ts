@@ -1,6 +1,7 @@
 // Push Notification servisi - Supabase only
 import { Platform, Alert, Vibration } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import * as Localization from 'expo-localization';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AnalyticsService } from './analyticsService';
 import { supabase } from '../config/supabase';
@@ -534,13 +535,26 @@ export class NotificationService {
     }
   }
 
-  // Mevcut dili al
+  // Cihaz dilini al (bildirimler için - her zaman cihaz dilini kullan)
   private static async getCurrentLanguage(): Promise<string> {
     try {
-      const language = await AsyncStorage.getItem('appLanguage');
-      return language || 'en'; // Varsayılan İngilizce
+      // Her zaman cihaz dilini algıla (uygulama dilinden bağımsız)
+      const deviceLocale = Localization.locale || Localization.getLocales()[0]?.languageCode || 'en';
+      const deviceLanguage = deviceLocale.split('-')[0].toLowerCase(); // 'tr-TR' -> 'tr'
+      
+      // Desteklenen diller
+      const supportedLanguages = ['tr', 'en', 'de', 'fr', 'es', 'it', 'nl', 'pl', 'pt', 'sv', 'no', 'fi', 'da'];
+      
+      if (supportedLanguages.includes(deviceLanguage)) {
+        logger.log('NotificationService: Cihaz dili algılandı (bildirim için):', deviceLanguage);
+        return deviceLanguage;
+      }
+
+      // Desteklenmeyen dil ise varsayılan İngilizce
+      logger.log('NotificationService: Cihaz dili desteklenmiyor, varsayılan: İngilizce');
+      return 'en';
     } catch (error) {
-      logger.error('Dil alma hatası:', error);
+      logger.error('Cihaz dili alma hatası:', error);
       return 'en';
     }
   }
@@ -1681,9 +1695,11 @@ export class NotificationService {
   // Günde 4 kişiselleştirilmiş bildirim zamanla
   static async scheduleDailyPersonalizedNotifications(): Promise<void> {
     try {
+      // Önce tüm mevcut günlük bildirimleri bir kez al
+      const allScheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+      
       // Önce mevcut günlük bildirimleri iptal et (sadece aynı tip bildirimler)
-      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
-      for (const notification of scheduledNotifications) {
+      for (const notification of allScheduledNotifications) {
         const data = notification.content.data;
         if (data && (data.type === 'daily_personalized' || data.type === 'guest_notification')) {
           await Notifications.cancelScheduledNotificationAsync(notification.identifier);
@@ -1720,6 +1736,7 @@ export class NotificationService {
       }
 
       // Sabah bildirimi (09:00) - her gün tekrarlayan (dil desteği ile)
+      const morningIdentifier = 'daily_personalized_morning';
       const morningMessages = this.getMessagesForTime('morning', userName, recentTopics, language);
       const morningMessage = morningMessages[Math.floor(Math.random() * morningMessages.length)];
       
@@ -1738,6 +1755,7 @@ export class NotificationService {
           };
       
       await Notifications.scheduleNotificationAsync({
+        identifier: morningIdentifier,
         content: {
           title: morningMessage.title,
           body: morningMessage.body,
@@ -1748,6 +1766,7 @@ export class NotificationService {
       });
 
       // Öğlen bildirimi (14:00) - her gün tekrarlayan (dil desteği ile)
+      const afternoonIdentifier = 'daily_personalized_afternoon';
       const afternoonMessages = this.getMessagesForTime('afternoon', userName, recentTopics, language);
       const afternoonMessage = afternoonMessages[Math.floor(Math.random() * afternoonMessages.length)];
       
@@ -1765,6 +1784,7 @@ export class NotificationService {
           };
       
       await Notifications.scheduleNotificationAsync({
+        identifier: afternoonIdentifier,
         content: {
           title: afternoonMessage.title,
           body: afternoonMessage.body,
@@ -1775,6 +1795,7 @@ export class NotificationService {
       });
 
       // Akşam bildirimi (20:00) - her gün tekrarlayan (dil desteği ile)
+      const eveningIdentifier = 'daily_personalized_evening';
       const eveningMessages = this.getMessagesForTime('evening', userName, recentTopics, language);
       const eveningMessage = eveningMessages[Math.floor(Math.random() * eveningMessages.length)];
       
@@ -1792,6 +1813,7 @@ export class NotificationService {
           };
       
       await Notifications.scheduleNotificationAsync({
+        identifier: eveningIdentifier,
         content: {
           title: eveningMessage.title,
           body: eveningMessage.body,
@@ -1802,6 +1824,7 @@ export class NotificationService {
       });
 
       // Gece bildirimi (22:30) - her gün tekrarlayan (dil desteği ile)
+      const nightIdentifier = 'daily_personalized_night';
       const nightMessages = this.getMessagesForTime('night', userName, recentTopics, language);
       const nightMessage = nightMessages[Math.floor(Math.random() * nightMessages.length)];
       
@@ -1819,6 +1842,7 @@ export class NotificationService {
           };
       
       await Notifications.scheduleNotificationAsync({
+        identifier: nightIdentifier,
         content: {
           title: nightMessage.title,
           body: nightMessage.body,
@@ -1837,9 +1861,11 @@ export class NotificationService {
   // Giriş yapmamış kullanıcılar için günlük bildirimler zamanla
   static async scheduleGuestNotifications(): Promise<void> {
     try {
+      // Önce tüm mevcut günlük bildirimleri bir kez al
+      const allScheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+      
       // Önce mevcut günlük bildirimleri iptal et (sadece aynı tip bildirimler)
-      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
-      for (const notification of scheduledNotifications) {
+      for (const notification of allScheduledNotifications) {
         const data = notification.content.data;
         if (data && (data.type === 'daily_personalized' || data.type === 'guest_notification')) {
           await Notifications.cancelScheduledNotificationAsync(notification.identifier);
@@ -1857,6 +1883,7 @@ export class NotificationService {
       const language = await this.getCurrentLanguage();
 
       // Sabah bildirimi (09:00) - her gün tekrarlayan (dil desteği ile)
+      const guestMorningIdentifier = 'guest_notification_morning';
       const morningMessages = await this.getGuestMessagesForTime('morning');
       const morningMessage = morningMessages[Math.floor(Math.random() * morningMessages.length)];
       
@@ -1874,6 +1901,7 @@ export class NotificationService {
           };
       
       await Notifications.scheduleNotificationAsync({
+        identifier: guestMorningIdentifier,
         content: {
           title: morningMessage.title,
           body: morningMessage.body,
@@ -1884,6 +1912,7 @@ export class NotificationService {
       });
 
       // Öğlen bildirimi (14:00) - her gün tekrarlayan (dil desteği ile)
+      const guestAfternoonIdentifier = 'guest_notification_afternoon';
       const afternoonMessages = await this.getGuestMessagesForTime('afternoon');
       const afternoonMessage = afternoonMessages[Math.floor(Math.random() * afternoonMessages.length)];
       
@@ -1901,6 +1930,7 @@ export class NotificationService {
           };
       
       await Notifications.scheduleNotificationAsync({
+        identifier: guestAfternoonIdentifier,
         content: {
           title: afternoonMessage.title,
           body: afternoonMessage.body,
@@ -1911,6 +1941,7 @@ export class NotificationService {
       });
 
       // Akşam bildirimi (20:00) - her gün tekrarlayan (dil desteği ile)
+      const guestEveningIdentifier = 'guest_notification_evening';
       const eveningMessages = await this.getGuestMessagesForTime('evening');
       const eveningMessage = eveningMessages[Math.floor(Math.random() * eveningMessages.length)];
       
@@ -1928,6 +1959,7 @@ export class NotificationService {
           };
       
       await Notifications.scheduleNotificationAsync({
+        identifier: guestEveningIdentifier,
         content: {
           title: eveningMessage.title,
           body: eveningMessage.body,
@@ -1938,6 +1970,7 @@ export class NotificationService {
       });
 
       // Gece bildirimi (22:30) - her gün tekrarlayan (dil desteği ile)
+      const guestNightIdentifier = 'guest_notification_night';
       const nightMessages = await this.getGuestMessagesForTime('night');
       const nightMessage = nightMessages[Math.floor(Math.random() * nightMessages.length)];
       
@@ -1955,6 +1988,7 @@ export class NotificationService {
           };
       
       await Notifications.scheduleNotificationAsync({
+        identifier: guestNightIdentifier,
         content: {
           title: nightMessage.title,
           body: nightMessage.body,
