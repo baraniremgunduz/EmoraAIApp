@@ -139,16 +139,9 @@ function AnimatedTabIcon({ focused, route }: { focused: boolean; route: any }) {
       ['transparent', darkTheme.colors.primary]
     );
 
-    const shadowHeight = interpolate(backgroundColor.value, [0, 1], [0, 6]);
-
     return {
       transform: [{ scale: scale.value * pulseScale.value }, { rotate: `${rotation.value}deg` }],
       backgroundColor: focused ? bgColor : 'transparent',
-      shadowOffset: {
-        width: 0,
-        height: shadowHeight,
-      },
-      shadowOpacity: shadowOpacity.value,
     };
   });
 
@@ -173,11 +166,17 @@ function AnimatedTabIcon({ focused, route }: { focused: boolean; route: any }) {
           justifyContent: 'center',
           alignItems: 'center',
           marginBottom: 2,
-          shadowColor: focused ? darkTheme.colors.primary : 'transparent',
-          shadowRadius: focused ? 10 : 0,
-          elevation: focused ? 6 : 0,
           zIndex: 1,
           position: 'relative',
+          // Shadow özellikleri static style'da olmalı (animated style'da desteklenmiyor)
+          shadowColor: focused ? darkTheme.colors.primary : 'transparent',
+          shadowOffset: {
+            width: 0,
+            height: focused ? 3 : 0,
+          },
+          shadowOpacity: focused ? 0.3 : 0,
+          shadowRadius: focused ? 8 : 0,
+          elevation: focused ? 6 : 0,
         },
         animatedStyle,
       ]}

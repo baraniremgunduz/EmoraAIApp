@@ -17,7 +17,7 @@
       "icon": "./assets/icon.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.emoraai.app.2025",
-      "buildNumber": "47",
+      "buildNumber": "48",
       "infoPlist": {
         "NSCameraUsageDescription": "Bu uygulama fotoğraf çekmek için kamera erişimi gerektirir.",
         "NSPhotoLibraryUsageDescription": "Bu uygulama fotoğraf seçmek için galeri erişimi gerektir.",

@@ -64,7 +64,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0); // Klavye yüksekliği için state
   const flatListRef = useRef<FlatList>(null);
-  
+
   // Scroll pozisyonu takibi
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const [shouldScrollToEnd, setShouldScrollToEnd] = useState(false);
@@ -438,8 +438,8 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
           (msg.content === aiResponse.content && 
            msg.role === aiResponse.role && 
            Math.abs(new Date(msg.timestamp).getTime() - new Date(aiResponse.timestamp).getTime()) < 2000)
-        );
-        if (isDuplicate) {
+          );
+          if (isDuplicate) {
           logger.log('Duplicate AI response detected, skipping:', aiResponse.id);
           return prev; // Duplicate ise ekleme
         }
@@ -702,7 +702,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
 
   return (
     <View style={styles.container}>
-      {/* Messages and Input - Animasyonsuz geçiş için KeyboardAvoidingView kaldırıldı */}
+      {/* Messages and Input - Android için KeyboardAvoidingView kaldırıldı, manuel padding kullanılıyor */}
       <View style={styles.keyboardAvoidingContainer}>
         {/* Messages */}
         <View style={styles.messagesContainer}>
@@ -712,7 +712,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
             renderItem={renderMessage}
             keyExtractor={keyExtractor}
             style={styles.messagesList}
-            contentContainerStyle={messagesContentStyle}
+          contentContainerStyle={messagesContentStyle}
             // ✅ Performance optimizations - scroll sorunlarını önlemek için ayarlar
             // getItemLayout kaldırıldı - mesajlar farklı uzunluklarda olduğu için yanlış hesaplama yapıyordu
             removeClippedSubviews={false} // Scroll sorunlarını önlemek için false yapıldı
@@ -738,13 +738,13 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
                 // Sadece yeni mesaj eklendiğinde ve kullanıcı scroll yapmıyorsa scroll
                 if (page === 0 && !isLoadingMore && !isLoading && !isUserScrolling) {
                   setShouldScrollToEnd(true);
-                  // Kısa bir delay ile scroll (render tamamlanması için)
-                  setTimeout(() => {
+                // Kısa bir delay ile scroll (render tamamlanması için)
+                setTimeout(() => {
                     if (!isUserScrolling && shouldScrollToEnd) {
-                      flatListRef.current?.scrollToEnd({ animated: true });
+                  flatListRef.current?.scrollToEnd({ animated: true });
                       setShouldScrollToEnd(false);
                     }
-                  }, 100);
+                }, 100);
                 }
               } else {
                 setLastContentHeight(contentHeight);
@@ -755,7 +755,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
               if (page === 0 && messages.length > 0 && !isUserScrolling) {
                 setTimeout(() => {
                   if (!isUserScrolling) {
-                    flatListRef.current?.scrollToEnd({ animated: false });
+                  flatListRef.current?.scrollToEnd({ animated: false });
                   }
                 }, 200);
               }
@@ -790,16 +790,20 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
         </View>
 
         {/* Banner Reklam - Premium kullanıcılara gösterilmez */}
-        <AdBanner style={styles.adBanner} isPremium={isPremium} />
+        {!isPremium && <AdBanner style={styles.adBanner} isPremium={isPremium} />}
 
-        {/* Input - Responsive - Animasyonsuz geçiş - Tüm iOS iPhone modelleri için */}
+        {/* Input Container */}
         <View
           style={[
             styles.inputContainer,
             {
-              paddingBottom: isKeyboardVisible
-                ? Math.max(insets.bottom, 0) + keyboardHeight // Klavye açıkken: safe area + klavye yüksekliği
-                : Math.max(insets.bottom, 4) + NAV_BAR_HEIGHT, // Klavye kapalıyken: navigation bar + safe area
+              paddingBottom: Platform.OS === 'android'
+                ? (isKeyboardVisible
+                    ? Math.max(insets.bottom, 8) + keyboardHeight // Android: safe area + klavye yüksekliği
+                    : Math.max(insets.bottom, 4) + NAV_BAR_HEIGHT) // Klavye kapalıyken: navigation bar + safe area
+                : (isKeyboardVisible
+                    ? Math.max(insets.bottom, 0) + keyboardHeight // iOS: safe area + klavye yüksekliği
+                    : Math.max(insets.bottom, 4) + NAV_BAR_HEIGHT), // iOS: navigation bar + safe area
             },
           ]}
         >

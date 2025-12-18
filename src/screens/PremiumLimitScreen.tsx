@@ -97,54 +97,54 @@ export default function PremiumLimitScreen({
                   nestedScrollEnabled={true}
                   bounces={true}
                 >
-                  {/* Header */}
-                  <View style={styles.header}>
-                    <View style={styles.iconContainer}>
+                {/* Header */}
+                <View style={styles.header}>
+                  <View style={styles.iconContainer}>
                       <Ionicons name="star" size={50} color={darkTheme.colors.premium} />
-                    </View>
-                    <Text style={styles.title}>{t('premium.upgrade')}</Text>
-                    <Text style={styles.subtitle}>{t('premium.daily_limit_filled')}</Text>
+                  </View>
+                  <Text style={styles.title}>{t('premium.upgrade')}</Text>
+                  <Text style={styles.subtitle}>{t('premium.daily_limit_filled')}</Text>
+                </View>
+
+                {/* Progress */}
+                <View style={styles.progressContainer}>
+                  <View style={styles.progressBar}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        { width: `${(messagesUsed / messagesLimit) * 100}%` },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.progressText}>
+                    {t('premium.messages_used').replace('{used}', messagesUsed.toString()).replace('{limit}', messagesLimit.toString())}
+                  </Text>
+                </View>
+
+                {/* Benefits */}
+                <View style={styles.benefitsContainer}>
+                  <Text style={styles.benefitsTitle}>{t('premium.benefits_title')}</Text>
+
+                  <View style={styles.benefitItem}>
+                    <Ionicons name="infinite" size={20} color={darkTheme.colors.primary} />
+                    <Text style={styles.benefitText}>{t('premium.unlimited')}</Text>
                   </View>
 
-                  {/* Progress */}
-                  <View style={styles.progressContainer}>
-                    <View style={styles.progressBar}>
-                      <View
-                        style={[
-                          styles.progressFill,
-                          { width: `${(messagesUsed / messagesLimit) * 100}%` },
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.progressText}>
-                      {t('premium.messages_used').replace('{used}', messagesUsed.toString()).replace('{limit}', messagesLimit.toString())}
-                    </Text>
+                  <View style={styles.benefitItem}>
+                    <Ionicons name="flash" size={20} color={darkTheme.colors.primary} />
+                    <Text style={styles.benefitText}>{t('premium.fast_response_time')}</Text>
                   </View>
 
-                  {/* Benefits */}
-                  <View style={styles.benefitsContainer}>
-                    <Text style={styles.benefitsTitle}>{t('premium.benefits_title')}</Text>
-
-                    <View style={styles.benefitItem}>
-                      <Ionicons name="infinite" size={20} color={darkTheme.colors.primary} />
-                      <Text style={styles.benefitText}>{t('premium.unlimited')}</Text>
-                    </View>
-
-                    <View style={styles.benefitItem}>
-                      <Ionicons name="flash" size={20} color={darkTheme.colors.primary} />
-                      <Text style={styles.benefitText}>{t('premium.fast_response_time')}</Text>
-                    </View>
-
-                    <View style={styles.benefitItem}>
-                      <Ionicons name="heart" size={20} color={darkTheme.colors.primary} />
-                      <Text style={styles.benefitText}>{t('premium.exclusive_ai')}</Text>
-                    </View>
-
-                    <View style={styles.benefitItem}>
-                      <Ionicons name="download" size={20} color={darkTheme.colors.primary} />
-                      <Text style={styles.benefitText}>{t('premium.export_history')}</Text>
-                    </View>
+                  <View style={styles.benefitItem}>
+                    <Ionicons name="heart" size={20} color={darkTheme.colors.primary} />
+                    <Text style={styles.benefitText}>{t('premium.exclusive_ai')}</Text>
                   </View>
+
+                  <View style={styles.benefitItem}>
+                    <Ionicons name="download" size={20} color={darkTheme.colors.primary} />
+                    <Text style={styles.benefitText}>{t('premium.export_history')}</Text>
+                  </View>
+                </View>
                 </ScrollView>
 
                 {/* Buttons - ScrollView dışında, her zaman görünür */}

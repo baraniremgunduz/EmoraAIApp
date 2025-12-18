@@ -233,8 +233,14 @@ export class NotificationService {
       });
 
       return token.data;
-    } catch (error) {
+    } catch (error: any) {
+      // Firebase hatası development build'de normal olabilir
+      // Push notifications için Firebase gerekli ama local notifications çalışmaya devam eder
+      if (error?.message?.includes('FirebaseApp') || error?.message?.includes('Firebase')) {
+        logger.log('NotificationService: Firebase yapılandırması eksik (development build normal) - Local notifications çalışmaya devam edecek');
+      } else {
       logger.error('Expo push token alma hatası:', error);
+      }
       return null;
     }
   }
@@ -1740,7 +1746,8 @@ export class NotificationService {
       const morningMessages = this.getMessagesForTime('morning', userName, recentTopics, language);
       const morningMessage = morningMessages[Math.floor(Math.random() * morningMessages.length)];
       
-      // iOS için doğru calendar trigger formatı
+      // iOS ve Android için calendar trigger formatı
+      // Android'de geçmiş saatler için bir sonraki güne otomatik erteleme yapılır
       const morningTrigger = Platform.OS === 'ios' 
         ? {
             type: 'daily' as const,
@@ -1749,6 +1756,7 @@ export class NotificationService {
             repeats: true,
           }
         : {
+            type: 'daily' as const,
             hour: 9,
             minute: 0,
             repeats: true,
@@ -1778,6 +1786,7 @@ export class NotificationService {
             repeats: true,
           }
         : {
+            type: 'daily' as const,
             hour: 14,
             minute: 0,
             repeats: true,
@@ -1807,6 +1816,7 @@ export class NotificationService {
             repeats: true,
           }
         : {
+            type: 'daily' as const,
             hour: 20,
             minute: 0,
             repeats: true,
@@ -1836,6 +1846,7 @@ export class NotificationService {
             repeats: true,
           }
         : {
+            type: 'daily' as const,
             hour: 22,
             minute: 30,
             repeats: true,
@@ -1895,6 +1906,7 @@ export class NotificationService {
             repeats: true,
           }
         : {
+            type: 'daily' as const,
             hour: 9,
             minute: 0,
             repeats: true,
@@ -1924,6 +1936,7 @@ export class NotificationService {
             repeats: true,
           }
         : {
+            type: 'daily' as const,
             hour: 14,
             minute: 0,
             repeats: true,
@@ -1953,6 +1966,7 @@ export class NotificationService {
             repeats: true,
           }
         : {
+            type: 'daily' as const,
             hour: 20,
             minute: 0,
             repeats: true,
@@ -1982,6 +1996,7 @@ export class NotificationService {
             repeats: true,
           }
         : {
+            type: 'daily' as const,
             hour: 22,
             minute: 30,
             repeats: true,

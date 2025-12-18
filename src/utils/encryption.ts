@@ -185,7 +185,7 @@ export class MessageEncryption {
       // CryptoJS.AES.decrypt çağrısını try-catch ile sar
       let decrypted: string;
       try {
-        const bytes = CryptoJS.AES.decrypt(encryptedMessage, key);
+      const bytes = CryptoJS.AES.decrypt(encryptedMessage, key);
         decrypted = bytes.toString(CryptoJS.enc.Utf8);
       } catch (cryptoError: any) {
         // Native crypto hatası - fallback deneme
