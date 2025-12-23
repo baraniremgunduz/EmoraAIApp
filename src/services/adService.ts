@@ -6,6 +6,7 @@ import mobileAds, {
   RewardedAdEventType,
   TestIds,
 } from 'react-native-google-mobile-ads';
+import { ADS_ENABLED } from '../config/adConfig';
 
 const INTERSTITIAL_UNIT_ID = __DEV__
   ? TestIds.INTERSTITIAL
@@ -31,6 +32,11 @@ export const adService = {
   },
 
   async showInterstitial(): Promise<void> {
+    // Reklamlar geçici olarak kapatıldı
+    if (!ADS_ENABLED) {
+      return Promise.resolve();
+    }
+
     return new Promise((resolve, reject) => {
       if (!interstitial) {
         interstitial = InterstitialAd.createForAdRequest(INTERSTITIAL_UNIT_ID);
@@ -69,6 +75,11 @@ export const adService = {
   },
 
   async showRewarded(onReward?: (reward: { amount: number; type: string }) => void): Promise<void> {
+    // Reklamlar geçici olarak kapatıldı
+    if (!ADS_ENABLED) {
+      return Promise.resolve();
+    }
+
     return new Promise((resolve, reject) => {
       if (!rewarded) {
         rewarded = RewardedAd.createForAdRequest(REWARDED_UNIT_ID);

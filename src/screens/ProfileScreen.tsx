@@ -218,14 +218,17 @@ export default function ProfileScreen({ navigation, route }: ProfileScreenNaviga
           {
             text: 'Ayarlara Git',
             onPress: async () => {
-              // iOS için ayarlara yönlendirme
-              if (Platform.OS === 'ios') {
-                try {
+              try {
+                // Platform-specific ayarlara yönlendirme
+                if (Platform.OS === 'ios') {
                   await Linking.openURL('app-settings:');
-                } catch (error) {
-                  logger.error('Ayarlara yönlendirme hatası:', error);
-                  Alert.alert(t('messages.error'), 'Ayarlara yönlendirilemedi. Lütfen manuel olarak Ayarlar > Emora AI > Fotoğraflar bölümünden izin verin.');
+                } else {
+                  // Android için genel ayarlar sayfasına yönlendir
+                  await Linking.openSettings();
                 }
+              } catch (error) {
+                logger.error('Ayarlara yönlendirme hatası:', error);
+                Alert.alert(t('messages.error'), 'Ayarlara yönlendirilemedi. Lütfen manuel olarak Ayarlar > Emora AI > Fotoğraflar bölümünden izin verin.');
               }
             },
           },
@@ -491,7 +494,9 @@ export default function ProfileScreen({ navigation, route }: ProfileScreenNaviga
               onPress={() => navigation.navigate('PremiumFeatures')}
             >
               <Ionicons name="sparkles" size={14} color={darkTheme.colors.premium} />
-              <Text style={styles.premiumPromptButtonText}>{t('profile.premium_discover')}</Text>
+              <Text style={[styles.premiumPromptButtonText, { marginLeft: 8 }]}>
+                {t('profile.premium_discover')}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -973,15 +978,20 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: darkTheme.colors.premium,
-    gap: 8,
-    shadowColor: darkTheme.colors.premium,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    // iOS shadow
+    ...(Platform.OS === 'ios' && {
+      shadowColor: darkTheme.colors.premium,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    }),
+    // Android elevation
+    ...(Platform.OS === 'android' && {
+      elevation: 2,
+    }),
   },
   premiumPromptButtonText: {
     ...darkTheme.typography.body,

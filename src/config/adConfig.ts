@@ -30,8 +30,9 @@ export const ADMOB_APP_ID = Platform.select({
   android: 'ca-app-pub-9485934183491164~1978001460',
 }) || 'ca-app-pub-9485934183491164~1978001460';
 
-// Reklamları aktif etme flag'i (ilk yayında false, sonra true yapılacak)
-export const ADS_ENABLED = process.env.EXPO_PUBLIC_ADS_ENABLED === 'true' || __DEV__;
+// ⚠️ GEÇİCİ OLARAK KAPATILDI: AdMob hesabı 29 gün askıya alındı (kendi reklamlarını tıklama nedeniyle)
+// 29 gün sonra otomatik olarak yeniden açılacak - o zaman bu flag'i tekrar açabilirsiniz
+export const ADS_ENABLED = false;
 
 // Ad Unit ID'leri al (test veya production)
 export const getAdUnitId = (type: 'banner' | 'interstitial' | 'rewarded'): string => {

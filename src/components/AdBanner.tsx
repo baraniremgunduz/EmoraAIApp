@@ -6,6 +6,7 @@ import {
   BannerAdSize,
   TestIds,
 } from 'react-native-google-mobile-ads';
+import { ADS_ENABLED } from '../config/adConfig';
 
 type AdBannerProps = {
   style?: StyleProp<ViewStyle>;
@@ -17,7 +18,8 @@ const BANNER_UNIT_ID = __DEV__
   : 'ca-app-pub-9485934183491164/8753602301'; // Gerçek banner ID
 
 export const AdBanner: React.FC<AdBannerProps> = ({ style, isPremium }) => {
-  if (isPremium) return null;
+  // Reklamlar geçici olarak kapatıldı veya premium kullanıcı
+  if (isPremium || !ADS_ENABLED) return null;
 
   return (
     <View style={[{ alignItems: 'center' }, style]}>

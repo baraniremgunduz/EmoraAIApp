@@ -480,7 +480,11 @@ export default function AppNavigator() {
       setIsAuthenticated(!!user);
 
       // İlk kez açılıyorsa onboarding göster
-      setShowOnboarding(!user); // Kullanıcı yoksa onboarding göster
+      if (!user) {
+        setShowOnboarding(true); // Kullanıcı yoksa onboarding göster
+      } else {
+        setShowOnboarding(false); // Kullanıcı varsa onboarding gösterme
+      }
     } catch (error) {
       // Auth session hatası normal, kullanıcı giriş yapmamış
       logger.log('Kullanıcı giriş yapmamış, onboarding gösteriliyor');
@@ -514,18 +518,27 @@ export default function AppNavigator() {
     const startTime = Date.now();
 
     // Auth durumunu kontrol et
-    checkLanguageAndAuthState().then(() => {
-      const elapsedTime = Date.now() - startTime;
-      const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
+    checkLanguageAndAuthState()
+      .then(() => {
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
 
-      // Kalan süreyi bekle (animasyonun tamamlanması için)
-      setTimeout(() => {
+        // Kalan süreyi bekle (animasyonun tamamlanması için)
+        setTimeout(() => {
+          setShowLoading(false);
+          // Fallback: Eğer hiçbir ekran koşulu true değilse, Auth ekranını göster
+          if (!showLanguageSelection && !showOnboarding && !isAuthenticated) {
+            logger.log('Fallback: Auth ekranı gösteriliyor');
+          }
+        }, remainingTime);
+      })
+      .catch((error) => {
+        logger.error('checkLanguageAndAuthState hatası:', error);
+        // Hata durumunda da loading'i kapat ve Auth ekranını göster
+        setIsLoading(false);
+        setShowOnboarding(true);
         setShowLoading(false);
-      }, remainingTime);
-    }).catch((error) => {
-      logger.error('checkLanguageAndAuthState hatası:', error);
-      setShowLoading(false);
-    });
+      });
   }, []);
 
   // Auth state değişikliklerini dinle
@@ -592,6 +605,12 @@ export default function AppNavigator() {
     );
   }
 
+  // Fallback: Hiçbir ekran koşulu true değilse Auth ekranını göster
+  const shouldShowLanguageSelection = showLanguageSelection;
+  const shouldShowOnboarding = showOnboarding && !onboardingCompleted;
+  const shouldShowAuth = !isAuthenticated && !shouldShowLanguageSelection && !shouldShowOnboarding;
+  const shouldShowMain = isAuthenticated && !shouldShowLanguageSelection && !shouldShowOnboarding;
+
   return (
     <PaperProvider theme={paperTheme}>
       <NavigationContainer ref={navigationRef}>
@@ -601,7 +620,7 @@ export default function AppNavigator() {
             cardStyle: { backgroundColor: darkTheme.colors.background },
           }}
         >
-          {showLanguageSelection ? (
+          {shouldShowLanguageSelection ? (
             <RootStack.Screen
               name="LanguageSelection"
               component={(props: any) => (
@@ -614,14 +633,14 @@ export default function AppNavigator() {
                 />
               )}
             />
-          ) : showOnboarding && !onboardingCompleted ? (
+          ) : shouldShowOnboarding ? (
             <RootStack.Screen
               name="Onboarding"
               component={(props: any) => (
                 <OnboardingScreen {...props} onComplete={() => setOnboardingCompleted(true)} />
               )}
             />
-          ) : isAuthenticated ? (
+          ) : shouldShowMain ? (
             <>
               <RootStack.Screen name="Main" component={MainTabNavigator} />
               <RootStack.Screen name="AccountSettings" component={AccountSettingsScreen} />

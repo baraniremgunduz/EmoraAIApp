@@ -6,9 +6,11 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
+  StatusBar,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { darkTheme } from '../utils/theme';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -76,7 +78,12 @@ export default function LanguageSelectionScreen({
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={darkTheme.colors.background}
+        translucent={Platform.OS === 'android'}
+      />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>

@@ -771,7 +771,6 @@ export default function SettingsScreen({ navigation }: any) {
                 placeholderTextColor={darkTheme.colors.primary}
                 selectionColor={darkTheme.colors.primary}
                 underlineColor={darkTheme.colors.primary}
-                underlineColorAndroid={darkTheme.colors.primary}
                 theme={{
                   colors: {
                     primary: darkTheme.colors.primary,
@@ -804,7 +803,6 @@ export default function SettingsScreen({ navigation }: any) {
                 placeholderTextColor={darkTheme.colors.primary}
                 selectionColor={darkTheme.colors.primary}
                 underlineColor={darkTheme.colors.primary}
-                underlineColorAndroid={darkTheme.colors.primary}
                 theme={{
                   colors: {
                     primary: darkTheme.colors.primary,

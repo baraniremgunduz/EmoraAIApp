@@ -59,7 +59,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showPremiumLimit, setShowPremiumLimit] = useState(false);
   const [messagesUsed, setMessagesUsed] = useState(0);
-  const [messagesLimit, setMessagesLimit] = useState(isPremium ? 999999 : 3); // Premium'da sınırsız
+  const [messagesLimit, setMessagesLimit] = useState(isPremium ? 999999 : 5); // Premium'da sınırsız
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0); // Klavye yüksekliği için state
@@ -104,7 +104,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
 
   // Premium durumu değiştiğinde mesaj limitini güncelle
   useEffect(() => {
-    setMessagesLimit(isPremium ? 999999 : 3);
+    setMessagesLimit(isPremium ? 999999 : 5);
   }, [isPremium]);
 
   // Günlük mesaj sayacı reset mekanizması
@@ -797,13 +797,9 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
           style={[
             styles.inputContainer,
             {
-              paddingBottom: Platform.OS === 'android'
-                ? (isKeyboardVisible
-                    ? Math.max(insets.bottom, 8) + keyboardHeight // Android: safe area + klavye yüksekliği
-                    : Math.max(insets.bottom, 4) + NAV_BAR_HEIGHT) // Klavye kapalıyken: navigation bar + safe area
-                : (isKeyboardVisible
-                    ? Math.max(insets.bottom, 0) + keyboardHeight // iOS: safe area + klavye yüksekliği
-                    : Math.max(insets.bottom, 4) + NAV_BAR_HEIGHT), // iOS: navigation bar + safe area
+              paddingBottom: isKeyboardVisible
+                ? Math.max(insets.bottom, 0) + keyboardHeight // iOS ile aynı: safe area + klavye yüksekliği
+                : Math.max(insets.bottom, 4) + NAV_BAR_HEIGHT, // iOS ile aynı: navigation bar + safe area
             },
           ]}
         >

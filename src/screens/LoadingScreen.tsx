@@ -1,6 +1,6 @@
 // Loading ekranı - Uygulama başlangıcında güzel animasyon
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, Easing, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { darkTheme } from '../utils/theme';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -91,6 +91,11 @@ export default function LoadingScreen({ onFinish }: LoadingScreenProps) {
 
   return (
     <View style={styles.container}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={darkTheme.colors.background}
+        translucent={Platform.OS === 'android'}
+      />
       {/* Arka plan gradient efekti */}
       <View style={styles.backgroundGradient} />
 
@@ -198,14 +203,20 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: darkTheme.colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 16,
+    // iOS shadow
+    ...(Platform.OS === 'ios' && {
+      shadowColor: darkTheme.colors.primary,
+      shadowOffset: {
+        width: 0,
+        height: 8,
+      },
+      shadowOpacity: 0.3,
+      shadowRadius: 16,
+    }),
+    // Android elevation
+    ...(Platform.OS === 'android' && {
+      elevation: 16,
+    }),
   },
   titleContainer: {
     alignItems: 'center',

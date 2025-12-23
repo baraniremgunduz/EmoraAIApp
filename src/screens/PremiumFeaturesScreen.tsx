@@ -11,6 +11,7 @@ import {
   Dimensions,
   Alert,
   Linking,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,6 +22,7 @@ import { logger } from '../utils/logger';
 import { adService } from '../services/adService';
 import { usePremium } from '../hooks/usePremium';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ADS_ENABLED } from '../config/adConfig';
 
 const { width } = Dimensions.get('window');
 
@@ -151,9 +153,9 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
 
     initializePurchase();
 
-    // Rewarded reklam yüklenmiş mi kontrol et
+    // Rewarded reklam yüklenmiş mi kontrol et - Sadece reklamlar açıksa
     const checkRewardedAd = async () => {
-      if (!isPremium) {
+      if (!isPremium && ADS_ENABLED) {
         try {
           const loaded = await adService.isRewardedLoaded();
           setIsRewardedAvailable(loaded);
@@ -166,11 +168,14 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
           // Sessizce devam et - butonu aktif et
           setIsRewardedAvailable(true);
         }
+      } else {
+        // Reklamlar kapalıysa veya premium ise, butonu devre dışı bırak
+        setIsRewardedAvailable(false);
       }
     };
     
-    // İlk kontrolü 3 saniye sonra yap (AdMob initialize olsun)
-    const timer = setTimeout(checkRewardedAd, 3000);
+    // İlk kontrolü 3 saniye sonra yap (AdMob initialize olsun) - Sadece reklamlar açıksa
+    const timer = ADS_ENABLED ? setTimeout(checkRewardedAd, 3000) : null;
 
     // Cleanup
     return () => {
@@ -440,8 +445,8 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
           </View>
         </View>
 
-        {/* Rewarded Ad Section - Premium olmayanlar için */}
-        {!isPremium && (
+        {/* Rewarded Ad Section - Premium olmayanlar için - GEÇİCİ OLARAK KAPATILDI */}
+        {!isPremium && ADS_ENABLED && (
           <View style={styles.rewardedAdSection}>
             <View style={styles.rewardedAdCard}>
               <Ionicons name="videocam" size={32} color={darkTheme.colors.primary} />
@@ -476,15 +481,21 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
 
         {/* CTA Button */}
         <View style={styles.ctaSection}>
-          {/* Apple EULA Metni - Butonun Hemen Üstünde (ZORUNLU) */}
+          {/* Platform-specific EULA Metni - Butonun Hemen Üstünde (ZORUNLU) */}
           <View style={styles.appleEulaSection}>
             <Text style={styles.appleEulaText}>
               {t('premium.eula_agreement_start')}{' '}
               <Text 
                 style={styles.appleEulaLink}
-                onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+                onPress={() => Linking.openURL(
+                  Platform.OS === 'ios' 
+                    ? 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'
+                    : 'https://play.google.com/about/play-terms/'
+                )}
               >
-                {t('premium.apple_standard_eula')}
+                {Platform.OS === 'ios' 
+                  ? t('premium.apple_standard_eula')
+                  : t('premium.google_play_eula')}
               </Text>
               {' '}{t('premium.and')}{' '}
               <Text 
@@ -515,13 +526,21 @@ export default function PremiumFeaturesScreen({ navigation }: PremiumFeaturesScr
           </TouchableOpacity>
           <Text style={styles.ctaSubtext}>{t('premium.cta_subtext')}</Text>
           
-          {/* Legal Links - Apple EULA ve Privacy Policy */}
+          {/* Legal Links - Platform-specific EULA ve Privacy Policy */}
           <View style={styles.legalLinksContainer}>
             <TouchableOpacity
-              onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+              onPress={() => Linking.openURL(
+                Platform.OS === 'ios' 
+                  ? 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'
+                  : 'https://play.google.com/about/play-terms/'
+              )}
               style={styles.legalLink}
             >
-              <Text style={styles.legalLinkText}>{t('premium.apple_terms_of_use')}</Text>
+              <Text style={styles.legalLinkText}>
+                {Platform.OS === 'ios' 
+                  ? t('premium.apple_terms_of_use')
+                  : t('premium.google_play_terms_of_use')}
+              </Text>
             </TouchableOpacity>
             <Text style={styles.legalSeparator}> • </Text>
             <TouchableOpacity

@@ -6,9 +6,11 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-  SafeAreaView,
   Animated,
+  StatusBar,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { darkTheme } from '../utils/theme';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -103,7 +105,12 @@ export default function OnboardingScreen({ navigation, onComplete }: OnboardingS
   const currentData = onboardingData[currentSlide];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={darkTheme.colors.background}
+        translucent={Platform.OS === 'android'}
+      />
       {/* Header */}
       <View style={styles.header}>
         {currentSlide > 0 ? (
