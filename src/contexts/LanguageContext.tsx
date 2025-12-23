@@ -313,7 +313,7 @@ const translations = {
     'profile.logout': 'Çıkış Yap',
     'profile.logout_confirm': 'Çıkış yapmak istediğinizden emin misiniz?',
     'profile.logout_error': 'Çıkış yapılırken bir hata oluştu.',
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.relationship': 'gündür birlikteyiz',
     'profile.mood_analysis': 'Duygu Analizi',
     'profile.mood_desc': 'Ruh halinizi takip edin',
@@ -805,7 +805,7 @@ const translations = {
     'profile.logout': 'Sign Out',
     'profile.logout_confirm': 'Are you sure you want to sign out?',
     'profile.logout_error': 'An error occurred while signing out.',
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.relationship': 'days together',
     'profile.mood_analysis': 'Mood Analysis',
     'profile.mood_desc': 'Track your mood',
@@ -1171,7 +1171,7 @@ const translations = {
     'profile.logout': 'Abmelden',
     'profile.logout_confirm': 'Sind Sie sicher, dass Sie sich abmelden möchten?',
     'profile.logout_error': 'Beim Abmelden ist ein Fehler aufgetreten.',
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.user': 'Benutzer',
     'profile.quote_example':
       'Hallo! Ich bin Emora AI, dein künstlicher Intelligenz-Freund. Ich bin immer hier und bereit, dir zuzuhören.',
@@ -1704,7 +1704,7 @@ const translations = {
     'profile.logout': 'Se déconnecter',
     'profile.logout_confirm': 'Êtes-vous sûr de vouloir vous déconnecter ?',
     'profile.logout_error': "Une erreur s'est produite lors de la déconnexion.",
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.user': 'Utilisateur',
     'profile.quote_example':
       "Bonjour ! Je suis Emora AI, ton ami intelligence artificielle. Je suis toujours là et prêt à t'écouter.",
@@ -2115,7 +2115,7 @@ const translations = {
     'profile.logout': 'Cerrar sesión',
     'profile.logout_confirm': '¿Estás seguro de que quieres cerrar sesión?',
     'profile.logout_error': 'Ocurrió un error al cerrar sesión.',
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.user': 'Usuario',
     'profile.quote_example':
       '¡Hola! Soy Emora AI, tu amigo de inteligencia artificial. Siempre estoy aquí y listo para escucharte.',
@@ -2513,7 +2513,7 @@ const translations = {
     'profile.logout': 'Disconnetti',
     'profile.logout_confirm': 'Sei sicuro di voler disconnetterti?',
     'profile.logout_error': 'Si è verificato un errore durante la disconnessione.',
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.user': 'Utente',
     'profile.quote_example':
       'Ciao! Sono Emora AI, il tuo amico di intelligenza artificiale. Sono sempre qui e pronto ad ascoltarti.',
@@ -2912,7 +2912,7 @@ const translations = {
     'profile.logout': 'Uitloggen',
     'profile.logout_confirm': 'Weet je zeker dat je wilt uitloggen?',
     'profile.logout_error': 'Er is een fout opgetreden bij het uitloggen.',
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.user': 'Gebruiker',
     'profile.quote_example':
       'Hallo! Ik ben Emora AI, je kunstmatige intelligentie vriend. Ik ben altijd hier en klaar om naar je te luisteren.',
@@ -3309,7 +3309,7 @@ const translations = {
     'profile.logout': 'Wyloguj się',
     'profile.logout_confirm': 'Czy jesteś pewien, że chcesz się wylogować?',
     'profile.logout_error': 'Wystąpił błąd podczas wylogowywania.',
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.user': 'Użytkownik',
     'profile.quote_example':
       'Cześć! Jestem Emora AI, twoim przyjacielem sztucznej inteligencji. Zawsze jestem tutaj i gotowy cię wysłuchać.',
@@ -3669,7 +3669,7 @@ const translations = {
     'profile.logout': 'Sair',
     'profile.logout_confirm': 'Tem certeza de que deseja sair?',
     'profile.logout_error': 'Ocorreu um erro ao sair.',
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.user': 'Usuário',
     'profile.quote_example':
       'Olá! Sou Emora AI, seu amigo de inteligência artificial. Estou sempre aqui e pronto para ouvi-lo.',
@@ -4106,7 +4106,7 @@ const translations = {
     'profile.logout': 'Logga ut',
     'profile.logout_confirm': 'Är du säker på att du vill logga ut?',
     'profile.logout_error': 'Ett fel uppstod vid utloggning.',
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.user': 'Användare',
     'profile.quote_example':
       'Hej! Jag är Emora AI, din artificiella intelligens-vän. Jag är alltid här och redo att lyssna på dig.',
@@ -4501,7 +4501,7 @@ const translations = {
     'profile.logout': 'Logg ut',
     'profile.logout_confirm': 'Er du sikker på at du vil logge ut?',
     'profile.logout_error': 'En feil oppstod ved utlogging.',
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.user': 'Bruker',
     'profile.quote_example':
       'Hei! Jeg er Emora AI, din kunstige intelligens-venn. Jeg er alltid her og klar til å høre på deg.',
@@ -4895,7 +4895,7 @@ const translations = {
     'profile.logout': 'Kirjaudu ulos',
     'profile.logout_confirm': 'Oletko varma, että haluat kirjautua ulos?',
     'profile.logout_error': 'Virhe tapahtui uloskirjautumisessa.',
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.user': 'Käyttäjä',
     'profile.quote_example':
       'Hei! Olen Emora AI, sinun tekoäly-ystäväsi. Olen aina täällä ja valmis kuuntelemaan sinua.',
@@ -5290,7 +5290,7 @@ const translations = {
     'profile.logout': 'Log ud',
     'profile.logout_confirm': 'Er du sikker på, at du vil logge ud?',
     'profile.logout_error': 'Der opstod en fejl ved udlogning.',
-    'profile.app_info': 'Emora AI v1.0.7',
+    'profile.app_info': 'Emora AI v1.0.8',
     'profile.user': 'Bruger',
     'profile.quote_example':
       'Hej! Jeg er Emora AI, din kunstige intelligens-ven. Jeg er altid her og klar til at lytte til dig.',

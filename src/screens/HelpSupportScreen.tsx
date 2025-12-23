@@ -226,7 +226,7 @@ export default function HelpSupportScreen({ navigation }: any) {
               <Ionicons name="sparkles" size={24} color={darkTheme.colors.primary} />
             </View>
             <View style={styles.appInfoContent}>
-              <Text style={styles.appInfoTitle}>Emora AI v1.0.7</Text>
+              <Text style={styles.appInfoTitle}>Emora AI v1.0.8</Text>
               <Text style={styles.appInfoSubtitle}>AI Arkadaşınla Sohbet Et</Text>
             </View>
           </View>

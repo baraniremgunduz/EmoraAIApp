@@ -576,7 +576,7 @@ export default function SettingsScreen({ navigation }: any) {
 
         {/* App Info */}
         <View style={styles.appInfoContainer}>
-          <Text style={styles.appInfoText}>{t('app.name')} v1.0.7</Text>
+          <Text style={styles.appInfoText}>{t('app.name')} v1.0.8</Text>
           <Text style={styles.appInfoSubtext}>{t('app.tagline')}</Text>
         </View>
       </ScrollView>
